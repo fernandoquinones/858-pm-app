@@ -44,6 +44,7 @@ export default function ProjectBoard() {
   const [extending, setExtending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
+  const [msg, setMsg] = useState(null)
 
   const load = useCallback(async () => {
     const [p, ws, ts, cm, at, lt] = await Promise.all([
@@ -146,6 +147,7 @@ export default function ProjectBoard() {
   async function saveTaskToLibrary(wsName, t) {
     const { error } = await supabase.from('library_tasks').upsert({ workstream: wsName, title: t.title, owner: t.owner, applies_to: t.applies_to, notes: t.notes }, { onConflict: 'workstream,title' })
     if (error) { setErr('Save to library failed: ' + error.message); return }
+    setErr(null); setMsg('\u2605 \u201c' + t.title + '\u201d saved to the library.'); setTimeout(() => setMsg(null), 3000)
     load()
   }
   async function removeFromLibrary(wsName, t) {
@@ -159,11 +161,12 @@ export default function ProjectBoard() {
     const rows = tasks.filter(t => t.workstream_id === w.id)
       .map(t => ({ workstream: w.name, title: t.title, owner: t.owner, applies_to: t.applies_to, notes: t.notes }))
       .filter(r => { const k = (r.title || '').trim().toLowerCase(); if (!k || seen.has(k)) return false; seen.add(k); return true })
-    if (rows.length) {
-      const { error } = await supabase.from('library_tasks').upsert(rows, { onConflict: 'workstream,title' })
-      if (error) { setErr('Save workstream failed: ' + error.message); return }
-    }
+    if (!rows.length) { setMsg('No tasks to save in this workstream.'); setTimeout(() => setMsg(null), 3000); return }
+    const { error } = await supabase.from('library_tasks').upsert(rows, { onConflict: 'workstream,title' })
+    if (error) { setErr('Save workstream failed: ' + error.message); return }
     setErr(null)
+    setMsg('\u2605 Saved ' + rows.length + ' task' + (rows.length !== 1 ? 's' : '') + ' from \u201c' + w.name + '\u201d to the library.')
+    setTimeout(() => setMsg(null), 4000)
     load()
   }
 
@@ -201,6 +204,7 @@ export default function ProjectBoard() {
       </div>
 
       {err && <div className="banner sans">{err}</div>}
+      {msg && <div className="banner sans" style={{ background: '#E1F5EE', borderColor: '#5DCAA5', color: '#0F6E56' }}>{msg}</div>}
       {project && project.slack_channel_id ? (
         <div className="card sans" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span className="subh" style={{ margin: 0 }}>Slack room</span>
@@ -347,7 +351,7 @@ export default function ProjectBoard() {
                       {ACTIVATIONS.map(x => <option key={x} value={x}>{x}</option>)}
                     </select>
                     <button className="btn sm" onClick={() => addTask(w.id)}>+ Add task</button>
-                    <button className="btn tiny" onClick={() => saveWorkstreamToLibrary(w)}>★ Save workstream to library</button>
+                    {(() => { const allIn = list.length > 0 && list.every(t => inLibrary(w.name, t)); return <button className="btn tiny" onClick={() => saveWorkstreamToLibrary(w)} style={allIn ? { background: '#E1F5EE', color: '#0F6E56', borderColor: '#bfe6c9' } : {}}>{allIn ? '★ Workstream in library' : '★ Save workstream to library'}</button> })()}
                   </div>
                 )}
               </div>
