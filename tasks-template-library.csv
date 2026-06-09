@@ -1,0 +1,72 @@
+phase,timing,task,owner,applies_to,status,due_date,notes
+Project kickoff,~2 months out,Create initial project plan,Fern,All events,todo,,Fern leads creation. Christina takes over execution ~1 month out.
+Project kickoff,~2 months out,Register on-site team for event,Christina,All events,todo,,Register all team members via Notion. Send confirmations + notify Fern.
+Project kickoff,~2 months out,Hotel bookings for on-site team,Team,All events,todo,,"Fern, Christina, or individuals book per Informa partnership terms."
+Project kickoff,~2 months out,Client kick-off email,Nic,All events,todo,,"Overview of what to expect, key links, initial client to-dos."
+Project kickoff,~2 months out,Create internal tracker hub,Christina,All events,todo,,
+Project kickoff,~2 months out,Event internal kick-off call,Fern + Christina,All events,todo,,"Internal team kick-off to align on project plan, ownership, and timeline."
+Project kickoff,~2 months out,Create overall event deck,Christina,All events,todo,,"Overall event deck covering key details, agenda, and team roles."
+Pre-event — client workstreams,4–6 weeks out,Send top 20 target request + attendee list,Nic,All events,todo,,Google Sheet with full event attendee list. Clients check off 20 top targets to invite.
+Pre-event — client workstreams,4–6 weeks out,Create client external spreadsheets with attendee lists,Christina,All events,todo,,External-facing Google Sheets with attendee lists shared directly with each client.
+Pre-event — client workstreams,4–6 weeks out,Send invites to nominated top targets,Chris,All events,todo,,Chris sends invites once each client returns their top 20 list.
+Pre-event — client workstreams,4–6 weeks out,Collect client to-dos,Christina,All events,todo,,"Logo, company bio, attendee registrations, calls scheduled."
+Pre-event — client workstreams,4–6 weeks out,Client prep call,Nic,All events,todo,,"~2 weeks out. Nic walks through full prep deck — logistics, expectations, event overview."
+Pre-event — client workstreams,4–6 weeks out,Client deal strategy call,JG,All events,todo,,"JG strategizes with client on talking points, target approach, and event goals."
+Pre-event — client workstreams,4–6 weeks out,Confirm GRIP preference designator per partner,Nic,GRIP Meetings,todo,,Each partner assigns one person (designator) who will log into GRIP and make meeting selections on behalf of the company.
+Pre-event — client workstreams,4–6 weeks out,Operator preference selections open — choose top 40,Nic,GRIP Meetings,todo,,Designator receives email with instructions and logs into GRIP to select up to 40 operators they want to meet with.
+Pre-event — client workstreams,4–6 weeks out,Review who's interested — refine operator preferences,Nic,GRIP Meetings,todo,,Mid-window check: review mutual interest signals in GRIP and adjust selections before the final deadline. Note: this often falls in a holiday week.
+Pre-event — client workstreams,4–6 weeks out,Final deadline — select operator preferences,Nic,GRIP Meetings,todo,,"Hard cutoff for all partner preference selections in GRIP. After this, Informa builds the schedule."
+Pre-event — client workstreams,4–6 weeks out,View preliminary meeting schedule + flag issues,Nic,GRIP Meetings,todo,,Informa publishes a draft schedule. Review each client's 10 meetings and flag any conflicts or mismatches directly with Informa.
+Pre-event — dossiers,3–4 weeks out,Build master attendee list,Christina,All events,todo,,"LinkedIn headshots, brand, job title, buyer intent. Updated multiple times/week."
+Pre-event — dossiers,3–4 weeks out,Map buyer intents to clients,Christina,All events,todo,,Match each operator's top 3 tech priorities to relevant client solutions.
+Pre-event — dossiers,3–4 weeks out,Create internal dossier,Christina,All events,todo,,Internal-facing dossier for the 858 team — separate from client dossiers.
+Pre-event — dossiers,3–4 weeks out,Build per-client dossier in Notion,Christina,All events,todo,,"Agenda, attendee table, buyer intents, map, team/client headshots. One per client."
+Pre-event — dossiers,3–4 weeks out,Add finalized GRIP schedule to client dossier,Christina,GRIP Meetings,todo,,"Once Informa publishes the preliminary schedule, add each client's confirmed 10 meetings into their Notion dossier so they can research and prep."
+Pre-event — dossiers,3–4 weeks out,Run prioritization exercise with clients,Christina,All events,todo,,"Clients nominate: 5 tier 1 targets, 5 tier 2, 10 current customers, 20 detractors."
+Pre-event — dossiers,3–4 weeks out,Publish dossier + create Rebrandly link,Christina,All events,todo,,Make Notion page public. Rename link in Rebrandly. Share with client.
+Pre-event — seating & room assignments,1–2 weeks out,Table / room assignments (JG),JG,Luncheon / Bird circles,todo,,"JG uses top targets, current customers, detractors + capacity. May review on deal strategy call."
+Pre-event — seating & room assignments,1–2 weeks out,Add assignments to dossiers,Christina,Luncheon / Bird circles,todo,,"Once JG finalizes, Christina adds table/room assignments to each client's dossier."
+Pre-event — seating & room assignments,1–2 weeks out,Build ESM trackers,Christina,All events,todo,,Shows each client's tier 1/2 targets + table/room overlap and GRIP meeting schedule. Sent to Nic for onsite ESM use.
+Pre-event — program guide & comms,1–2 weeks out,Draft program guide content,Fern,All events,todo,,Fern runs first draft through Claude. Sends to JG + Marty for review and visual direction.
+Pre-event — program guide & comms,1–2 weeks out,Build program guide in Figma,Christina,All events,todo,,Christina builds from template. Check-ins with JG + Marty. Export as PDF.
+Pre-event — program guide & comms,1–2 weeks out,Program guide / KBYG send,Chris + JG,All events,todo,,JG links PDF. Sent 2–3 days before event to all operators + clients.
+Pre-event — program guide & comms,1–2 weeks out,Stage table / room linking emails,Chris,Luncheon / Bird circles,todo,,Chris stages with placeholder photos + LinkedIn links so JG can preview format.
+Pre-event — photography brief,~1 week out,Sign photographer contract,Fern + Christina,All events,todo,,"Vet and sign per city. Contract, hourly quote. Pre-event call if first time."
+Pre-event — photography brief,~1 week out,Send photography dossier + run of show,Christina,All events,todo,,"Due dates, shot list, run of show, full attendee headshots, contact info, maps."
+Pre-event — photography brief,~1 week out,Brief Robin (photo organizer),Christina,All events,todo,,Same dossier as photographer. Note when full gallery will be available — that's his start date.
+Pre-event — vendors & logistics,Varies,Venue contract,Fern,Luncheon / Bird circles / 858 House,todo,,Fern handles all venue contracts and coordination.
+Pre-event — vendors & logistics,Varies,Secure floorplan + AV details,Fern,Luncheon,todo,,"Get floor plan, room setup, and AV sorted with the venue for the luncheon space."
+Pre-event — vendors & logistics,Varies,Food & beverage + espresso cart,Fern,All events,todo,,"Menu, vendors, contracts. Always include espresso cart. Source beans from a client if possible."
+Pre-event — vendors & logistics,Varies,Furniture order,Fern,Luncheon / Bird circles / 858 House,todo,,Only if bringing furniture from outside the venue.
+Pre-event — vendors & logistics,Varies,Hire staff / extra staffing,Fern,All events,todo,,"Check-in help, room flips. Especially needed for large-scale events."
+Pre-event — vendors & logistics,Varies,Swag for attendees,Fern,All events,todo,,"Order and coordinate attendee swag — source, brand, and deliver to venue."
+Pre-event — vendors & logistics,Varies,Moderator logistics,Fern + Christina,Bird circles,todo,,"Coordinate moderator details for bird circles: travel, briefing, run of show."
+Pre-event — vendors & logistics,Varies,Write opening remarks,JG,Luncheon,todo,,JG's remarks drafted ahead of the luncheon. Multiple check-in rounds before final.
+Pre-event — vendors & logistics,Varies,Finalize list of client attendees,Christina,All events,todo,,Separate from building the dossier — confirm final client-side attendee list.
+Pre-event — vendors & logistics,Varies,Designs & signage,Fern + Christina,All events,todo,,"Christina designs (badges, note cards, collateral). Fern approves and orders."
+Pre-event — vendors & logistics,Varies,Marketing materials,Christina,All events,todo,,"Client logos, bios, 858 logo/bio — collect and send to event as needed."
+Pre-event — vendors & logistics,Varies,858 House setup coordination,Fern,858 House,todo,,"Full bar, sushi, carving station, bra bar, check-in system, table reservation setup."
+Onsite,Day of event,Final seat assignments (post check-in),JG,Luncheon / Bird circles,todo,,"Input final check-in data (no-shows, walk-ins) into Claude project. Reassign if needed."
+Onsite,Day of event,858 House check-in + table management,Christina,858 House,todo,,"Manage full check-in, table reservations, and room flow throughout the event."
+Onsite,Day of event,ESM introductions tracking,Nic,All events,todo,,Nic + ESMs use trackers to ensure each client meets their tier 1/2 targets.
+Onsite,Day of event,GRIP meeting support + ESM coverage,Nic,GRIP Meetings,todo,,"ESMs ensure each client is at their GRIP meetings on time and equipped. 10 x 10-min back-to-back 1:1s — fast-paced, needs active support."
+Onsite,Day of event,Request same-day photo drop,Christina,All events,todo,,20–40 edited photos by end of day or early next morning. Must include table/room linking shots.
+Post-event — table & room linking emails,Within 48 hours,Finalize attendee list by actual table / room,Chris,Luncheon / Bird circles,todo,,Chris organizes final list around confirmed seating (no-shows removed).
+Post-event — table & room linking emails,Within 48 hours,Organize same-day photos for Chris,Christina,Luncheon / Bird circles,todo,,"Christina labels and drops photos into Google Drive, linked by table/room."
+Post-event — table & room linking emails,Within 48 hours,Final review + send linking emails,Chris + JG,Luncheon / Bird circles,todo,,"One email per table or room. Chris populates, JG final review, send within 48hrs."
+Post-event — recap,~1 week out,Draft post-event recap using Claude,Christina,All events,todo,,"Uses program guide, emails, event notes. Covers activations, attendance, speakers, spotlights."
+Post-event — recap,~1 week out,Nic adds reporting + feedback layer,Nic,All events,todo,,"Buyer intent reporting, operator/client feedback, ESM debrief notes."
+Post-event — recap,~1 week out,JG + Marty final content review,JG + Marty,All events,todo,,Final edit and approval before Webflow build.
+Post-event — recap,~1 week out,Build visual recap in Webflow,Christina,All events,todo,,"Once full gallery is available. Christina builds, JG + Marty review, then make live."
+Post-event — recap,~1 week out,Send live recap link to Chris,Christina,All events,todo,,Chris includes the recap link in all one-on-one follow-up emails.
+Post-event — photography & Robin,3–10 days out,Receive full photo gallery,Christina,All events,todo,,"Per contract (3–7 business days). Speakers, food/decor, venue, candids, team, linking photos."
+Post-event — photography & Robin,3–10 days out,Send gallery + updated attendee list to Robin,Christina,All events,todo,,Include any walk-in headshots researched. Updated dossier included for reference.
+Post-event — photography & Robin,3–10 days out,Confirm Robin delivery + send to Chris,Christina,All events,todo,,Robin delivers organized folders (~2–4 days). Christina confirms and forwards to Chris.
+Post-event — photography & Robin,3–10 days out,Approve Robin's invoice,Christina,All events,todo,,Christina + Chris approve. Notify Fern to process payment.
+Post-event — one-on-one follow-up,~2 weeks out,Open 1:1 follow-up copy doc,Christina,All events,todo,,Christina creates structure + optional Claude template. JG + Chris own the copy.
+Post-event — one-on-one follow-up,~2 weeks out,Write personalized 1:1 copy,Chris + JG,All events,todo,,JG + Chris write personalized follow-ups per operator. Includes event recap and personal note.
+Post-event — one-on-one follow-up,~2 weeks out,Deliver Robin's organized photos to Chris,Christina,All events,todo,,Once Robin is done. Christina sends organized folder to Chris for photo attachment.
+Post-event — one-on-one follow-up,~2 weeks out,Final review + send 1:1 emails,Chris + JG,All events,todo,,Chris confirms photos + copy. Sends individually with photo + post-event recap link.
+Post-event — debrief,1–2 weeks out,Client debrief calls,Nic,All events,todo,,"Nic hosts per client — what worked, what to improve, overall satisfaction."
+Post-event — debrief,1–2 weeks out,Log connections in Attio,Christina,All events,todo,,Log all new connections and introductions made at the event into Attio (CRM).
+Post-event — debrief,1–2 weeks out,Project wrap-up + template update,Fern + Christina,All events,todo,,Close out project plan. Document lessons learned. Update templates for next event.

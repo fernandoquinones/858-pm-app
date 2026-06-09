@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luncheon Seating — Tool Demo</title>
+<style>
+  :root{
+    --bg:#f4f5f8; --card:#ffffff; --ink:#1c1e26; --muted:#6b7280; --line:#e6e8ee;
+    --accent:#4f46e5; --accent-soft:#eef0fe; --green:#16a34a; --green-soft:#e7f6ec;
+    --amber:#d97706; --amber-soft:#fdf3e3; --blue:#2563eb; --blue-soft:#e7effe;
+    --red:#dc2626; --red-soft:#fdeaea; --slack:#4a154b; --slack-soft:#f5eef6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+  .wrap{max-width:1240px;margin:0 auto;padding:20px}
+  /* top bar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+  .brand h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.2px}
+  .brand .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+    background:var(--accent-soft);color:var(--accent);padding:3px 8px;border-radius:6px;margin-left:8px;vertical-align:middle}
+  .status-chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chip{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);
+    padding:6px 11px;border-radius:20px;font-size:12px;font-weight:600;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+  .dot.live{animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 var(--green-soft)}70%{box-shadow:0 0 0 6px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+  .avatar{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;
+    font-weight:700;display:flex;align-items:center;justify-content:center}
+  /* prompt bar */
+  .prompt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0 18px;
+    box-shadow:0 1px 2px rgba(20,20,40,.04)}
+  .prompt .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px}
+  .prompt .row{display:flex;gap:10px;flex-wrap:wrap}
+  .prompt input{flex:1;min-width:280px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+    font-size:14px;font-family:inherit;background:#fbfbfd}
+  .prompt input:focus{outline:none;border-color:var(--accent);background:#fff}
+  .btn{border:none;border-radius:10px;padding:12px 18px;font-size:13.5px;font-weight:700;cursor:pointer;
+    background:var(--accent);color:#fff;transition:.15s;white-space:nowrap}
+  .btn:hover{filter:brightness(1.07)}
+  .btn.ghost{background:var(--accent-soft);color:var(--accent)}
+  .btn.sm{padding:6px 11px;font-size:12px;border-radius:8px}
+  .hint{color:var(--muted);font-size:12px;margin-top:8px}
+  .hint b{color:var(--ink)}
+  /* generating animation */
+  .gen{display:none;align-items:center;gap:10px;color:var(--accent);font-weight:600;font-size:13px;margin-top:12px}
+  .gen .spin{width:15px;height:15px;border:2.5px solid var(--accent-soft);border-top-color:var(--accent);
+    border-radius:50%;animation:rot .7s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  /* layout */
+  #stage{display:none}
+  .grid{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:start}
+  @media(max-width:920px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(20,20,40,.04);overflow:hidden}
+  .panel h2{font-size:14px;margin:0;padding:14px 16px;border-bottom:1px solid var(--line);font-weight:700;
+    display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .panel h2 .meta{font-size:11.5px;font-weight:600;color:var(--muted)}
+  .pad{padding:16px}
+  /* tables board */
+  .alert{display:none;background:var(--red-soft);border:1px solid #f3c4c4;border-radius:10px;padding:12px 14px;margin:0 16px 4px;
+    font-size:13px}
+  .alert b{color:var(--red)}
+  .alert .btn{margin-left:6px}
+  .tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px}
+  .tbl{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfbfd}
+  .tbl .th{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+  .tbl .th .name{font-weight:700;font-size:13px}
+  .tbl .th .cap{font-size:11px;color:var(--muted)}
+  .tbl.host{border-color:var(--accent);background:var(--accent-soft)}
+  .tbl.host .th .name::after{content:" ★";color:var(--accent)}
+  .seat{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;margin-bottom:5px;cursor:pointer;
+    border:1px solid transparent;transition:.12s}
+  .seat:hover{background:#fff;border-color:var(--line)}
+  .seat.empty{justify-content:center;color:var(--muted);font-style:italic;border:1px dashed var(--line);font-size:12px}
+  .seat.empty:hover{border-color:var(--accent);color:var(--accent)}
+  .seat.sel{background:#fff;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .gav{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;color:#fff;background:var(--muted)}
+  .gav.t1{background:var(--amber)} .gav.t2{background:var(--blue)}
+  .ginfo{flex:1;min-width:0}
+  .ginfo .gn{font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ginfo .gc{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pill{font-size:9px;font-weight:700;padding:2px 5px;border-radius:5px;text-transform:uppercase;letter-spacing:.3px}
+  .pill.t1{background:var(--amber-soft);color:var(--amber)} .pill.t2{background:var(--blue-soft);color:var(--blue)}
+  .diet{font-size:11px}
+  .noshow{opacity:0;font-size:11px;color:var(--red);font-weight:700;cursor:pointer;padding:2px 4px}
+  .seat:hover .noshow{opacity:1}
+  .selnote{font-size:12px;color:var(--accent);font-weight:600;min-height:18px;margin-bottom:8px}
+  /* slack */
+  .slack h2{background:var(--slack);color:#fff;border-bottom:none}
+  .slack h2 .meta{color:#d9b8da}
+  .feed{padding:12px 14px;max-height:520px;overflow:auto}
+  .msg{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f0eef1}
+  .msg:last-child{border-bottom:none}
+  .msg .pic{width:30px;height:30px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;color:#fff}
+  .msg .body{flex:1;min-width:0}
+  .msg .who{font-weight:700;font-size:12.5px}
+  .msg .who span{font-weight:500;color:var(--muted);font-size:11px;margin-left:6px}
+  .msg .txt{font-size:13px;margin-top:1px}
+  .msg .txt b{color:var(--slack)}
+  .msg .act{margin-top:6px}
+  .reply{background:var(--green-soft);color:var(--green);border:1px solid #bfe6c9;border-radius:7px;
+    padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer}
+  .reply:hover{background:#d8f0df}
+  .reply.done{opacity:.6;cursor:default;pointer-events:none}
+  .empty-feed{color:var(--muted);font-size:12.5px;padding:8px 2px;font-style:italic}
+  /* tasks */
+  .task-panel{margin-top:18px}
+  table.tasks{width:100%;border-collapse:collapse}
+  table.tasks th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+    padding:10px 14px;border-bottom:1px solid var(--line);font-weight:700}
+  table.tasks td{padding:11px 14px;border-bottom:1px solid #f1f2f6;font-size:13.5px;vertical-align:middle}
+  table.tasks tr:last-child td{border-bottom:none}
+  .owner{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:12.5px}
+  .owner .av{width:22px;height:22px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;
+    display:flex;align-items:center;justify-content:center}
+  select.st{border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer}
+  select.st.todo{color:var(--muted)} select.st.prog{color:var(--blue);border-color:#c7dafc;background:var(--blue-soft)}
+  select.st.review{color:var(--amber);border-color:#f0d8a8;background:var(--amber-soft)}
+  select.st.done{color:var(--green);border-color:#bfe6c9;background:var(--green-soft)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;padding:14px 16px;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;font-size:12px;color:var(--muted)}
+  .legend b{color:var(--ink)} .legend .it{display:flex;gap:7px;align-items:center}
+  .footer-note{text-align:center;color:var(--muted);font-size:11.5px;margin:22px 0 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <h1>Luncheon Seating — Project Tool <span class="tag">Demo</span></h1>
+      <div class="sub">How the web app will work · sample data · architecture proof</div>
+    </div>
+    <div class="status-chips">
+      <div class="chip"><span class="dot live"></span> Live · single source of truth</div>
+      <div class="chip"><span class="avatar">CA</span> Christina is editing</div>
+    </div>
+  </div>
+
+  <!-- INPUT LAYER -->
+  <div class="prompt">
+    <div class="lbl">① Input layer — one natural-language prompt</div>
+    <div class="row">
+      <input id="promptIn" value="CFO Luncheon · 20 execs · 5 tables (1 sponsor head table) · seated lunch + networking · Acme Capital sponsor">
+      <button class="btn" id="genBtn" onclick="generate()">Generate plan</button>
+    </div>
+    <div class="hint">Claude reads this prompt <b>+ the task-template library</b> (every past event's tasks, tagged by type) → builds the seating board and the task plan below.</div>
+    <div class="gen" id="genAnim"><span class="spin"></span> Claude is reading your template library and generating the plan…</div>
+  </div>
+
+  <!-- STAGE (revealed after generate) -->
+  <div id="stage">
+    <div class="grid">
+      <!-- SEATING BOARD -->
+      <div class="panel">
+        <h2>② Seating board <span class="meta" id="seatMeta"></span></h2>
+        <div class="alert" id="alert"></div>
+        <div class="pad">
+          <div class="selnote" id="selNote">Tip: click a guest, then click an empty seat to move them. Hover a guest to mark a no-show.</div>
+          <div class="tables" id="tables"></div>
+        </div>
+      </div>
+
+      <!-- SLACK -->
+      <div class="panel slack">
+        <h2>④ Slack — how everyone else interacts <span class="meta">#luncheon-seating</span></h2>
+        <div class="feed" id="feed"></div>
+      </div>
+    </div>
+
+    <!-- TASK PLAN -->
+    <div class="panel task-panel">
+      <h2>③ Seating task plan <span class="meta">editable · owners &amp; dates · status</span></h2>
+      <table class="tasks">
+        <thead><tr><th style="width:42%">Task</th><th>Owner</th><th>Due</th><th style="width:160px">Status</th></tr></thead>
+        <tbody id="taskBody"></tbody>
+      </table>
+    </div>
+
+    <div class="legend">
+      <div class="it"><span class="dot"></span><b>Power users</b> (Fernando, Christina) — work in the board</div>
+      <div class="it"><span class="gav" style="background:var(--slack);width:18px;height:18px">J</span><b>Juan</b> — Slack pings only</div>
+      <div class="it"><span class="gav" style="background:var(--slack);width:18px;height:18px">N</span><b>Nic</b> — reads status</div>
+      <div class="it"><span class="gav" style="background:var(--slack);width:18px;height:18px">JG</span><b>JG</b> — completes from Slack on mobile, no login</div>
+    </div>
+    <div class="footer-note">Demo only — no real database connected. In the real build this state lives in Supabase and syncs to everyone in real time.</div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- sample data ---------- */
+const owners = {
+  F:{name:"Fernando",c:"#4f46e5"}, C:{name:"Christina",c:"#0891b2"},
+  J:{name:"Juan",c:"#4a154b"}, N:{name:"Nic",c:"#be185d"}
+};
+let tables = [
+  {id:1,name:"Head Table",cap:4,host:true},
+  {id:2,name:"Table 2",cap:4},
+  {id:3,name:"Table 3",cap:4},
+  {id:4,name:"Table 4",cap:4},
+  {id:5,name:"Table 5",cap:4}
+];
+let guests = [
+  {id:1,n:"Dana Whitfield",co:"Northwind Capital · CFO",tier:1,diet:"",t:1},
+  {id:2,n:"Marcus Ortiz",co:"Acme Capital · Partner",tier:1,diet:"",t:1},
+  {id:3,n:"Priya Nair",co:"Vertex Foods · CFO",tier:1,diet:"VG",t:1},
+  {id:4,n:"Sam Calloway",co:"858 · Host",tier:2,diet:"",t:1},
+  {id:5,n:"Elena Brooks",co:"Brightline · VP Fin",tier:2,diet:"",t:2},
+  {id:6,n:"Tom Reyes",co:"Cedar & Co · CFO",tier:1,diet:"GF",t:2},
+  {id:7,n:"Aisha Khan",co:"Mendel Group · Controller",tier:2,diet:"",t:2},
+  {id:8,n:"Greg Patton",co:"Halcyon · CFO",tier:1,diet:"",t:2},
+  {id:9,n:"Lori Sanders",co:"Pinecrest · VP",tier:2,diet:"",t:3},
+  {id:10,n:"David Cho",co:"Onyx Retail · CFO",tier:1,diet:"",t:3},
+  {id:11,n:"Rachel Imani",co:"Lumen Health · CFO",tier:1,diet:"VG",t:3},
+  {id:12,n:"Bill Frances",co:"Aster Mfg · Treasurer",tier:2,diet:"",t:3},
+  {id:13,n:"Nora Esposito",co:"Quill Media · CFO",tier:1,diet:"",t:4},
+  {id:14,n:"Hank Liu",co:"Forge Labs · VP Fin",tier:2,diet:"",t:4},
+  {id:15,n:"Tara Okafor",co:"Maple Bank · CFO",tier:1,diet:"GF",t:4},
+  {id:16,n:"Joel Birkin",co:"Strata · Controller",tier:2,diet:"",t:4},
+  {id:17,n:"Carmen Diaz",co:"Vista Group · CFO",tier:1,diet:"",t:5},
+  {id:18,n:"Owen Pratt",co:"Birch Co · VP",tier:2,diet:"",t:5},
+  {id:19,n:"Mei Tanaka",co:"Solace · CFO",tier:1,diet:"VG",t:5}
+  // Table 5 has one open seat to start
+];
+let waitlist = [
+  {id:101,n:"Frank Dunlap",co:"Ridge Partners · CFO",tier:1,diet:""},
+  {id:102,n:"Sofia Marsh",co:"Keystone · VP Fin",tier:2,diet:""}
+];
+let tasks = [
+  {id:1,name:"Build & import guest list (CSV)",own:"C",due:"Jun 12",st:"done"},
+  {id:2,name:"Confirm RSVPs & dietary flags",own:"C",due:"Jun 18",st:"prog"},
+  {id:3,name:"Draft seating chart (Tier 1/2 next to sponsors)",own:"F",due:"Jun 22",st:"prog"},
+  {id:4,name:"Sponsor sign-off on head table",own:"J",due:"Jun 24",st:"review"},
+  {id:5,name:"Finalize chart & print place cards",own:"F",due:"Jun 26",st:"todo"},
+  {id:6,name:"Day-of: manage no-shows / live re-seating",own:"F",due:"Jun 27",st:"todo"}
+];
+
+/* ---------- state ---------- */
+let selected = null;            // selected guest id
+let feedMsgs = [];
+const stLabels = {todo:"To do",prog:"In progress",review:"Needs review",done:"Done ✓"};
+
+/* ---------- generate (reveal) ---------- */
+function generate(){
+  const btn = document.getElementById('genBtn');
+  const anim = document.getElementById('genAnim');
+  btn.disabled = true; btn.style.opacity=.6;
+  anim.style.display='flex';
+  setTimeout(()=>{
+    anim.style.display='none';
+    btn.disabled=false; btn.style.opacity=1; btn.textContent="Regenerate";
+    document.getElementById('stage').style.display='block';
+    pushMsg("Claude","#4f46e5","Generated <b>CFO Luncheon</b> plan — 5 tables, 6 seating tasks pulled from template library. Board is live.",null);
+    render();
+    document.getElementById('stage').scrollIntoView({behavior:'smooth',block:'start'});
+  },1400);
+}
+
+/* ---------- render ---------- */
+function gAvatar(g){
+  const cls = g.tier===1?'t1':g.tier===2?'t2':'';
+  const init = g.n.split(' ').map(x=>x[0]).slice(0,2).join('');
+  return `<div class="gav ${cls}">${init}</div>`;
+}
+function render(){ renderTables(); renderTasks(); renderFeed(); renderMeta(); }
+
+function renderMeta(){
+  const seated = guests.length;
+  const cap = tables.reduce((a,t)=>a+t.cap,0);
+  document.getElementById('seatMeta').textContent = `${seated}/${cap} seated · ${tables.length} tables`;
+}
+
+function renderTables(){
+  const host = document.getElementById('tables');
+  host.innerHTML = tables.map(t=>{
+    const occ = guests.filter(g=>g.t===t.id);
+    let seats = occ.map(g=>`
+      <div class="seat ${selected===g.id?'sel':''}" onclick="seatClick(${g.id},event)">
+        ${gAvatar(g)}
+        <div class="ginfo">
+          <div class="gn">${g.n} ${g.tier?`<span class="pill ${g.tier===1?'t1':'t2'}">T${g.tier}</span>`:''} ${g.diet?`<span class="diet" title="dietary">${g.diet==='VG'?'🌱':g.diet==='GF'?'🌾':''}</span>`:''}</div>
+          <div class="gc">${g.co}</div>
+        </div>
+        <span class="noshow" onclick="noShow(${g.id},event)" title="Mark no-show">no-show ✕</span>
+      </div>`).join('');
+    const empties = t.cap - occ.length;
+    for(let i=0;i<empties;i++){
+      seats += `<div class="seat empty" onclick="emptyClick(${t.id})">+ open seat</div>`;
+    }
+    return `<div class="tbl ${t.host?'host':''}">
+      <div class="th"><span class="name">${t.name}</span><span class="cap">${occ.length}/${t.cap}</span></div>
+      ${seats}</div>`;
+  }).join('');
+}
+
+function renderTasks(){
+  const tb = document.getElementById('taskBody');
+  tb.innerHTML = tasks.map(t=>{
+    const o = owners[t.own];
+    const opts = Object.keys(stLabels).map(k=>`<option value="${k}" ${t.st===k?'selected':''}>${stLabels[k]}</option>`).join('');
+    return `<tr>
+      <td>${t.name}</td>
+      <td><span class="owner"><span class="av" style="background:${o.c}">${o.name[0]}</span>${o.name}</span></td>
+      <td>${t.due}</td>
+      <td><select class="st ${t.st}" onchange="changeStatus(${t.id},this.value)">${opts}</select></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderFeed(){
+  const f = document.getElementById('feed');
+  if(!feedMsgs.length){ f.innerHTML = `<div class="empty-feed">Status changes and seat swaps post here, and the right people get pinged.</div>`; return; }
+  f.innerHTML = feedMsgs.map(m=>`
+    <div class="msg">
+      <div class="pic" style="background:${m.color}">${m.who.slice(0,2)}</div>
+      <div class="body">
+        <div class="who">${m.who}<span>${m.time}</span></div>
+        <div class="txt">${m.text}</div>
+        ${m.action?`<div class="act"><button class="reply ${m.done?'done':''}" onclick="slackReply(${m.id})">${m.done?'✓ marked done from Slack':'✅ Reply “done”'}</button></div>`:''}
+      </div>
+    </div>`).join('');
+  f.scrollTop = f.scrollHeight;
+}
+
+/* ---------- interactions ---------- */
+function seatClick(id,e){
+  e.stopPropagation();
+  if(selected===id){ selected=null; setNote(""); }
+  else if(selected){
+    // swap two guests' tables
+    const a=guests.find(g=>g.id===selected), b=guests.find(g=>g.id===id);
+    const tmp=a.t; a.t=b.t; b.t=tmp;
+    setNote(`Swapped ${a.n} ↔ ${b.n}.`);
+    pushMsg("Christina","#0891b2",`Swapped <b>${a.n}</b> and <b>${b.n}</b> on the seating chart.`,null);
+    selected=null;
+  } else {
+    selected=id; const g=guests.find(g=>g.id===id);
+    setNote(`Selected ${g.n} — click an open seat to move, or another guest to swap.`);
+  }
+  render();
+}
+function emptyClick(tid){
+  if(!selected){ setNote("Select a guest first, then click an open seat."); return; }
+  const g=guests.find(g=>g.id===selected);
+  const tbl=tables.find(t=>t.id===tid);
+  g.t=tid; setNote(`Moved ${g.n} to ${tbl.name}.`);
+  pushMsg("Fernando","#4f46e5",`Moved <b>${g.n}</b> to <b>${tbl.name}</b>.`,null);
+  selected=null; render();
+}
+function noShow(id,e){
+  e.stopPropagation();
+  const i=guests.findIndex(g=>g.id===id); if(i<0)return;
+  const g=guests[i]; const tbl=tables.find(t=>t.id===g.t);
+  guests.splice(i,1);
+  // suggest a replacement from waitlist (prefer same tier)
+  const sub = waitlist.find(w=>w.tier===g.tier) || waitlist[0];
+  const al=document.getElementById('alert');
+  al.style.display='block';
+  if(sub){
+    al.innerHTML = `<b>No-show:</b> ${g.n} (${tbl.name}) — seat opened. Suggested replacement: <b>${sub.n}</b> · ${sub.co}
+      <button class="btn sm" onclick="seatSub(${sub.id},${tbl.id})">Seat ${sub.n.split(' ')[0]} here</button>`;
+  } else {
+    al.innerHTML = `<b>No-show:</b> ${g.n} (${tbl.name}) — seat opened. Waitlist empty.`;
+  }
+  pushMsg("Fernando","#4f46e5",`⚠️ No-show: <b>${g.n}</b> at ${tbl.name}. Seat freed — handling live re-seat.`,null);
+  // ping Juan for sponsor table, else ping Nic for visibility
+  if(tbl.host){ pushMsg("Tool → Juan","#4a154b",`@Juan a seat opened at the <b>sponsor head table</b> — confirm the replacement.`,true); }
+  selected=null; render();
+}
+function seatSub(wid,tid){
+  const wi=waitlist.findIndex(w=>w.id===wid); if(wi<0)return;
+  const w=waitlist.splice(wi,1)[0];
+  guests.push({id:w.id,n:w.n,co:w.co,tier:w.tier,diet:w.diet,t:tid});
+  const tbl=tables.find(t=>t.id===tid);
+  document.getElementById('alert').style.display='none';
+  pushMsg("Christina","#0891b2",`Seated <b>${w.n}</b> from the waitlist at <b>${tbl.name}</b>. Place card reprinting.`,null);
+  render();
+}
+function changeStatus(id,val){
+  const t=tasks.find(x=>x.id===id); const prev=t.st; t.st=val;
+  render();
+  if(val==='done'){ pushMsg(owners[t.own].name,owners[t.own].c,`Marked <b>${t.name}</b> complete.`,null); }
+  else if(val==='review'){ pushMsg("Tool → Juan","#4a154b",`@Juan <b>${t.name}</b> needs your sign-off.`,true); }
+  else if(prev==='done'){ pushMsg(owners[t.own].name,owners[t.own].c,`Reopened <b>${t.name}</b> (${stLabels[val]}).`,null); }
+}
+function slackReply(mid){
+  const m=feedMsgs.find(x=>x.id===mid); if(!m||m.done)return;
+  m.done=true;
+  // write-back: find the review task and mark done
+  const t=tasks.find(x=>x.st==='review');
+  if(t){ t.st='done'; }
+  pushMsg("JG","#4a154b",`done ✅`,null);
+  pushMsg("Tool","#4f46e5",`Synced from Slack → <b>${t?t.name:'task'}</b> marked complete in the dashboard. No login needed.`,null);
+  render();
+}
+
+/* ---------- helpers ---------- */
+let msgId=0;
+function pushMsg(who,color,text,action){
+  const d=new Date();
+  const time=d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  feedMsgs.push({id:++msgId,who,color,text,action:!!action,done:false,time});
+  renderFeed();
+}
+function setNote(t){ document.getElementById('selNote').textContent = t || "Tip: click a guest, then an open seat to move them. Hover a guest to mark a no-show."; }
+
+// clicking empty space clears selection
+document.addEventListener('click',e=>{ if(!e.target.closest('.seat')&&!e.target.closest('.alert')&&selected){ selected=null; setNote(""); render(); }});
+</script>
+</body>
+</html>

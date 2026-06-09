@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>858 Project Tool — CFO Luncheon (Demo)</title>
+<style>
+  :root{
+    --bg:#faf9f5; --card:#ffffff; --surf2:#f5f4ef; --ink:#1a1a1a; --muted:#5f5e5a; --faint:#9b9a96;
+    --line:rgba(0,0,0,.10); --accent:#4f46e5; --accent-soft:#eef0fe;
+    --green:#16a34a; --green-soft:#e7f6ec; --amber:#d97706; --amber-soft:#fdf3e3;
+    --blue:#2563eb; --blue-soft:#e7effe; --red:#dc2626; --red-soft:#fdeaea; --slack:#4a154b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Georgia','Times New Roman',serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+  .sans{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 22px 70px}
+  /* top */
+  .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  h1{font-size:18px;margin:0;font-weight:600;letter-spacing:-.01em}
+  .sub{color:var(--faint);font-size:11.5px;margin-top:3px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);
+    padding:5px 11px;border-radius:20px;font-size:11.5px;font-weight:600;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .dot.live{animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 var(--green-soft)}70%{box-shadow:0 0 0 6px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+  .av{border-radius:50%;color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  /* prompt */
+  .prompt{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:14px}
+  .prompt .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);margin-bottom:7px}
+  .prow{display:flex;gap:9px;flex-wrap:wrap}
+  .prompt input{flex:1;min-width:280px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:13px;background:#fbfbfd;font-family:inherit}
+  .prompt input:focus{outline:none;border-color:var(--accent)}
+  /* tabs */
+  .tabs{display:flex;gap:5px;margin-bottom:16px}
+  .tab{font-size:12.5px;padding:7px 15px;border-radius:8px;cursor:pointer;border:1px solid var(--line);
+    background:transparent;color:var(--muted);font-family:inherit;font-weight:400}
+  .tab.on{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600}
+  /* layout */
+  .cols{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+  @media(max-width:960px){.cols{grid-template-columns:1fr}}
+  .btn{border:none;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;
+    background:var(--accent);color:#fff;font-family:inherit}
+  .btn:hover{filter:brightness(1.07)} .btn.ghost{background:var(--accent-soft);color:var(--accent)}
+  .btn.sm{padding:5px 10px;font-size:11.5px;border-radius:7px}
+  .btn.tiny{padding:3px 9px;font-size:11px;border-radius:6px;background:var(--surf2);color:var(--muted);font-weight:600;border:1px solid var(--line)}
+  .btn.tiny:hover{background:#ecebe4}
+  /* phases */
+  .phase{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:11px}
+  .ph-head{display:flex;align-items:center;gap:10px;padding:12px 15px;cursor:pointer;user-select:none}
+  .ph-head .timing{font-size:10.5px;color:var(--faint);min-width:96px}
+  .ph-head .ttl{font-size:14px;font-weight:600;flex:1}
+  .ph-head .cnt{font-size:10.5px;color:var(--faint)}
+  .ph-head .arr{font-size:11px;color:var(--faint);transition:transform .2s}
+  .ph-body{border-top:1px solid var(--line)}
+  .trow{display:grid;grid-template-columns:1fr 140px 150px;gap:10px;padding:9px 15px;align-items:center;
+    border-bottom:1px solid #f1f0ea;font-size:13px}
+  .trow:last-child{border-bottom:none}
+  .tname{display:flex;flex-direction:column;gap:2px}
+  .tname .nt{line-height:1.35}
+  .tname .acts{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+  .pill{font-size:9px;font-weight:600;padding:2px 7px;border-radius:11px;white-space:nowrap}
+  .owner{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  select.st{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;width:100%}
+  select.st.todo{color:var(--muted)} select.st.prog{color:var(--blue);background:var(--blue-soft);border-color:#c7dafc}
+  select.st.review{color:var(--amber);background:var(--amber-soft);border-color:#f0d8a8}
+  select.st.done{color:var(--green);background:var(--green-soft);border-color:#bfe6c9}
+  .addrow{padding:9px 15px;background:var(--surf2);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .addrow input{border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:12.5px;font-family:inherit;min-width:200px;flex:1}
+  .addrow select{border:1px solid var(--line);border-radius:7px;padding:7px 8px;font-size:12.5px;font-family:inherit}
+  .addbar{padding:8px 15px;border-top:1px solid #f1f0ea}
+  #addPhaseWrap{margin-top:6px;display:flex;gap:8px;align-items:center}
+  #addPhaseWrap input{border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit;min-width:220px}
+  /* seating */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px}
+  .panel h2{font-size:13.5px;margin:0;padding:12px 15px;border-bottom:1px solid var(--line);font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .panel h2 .meta{font-size:11px;color:var(--faint);font-weight:400}
+  .pad{padding:14px}
+  .alert{display:none;background:var(--red-soft);border:1px solid #f3c4c4;border-radius:9px;padding:11px 13px;margin:0 14px 6px;font-size:12.5px}
+  .alert b{color:var(--red)}
+  .selnote{font-size:11.5px;color:var(--accent);font-weight:600;min-height:16px;margin-bottom:9px}
+  .tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px}
+  .tbl{border:1px solid var(--line);border-radius:11px;padding:11px;background:#fbfbfd}
+  .tbl.host{border-color:var(--slack);background:#f7eef7}
+  .tbl .th{display:flex;justify-content:space-between;margin-bottom:8px}
+  .tbl .th .name{font-weight:600;font-size:12.5px} .tbl.host .th .name::after{content:" ★";color:var(--slack)}
+  .tbl .th .cap{font-size:10.5px;color:var(--faint)}
+  .seat{display:flex;align-items:center;gap:8px;padding:6px 7px;border-radius:7px;margin-bottom:4px;cursor:pointer;border:1px solid transparent}
+  .seat:hover{background:#fff;border-color:var(--line)}
+  .seat.empty{justify-content:center;color:var(--faint);font-style:italic;border:1px dashed var(--line);font-size:11.5px}
+  .seat.empty:hover{border-color:var(--accent);color:var(--accent)}
+  .seat.sel{background:#fff;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .gav{width:23px;height:23px;font-size:9.5px}
+  .gav.t1{background:var(--amber)} .gav.t2{background:var(--blue)} .gav.t0{background:var(--faint)}
+  .ginfo{flex:1;min-width:0} .ginfo .gn{font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ginfo .gc{font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tp{font-size:8.5px;font-weight:700;padding:1px 5px;border-radius:5px}
+  .tp.t1{background:var(--amber-soft);color:var(--amber)} .tp.t2{background:var(--blue-soft);color:var(--blue)}
+  .noshow{opacity:0;font-size:10.5px;color:var(--red);font-weight:700;cursor:pointer}
+  .seat:hover .noshow{opacity:1}
+  /* slack rail */
+  .slack{position:sticky;top:14px}
+  .slack h2{background:var(--slack);color:#fff;border-bottom:none}
+  .slack h2 .meta{color:#d9b8da}
+  .feed{padding:11px 13px;max-height:560px;overflow:auto}
+  .msg{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid #f0eef1}
+  .msg:last-child{border-bottom:none}
+  .msg .pic{width:28px;height:28px;border-radius:7px;font-size:10px}
+  .msg .who{font-weight:700;font-size:12px} .msg .who span{font-weight:400;color:var(--faint);font-size:10.5px;margin-left:5px}
+  .msg .txt{font-size:12.5px;margin-top:1px} .msg .txt b{color:var(--slack)}
+  .reply{margin-top:5px;background:var(--green-soft);color:var(--green);border:1px solid #bfe6c9;border-radius:6px;padding:4px 9px;font-size:11.5px;font-weight:700;cursor:pointer}
+  .reply.done{opacity:.6;pointer-events:none}
+  .empty-feed{color:var(--faint);font-size:12px;font-style:italic;padding:6px 2px}
+  .hide{display:none}
+  .foot{text-align:center;color:var(--faint);font-size:11px;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <h1>858 Project Tool — CFO Luncheon <span class="sans" style="font-size:10px;font-weight:700;background:var(--accent-soft);color:var(--accent);padding:2px 7px;border-radius:5px;vertical-align:middle">DEMO</span></h1>
+      <div class="sub sans">Multifunction project plan + seating · real Create tasks · sample data</div>
+    </div>
+    <div class="chips sans">
+      <div class="chip"><span class="dot live"></span> Live · single source of truth</div>
+      <div class="chip"><span class="av" style="width:18px;height:18px;font-size:9px;background:#185FA5">C</span> Christina is editing</div>
+    </div>
+  </div>
+
+  <div class="prompt sans">
+    <div class="lbl">Input layer — describe the event, Claude builds the plan from your template library</div>
+    <div class="prow">
+      <input id="promptIn" value="CFO Luncheon · 20 execs · 5 tables (1 sponsor head table) · assigned seating · Acme Capital sponsor">
+      <button class="btn" onclick="regen()">Generate plan</button>
+    </div>
+  </div>
+
+  <div class="tabs sans">
+    <button class="tab on" id="tab-plan" onclick="setTab('plan')">📋 Project plan</button>
+    <button class="tab" id="tab-seat" onclick="setTab('seat')">🪑 Seating</button>
+  </div>
+
+  <div class="cols">
+    <!-- LEFT: changes by tab -->
+    <div>
+      <!-- PLAN -->
+      <div id="view-plan">
+        <div id="phases"></div>
+        <div class="addbar sans" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 15px">
+          <button class="btn ghost sm" onclick="showAddPhase()">+ Add workstream</button>
+          <span style="font-size:11.5px;color:var(--faint);margin-left:6px">Christina can spin up a new workstream and add tasks on the fly.</span>
+          <div id="addPhaseWrap" class="hide">
+            <input id="newPhaseName" placeholder="Workstream name (e.g. Sponsor coordination)">
+            <button class="btn sm" onclick="addPhase()">Add</button>
+            <button class="btn tiny" onclick="hideAddPhase()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEATING -->
+      <div id="view-seat" class="hide">
+        <div class="panel">
+          <h2>Seating board <span class="meta sans" id="seatMeta"></span></h2>
+          <div class="alert sans" id="alert"></div>
+          <div class="pad">
+            <div class="selnote sans" id="selNote">Click a guest, then an open seat to move them. Hover a guest to mark a no-show.</div>
+            <div class="tables" id="tables"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Seating tasks <span class="meta sans">from the project plan</span></h2>
+          <div id="seatTasks"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: slack rail (both tabs) -->
+    <div>
+      <div class="panel slack">
+        <h2>Slack — how everyone else interacts <span class="meta sans">#cfo-luncheon</span></h2>
+        <div class="feed" id="feed"></div>
+      </div>
+      <div class="sans" style="font-size:11px;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;line-height:1.6">
+        <b>Who touches what</b><br>
+        <span style="color:var(--faint)">Power users</span> Fern, Christina — in the app<br>
+        <span style="color:var(--faint)">Light-touch</span> Juan — Slack pings only<br>
+        <span style="color:var(--faint)">Reviewer</span> Nic — reads status<br>
+        <span style="color:var(--faint)">Mobile</span> JG — completes from Slack, no login
+      </div>
+    </div>
+  </div>
+
+  <div class="foot sans">Demo only — no live database. In the real build this state lives in Supabase and syncs to everyone in real time. CSVs to import these tasks are in the same folder.</div>
+</div>
+
+<script>
+/* ---------- owners ---------- */
+const OWN = {
+  "Christina":"#185FA5","Fern":"#1D9E75","Nic":"#993C1D","JG":"#534AB7","Chris":"#888780",
+  "Marty":"#854F0B","JG+Marty":"#854F0B","Chris+JG":"#3B6D11","Fern+Christina":"#0F6E56","Team":"#5f5e5a"
+};
+const OWNERS = Object.keys(OWN);
+function ownColor(o){return OWN[o]||"#888"}
+function ownInit(o){return o.includes('+')?o.split('+').map(x=>x[0]).join(''):o.slice(0,2)}
+
+/* ---------- activations ---------- */
+const ACT = {
+  all:{l:"All",bg:"#f1efe8",c:"#5f5e5a"}, luncheon:{l:"Luncheon",bg:"#EEEDFE",c:"#3C3489"},
+  bird:{l:"Bird circles",bg:"#E6F1FB",c:"#185FA5"}, house:{l:"858 House",bg:"#E1F5EE",c:"#085041"},
+  grip:{l:"GRIP",bg:"#FFF0E6",c:"#8B3A00"}
+};
+
+/* ---------- real luncheon plan data ---------- */
+const RAW = [{"phase":"Project kickoff","timing":"~2 months out","tasks":[{"n":"Create initial project plan","o":"Fern","a":["all"],"note":"Fern leads creation. Christina takes over execution ~1 month out."},{"n":"Register on-site team for event","o":"Christina","a":["all"],"note":"Register all team members via Notion. Send confirmations + notify Fern."},{"n":"Hotel bookings for on-site team","o":"Team","a":["all"],"note":"Fern, Christina, or individuals book per Informa partnership terms."},{"n":"Client kick-off email","o":"Nic","a":["all"],"note":"Overview of what to expect, key links, initial client to-dos."},{"n":"Create internal tracker hub","o":"Christina","a":["all"],"note":""},{"n":"Event internal kick-off call","o":"Fern+Christina","a":["all"],"note":"Internal team kick-off to align on project plan, ownership, and timeline."},{"n":"Create overall event deck","o":"Christina","a":["all"],"note":"Overall event deck covering key details, agenda, and team roles."}]},{"phase":"Pre-event — client workstreams","timing":"4–6 weeks out","tasks":[{"n":"Send top 20 target request + attendee list","o":"Nic","a":["all"],"note":"Google Sheet with full event attendee list. Clients check off 20 top targets to invite."},{"n":"Create client external spreadsheets with attendee lists","o":"Christina","a":["all"],"note":"External-facing Google Sheets with attendee lists shared directly with each client."},{"n":"Send invites to nominated top targets","o":"Chris","a":["all"],"note":"Chris sends invites once each client returns their top 20 list."},{"n":"Collect client to-dos","o":"Christina","a":["all"],"note":"Logo, company bio, attendee registrations, calls scheduled."},{"n":"Client prep call","o":"Nic","a":["all"],"note":"~2 weeks out. Nic walks through full prep deck — logistics, expectations, event overview."},{"n":"Client deal strategy call","o":"JG","a":["all"],"note":"JG strategizes with client on talking points, target approach, and event goals."}]},{"phase":"Pre-event — dossiers","timing":"3–4 weeks out","tasks":[{"n":"Build master attendee list","o":"Christina","a":["all"],"note":"LinkedIn headshots, brand, job title, buyer intent. Updated multiple times/week."},{"n":"Map buyer intents to clients","o":"Christina","a":["all"],"note":"Match each operator's top 3 tech priorities to relevant client solutions."},{"n":"Create internal dossier","o":"Christina","a":["all"],"note":"Internal-facing dossier for the 858 team — separate from client dossiers."},{"n":"Build per-client dossier in Notion","o":"Christina","a":["all"],"note":"Agenda, attendee table, buyer intents, map, team/client headshots. One per client."},{"n":"Run prioritization exercise with clients","o":"Christina","a":["all"],"note":"Clients nominate: 5 tier 1 targets, 5 tier 2, 10 current customers, 20 detractors."},{"n":"Publish dossier + create Rebrandly link","o":"Christina","a":["all"],"note":"Make Notion page public. Rename link in Rebrandly. Share with client."}]},{"phase":"Pre-event — seating & room assignments","timing":"1–2 weeks out","tasks":[{"n":"Table / room assignments (JG)","o":"JG","a":["luncheon","bird"],"note":"JG uses top targets, current customers, detractors + capacity. May review on deal strategy call."},{"n":"Add assignments to dossiers","o":"Christina","a":["luncheon","bird"],"note":"Once JG finalizes, Christina adds table/room assignments to each client's dossier."},{"n":"Build ESM trackers","o":"Christina","a":["all"],"note":"Shows each client's tier 1/2 targets + table/room overlap and GRIP meeting schedule. Sent to Nic for onsite ESM use."}]},{"phase":"Pre-event — program guide & comms","timing":"1–2 weeks out","tasks":[{"n":"Draft program guide content","o":"Fern","a":["all"],"note":"Fern runs first draft through Claude. Sends to JG + Marty for review and visual direction."},{"n":"Build program guide in Figma","o":"Christina","a":["all"],"note":"Christina builds from template. Check-ins with JG + Marty. Export as PDF."},{"n":"Program guide / KBYG send","o":"Chris+JG","a":["all"],"note":"JG links PDF. Sent 2–3 days before event to all operators + clients."},{"n":"Stage table / room linking emails","o":"Chris","a":["luncheon","bird"],"note":"Chris stages with placeholder photos + LinkedIn links so JG can preview format."}]},{"phase":"Pre-event — photography brief","timing":"~1 week out","tasks":[{"n":"Sign photographer contract","o":"Fern+Christina","a":["all"],"note":"Vet and sign per city. Contract, hourly quote. Pre-event call if first time."},{"n":"Send photography dossier + run of show","o":"Christina","a":["all"],"note":"Due dates, shot list, run of show, full attendee headshots, contact info, maps."},{"n":"Brief Robin (photo organizer)","o":"Christina","a":["all"],"note":"Same dossier as photographer. Note when full gallery will be available — that's his start date."}]},{"phase":"Pre-event — vendors & logistics","timing":"Varies","tasks":[{"n":"Venue contract","o":"Fern","a":["luncheon","bird","house"],"note":"Fern handles all venue contracts and coordination."},{"n":"Secure floorplan + AV details","o":"Fern","a":["luncheon"],"note":"Get floor plan, room setup, and AV sorted with the venue for the luncheon space."},{"n":"Food & beverage + espresso cart","o":"Fern","a":["all"],"note":"Menu, vendors, contracts. Always include espresso cart. Source beans from a client if possible."},{"n":"Furniture order","o":"Fern","a":["luncheon","bird","house"],"note":"Only if bringing furniture from outside the venue."},{"n":"Hire staff / extra staffing","o":"Fern","a":["all"],"note":"Check-in help, room flips. Especially needed for large-scale events."},{"n":"Swag for attendees","o":"Fern","a":["all"],"note":"Order and coordinate attendee swag — source, brand, and deliver to venue."},{"n":"Write opening remarks","o":"JG","a":["luncheon"],"note":"JG's remarks drafted ahead of the luncheon. Multiple check-in rounds before final."},{"n":"Finalize list of client attendees","o":"Christina","a":["all"],"note":"Separate from building the dossier — confirm final client-side attendee list."},{"n":"Designs & signage","o":"Fern+Christina","a":["all"],"note":"Christina designs (badges, note cards, collateral). Fern approves and orders."},{"n":"Marketing materials","o":"Christina","a":["all"],"note":"Client logos, bios, 858 logo/bio — collect and send to event as needed."}]},{"phase":"Onsite","timing":"Day of event","tasks":[{"n":"Final seat assignments (post check-in)","o":"JG","a":["luncheon","bird"],"note":"Input final check-in data (no-shows, walk-ins) into Claude project. Reassign if needed."},{"n":"ESM introductions tracking","o":"Nic","a":["all"],"note":"Nic + ESMs use trackers to ensure each client meets their tier 1/2 targets."},{"n":"Request same-day photo drop","o":"Christina","a":["all"],"note":"20–40 edited photos by end of day or early next morning. Must include table/room linking shots."}]},{"phase":"Post-event — table & room linking emails","timing":"Within 48 hours","tasks":[{"n":"Finalize attendee list by actual table / room","o":"Chris","a":["luncheon","bird"],"note":"Chris organizes final list around confirmed seating (no-shows removed)."},{"n":"Organize same-day photos for Chris","o":"Christina","a":["luncheon","bird"],"note":"Christina labels and drops photos into Google Drive, linked by table/room."},{"n":"Final review + send linking emails","o":"Chris+JG","a":["luncheon","bird"],"note":"One email per table or room. Chris populates, JG final review, send within 48hrs."}]},{"phase":"Post-event — recap","timing":"~1 week out","tasks":[{"n":"Draft post-event recap using Claude","o":"Christina","a":["all"],"note":"Uses program guide, emails, event notes. Covers activations, attendance, speakers, spotlights."},{"n":"Nic adds reporting + feedback layer","o":"Nic","a":["all"],"note":"Buyer intent reporting, operator/client feedback, ESM debrief notes."},{"n":"JG + Marty final content review","o":"JG+Marty","a":["all"],"note":"Final edit and approval before Webflow build."},{"n":"Build visual recap in Webflow","o":"Christina","a":["all"],"note":"Once full gallery is available. Christina builds, JG + Marty review, then make live."},{"n":"Send live recap link to Chris","o":"Christina","a":["all"],"note":"Chris includes the recap link in all one-on-one follow-up emails."}]},{"phase":"Post-event — photography & Robin","timing":"3–10 days out","tasks":[{"n":"Receive full photo gallery","o":"Christina","a":["all"],"note":"Per contract (3–7 business days). Speakers, food/decor, venue, candids, team, linking photos."},{"n":"Send gallery + updated attendee list to Robin","o":"Christina","a":["all"],"note":"Include any walk-in headshots researched. Updated dossier included for reference."},{"n":"Confirm Robin delivery + send to Chris","o":"Christina","a":["all"],"note":"Robin delivers organized folders (~2–4 days). Christina confirms and forwards to Chris."},{"n":"Approve Robin's invoice","o":"Christina","a":["all"],"note":"Christina + Chris approve. Notify Fern to process payment."}]},{"phase":"Post-event — one-on-one follow-up","timing":"~2 weeks out","tasks":[{"n":"Open 1:1 follow-up copy doc","o":"Christina","a":["all"],"note":"Christina creates structure + optional Claude template. JG + Chris own the copy."},{"n":"Write personalized 1:1 copy","o":"Chris+JG","a":["all"],"note":"JG + Chris write personalized follow-ups per operator. Includes event recap and personal note."},{"n":"Deliver Robin's organized photos to Chris","o":"Christina","a":["all"],"note":"Once Robin is done. Christina sends organized folder to Chris for photo attachment."},{"n":"Final review + send 1:1 emails","o":"Chris+JG","a":["all"],"note":"Chris confirms photos + copy. Sends individually with photo + post-event recap link."}]},{"phase":"Post-event — debrief","timing":"1–2 weeks out","tasks":[{"n":"Client debrief calls","o":"Nic","a":["all"],"note":"Nic hosts per client — what worked, what to improve, overall satisfaction."},{"n":"Log connections in Attio","o":"Christina","a":["all"],"note":"Log all new connections and introductions made at the event into Attio (CRM)."},{"n":"Project wrap-up + template update","o":"Fern+Christina","a":["all"],"note":"Close out project plan. Document lessons learned. Update templates for next event."}]}];
+
+/* build state with ids + a few realistic starting statuses */
+let pid=0;
+let PH = RAW.map((p,pi)=>({
+  phase:p.phase, timing:p.timing, custom:false, open: pi<5,
+  tasks:p.tasks.map(t=>({id:++pid, n:t.n, o:t.o, a:t.a, note:t.note,
+    st: pi===0?'done' : pi===1?'prog' : pi===2? (Math.random()<.5?'prog':'todo') : 'todo'}))
+}));
+// nudge a couple into review for the slack demo
+PH[1].tasks[4] && (PH[1].tasks[4].st='review');
+PH[3].tasks[0] && (PH[3].tasks[0].st='prog');
+
+const stLabel={todo:"To do",prog:"In progress",review:"Needs review",done:"Done ✓"};
+
+/* ---------- seating sample ---------- */
+let tables=[{id:1,name:"Head Table",cap:4,host:true},{id:2,name:"Table 2",cap:4},{id:3,name:"Table 3",cap:4},{id:4,name:"Table 4",cap:4},{id:5,name:"Table 5",cap:4}];
+let guests=[
+  {id:1,n:"Dana Whitfield",co:"Northwind Capital · CFO",tier:1,t:1},{id:2,n:"Marcus Ortiz",co:"Acme Capital · Partner",tier:1,t:1},
+  {id:3,n:"Priya Nair",co:"Vertex Foods · CFO",tier:1,t:1},{id:4,n:"Sam Calloway",co:"858 · Host",tier:0,t:1},
+  {id:5,n:"Elena Brooks",co:"Brightline · VP Fin",tier:2,t:2},{id:6,n:"Tom Reyes",co:"Cedar & Co · CFO",tier:1,t:2},
+  {id:7,n:"Aisha Khan",co:"Mendel Group · Controller",tier:2,t:2},{id:8,n:"Greg Patton",co:"Halcyon · CFO",tier:1,t:2},
+  {id:9,n:"Lori Sanders",co:"Pinecrest · VP",tier:2,t:3},{id:10,n:"David Cho",co:"Onyx Retail · CFO",tier:1,t:3},
+  {id:11,n:"Rachel Imani",co:"Lumen Health · CFO",tier:1,t:3},{id:12,n:"Bill Frances",co:"Aster Mfg · Treasurer",tier:2,t:3},
+  {id:13,n:"Nora Esposito",co:"Quill Media · CFO",tier:1,t:4},{id:14,n:"Hank Liu",co:"Forge Labs · VP Fin",tier:2,t:4},
+  {id:15,n:"Tara Okafor",co:"Maple Bank · CFO",tier:1,t:4},{id:16,n:"Joel Birkin",co:"Strata · Controller",tier:2,t:4},
+  {id:17,n:"Carmen Diaz",co:"Vista Group · CFO",tier:1,t:5},{id:18,n:"Owen Pratt",co:"Birch Co · VP",tier:2,t:5},
+  {id:19,n:"Mei Tanaka",co:"Solace · CFO",tier:1,t:5}
+];
+let waitlist=[{id:101,n:"Frank Dunlap",co:"Ridge Partners · CFO",tier:1},{id:102,n:"Sofia Marsh",co:"Keystone · VP Fin",tier:2}];
+let selected=null;
+
+/* ---------- slack ---------- */
+let feed=[], mid=0;
+function pushMsg(who,color,text,action){
+  const t=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  feed.push({id:++mid,who,color,text,action:!!action,done:false,time:t}); renderFeed();
+}
+function renderFeed(){
+  const f=document.getElementById('feed');
+  if(!feed.length){f.innerHTML='<div class="empty-feed">Status changes & seat swaps post here — the right people get pinged.</div>';return;}
+  f.innerHTML=feed.map(m=>`<div class="msg"><div class="av pic" style="background:${m.color}">${m.who.replace('Tool → ','').slice(0,2)}</div>
+    <div style="flex:1;min-width:0"><div class="who">${m.who}<span>${m.time}</span></div>
+    <div class="txt">${m.text}</div>${m.action?`<button class="reply ${m.done?'done':''}" onclick="slackReply(${m.id})">${m.done?'✓ done from Slack':'✅ Reply “done”'}</button>`:''}</div></div>`).join('');
+  f.scrollTop=f.scrollHeight;
+}
+function slackReply(id){
+  const m=feed.find(x=>x.id===id); if(!m||m.done)return; m.done=true;
+  let done=null;
+  for(const p of PH){const t=p.tasks.find(t=>t.st==='review'); if(t){t.st='done';done=t;break;}}
+  pushMsg("JG","#534AB7","done ✅",false);
+  pushMsg("Tool","#4f46e5",`Synced from Slack → <b>${done?done.n:'task'}</b> marked complete. No login needed.`,false);
+  render();
+}
+
+/* ---------- render plan ---------- */
+function actPills(a){return a.map(k=>{const s=ACT[k];return s?`<span class="pill" style="background:${s.bg};color:${s.c}">${s.l}</span>`:''}).join('')}
+function ownerChip(o){return `<span class="owner"><span class="av" style="width:20px;height:20px;font-size:9px;background:${ownColor(o)}">${ownInit(o)}</span>${o}</span>`}
+function stSel(t){return `<select class="st sans ${t.st}" onchange="setStatus(${t.id},this.value)">`+
+  Object.keys(stLabel).map(k=>`<option value="${k}" ${t.st===k?'selected':''}>${stLabel[k]}</option>`).join('')+`</select>`}
+
+function renderPlan(){
+  document.getElementById('phases').innerHTML = PH.map((p,pi)=>{
+    const rows = p.tasks.map(t=>`<div class="trow">
+      <div class="tname"><span class="nt">${t.n}</span><div class="acts">${actPills(t.a)}</div></div>
+      <div>${ownerChip(t.o)}</div>
+      <div>${stSel(t)}</div></div>`).join('') || `<div class="trow" style="color:var(--faint)"><span>No tasks yet — add one below.</span><span></span><span></span></div>`;
+    const addForm = `<div class="addrow sans" id="add-${pi}" class="hide" style="display:none">
+      <input id="addn-${pi}" placeholder="New task…" onkeydown="if(event.key==='Enter')addTask(${pi})">
+      <select id="addo-${pi}">${OWNERS.map(o=>`<option>${o}</option>`).join('')}</select>
+      <button class="btn sm" onclick="addTask(${pi})">Add task</button>
+      <button class="btn tiny" onclick="toggleAdd(${pi},false)">Cancel</button></div>`;
+    return `<div class="phase">
+      <div class="ph-head" onclick="togglePhase(${pi})">
+        <span class="timing sans">${p.timing||''}</span>
+        <span class="ttl">${p.phase}</span>
+        <span class="cnt sans">${p.tasks.length} task${p.tasks.length!==1?'s':''}</span>
+        <span class="arr" style="transform:rotate(${p.open?'0':'-90'}deg)">▾</span>
+      </div>
+      ${p.open?`<div class="ph-body">${rows}${addForm}<div class="addbar"><button class="btn tiny" onclick="toggleAdd(${pi},true)">+ Add task</button></div></div>`:''}
+    </div>`;
+  }).join('');
+}
+function togglePhase(pi){PH[pi].open=!PH[pi].open;renderPlan()}
+function toggleAdd(pi,show){const el=document.getElementById('add-'+pi);if(el){el.style.display=show?'flex':'none';if(show){const i=document.getElementById('addn-'+pi);i&&i.focus();}}}
+function addTask(pi){
+  const ni=document.getElementById('addn-'+pi), oi=document.getElementById('addo-'+pi);
+  const name=ni.value.trim(); if(!name)return;
+  PH[pi].tasks.push({id:++pid,n:name,o:oi.value,a:['luncheon'],note:'',st:'todo'});
+  pushMsg("Christina","#185FA5",`Added task <b>${name}</b> to ${PH[pi].phase} (owner: ${oi.value}).`,false);
+  ni.value=''; render();
+}
+function showAddPhase(){document.getElementById('addPhaseWrap').classList.remove('hide');document.getElementById('addPhaseWrap').style.display='flex';document.getElementById('newPhaseName').focus()}
+function hideAddPhase(){document.getElementById('addPhaseWrap').classList.add('hide')}
+function addPhase(){
+  const v=document.getElementById('newPhaseName').value.trim(); if(!v)return;
+  PH.push({phase:v,timing:'custom',custom:true,open:true,tasks:[]});
+  pushMsg("Christina","#185FA5",`Created new workstream <b>${v}</b>.`,false);
+  document.getElementById('newPhaseName').value=''; hideAddPhase(); render();
+}
+function setStatus(id,val){
+  for(const p of PH){const t=p.tasks.find(t=>t.id===id); if(t){const prev=t.st;t.st=val;
+    if(val==='done')pushMsg(t.o.split('+')[0],ownColor(t.o),`Marked <b>${t.n}</b> complete.`,false);
+    else if(val==='review')pushMsg("Tool → Juan","#4a154b",`@Juan <b>${t.n}</b> needs your sign-off.`,true);
+    else if(prev==='done')pushMsg(t.o.split('+')[0],ownColor(t.o),`Reopened <b>${t.n}</b>.`,false);
+    break;}}
+  render();
+}
+
+/* ---------- render seating ---------- */
+function renderSeatTasks(){
+  const seatTasks=[];
+  PH.forEach(p=>p.tasks.forEach(t=>{ if(/seat|table|room|check-in/i.test(t.n)) seatTasks.push(t); }));
+  document.getElementById('seatTasks').innerHTML = seatTasks.map(t=>`<div class="trow">
+    <div class="tname"><span class="nt">${t.n}</span><div class="acts">${actPills(t.a)}</div></div>
+    <div>${ownerChip(t.o)}</div><div>${stSel(t)}</div></div>`).join('') || '<div class="pad sans" style="color:var(--faint)">No seating tasks.</div>';
+}
+function gAv(g){const cls=g.tier===1?'t1':g.tier===2?'t2':'t0';return `<span class="av gav ${cls}">${g.n.split(' ').map(x=>x[0]).slice(0,2).join('')}</span>`}
+function renderTables(){
+  document.getElementById('seatMeta').textContent=`${guests.length}/${tables.reduce((a,t)=>a+t.cap,0)} seated · ${tables.length} tables`;
+  document.getElementById('tables').innerHTML=tables.map(t=>{
+    const occ=guests.filter(g=>g.t===t.id);
+    let seats=occ.map(g=>`<div class="seat ${selected===g.id?'sel':''}" onclick="seatClick(${g.id},event)">${gAv(g)}
+      <div class="ginfo"><div class="gn">${g.n} ${g.tier?`<span class="tp t${g.tier}">T${g.tier}</span>`:''}</div><div class="gc">${g.co}</div></div>
+      <span class="noshow sans" onclick="noShow(${g.id},event)">no-show ✕</span></div>`).join('');
+    for(let i=0;i<t.cap-occ.length;i++) seats+=`<div class="seat empty" onclick="emptyClick(${t.id})">+ open seat</div>`;
+    return `<div class="tbl ${t.host?'host':''}"><div class="th"><span class="name">${t.name}</span><span class="cap sans">${occ.length}/${t.cap}</span></div>${seats}</div>`;
+  }).join('');
+}
+function setNote(t){document.getElementById('selNote').textContent=t||"Click a guest, then an open seat to move them. Hover a guest to mark a no-show."}
+function seatClick(id,e){e.stopPropagation();
+  if(selected===id){selected=null;setNote("")}
+  else if(selected){const a=guests.find(g=>g.id===selected),b=guests.find(g=>g.id===id);const tmp=a.t;a.t=b.t;b.t=tmp;
+    setNote(`Swapped ${a.n} ↔ ${b.n}.`);pushMsg("Christina","#185FA5",`Swapped <b>${a.n}</b> and <b>${b.n}</b>.`,false);selected=null;}
+  else{selected=id;const g=guests.find(g=>g.id===id);setNote(`Selected ${g.n} — click an open seat or another guest.`)}
+  renderTables();
+}
+function emptyClick(tid){if(!selected){setNote("Select a guest first.");return}
+  const g=guests.find(g=>g.id===selected),tbl=tables.find(t=>t.id===tid);g.t=tid;
+  setNote(`Moved ${g.n} to ${tbl.name}.`);pushMsg("Fern","#1D9E75",`Moved <b>${g.n}</b> to <b>${tbl.name}</b>.`,false);selected=null;renderTables();
+}
+function noShow(id,e){e.stopPropagation();const i=guests.findIndex(g=>g.id===id);if(i<0)return;
+  const g=guests[i],tbl=tables.find(t=>t.id===g.t);guests.splice(i,1);
+  const sub=waitlist.find(w=>w.tier===g.tier)||waitlist[0];const al=document.getElementById('alert');al.style.display='block';
+  al.innerHTML=sub?`<b>No-show:</b> ${g.n} (${tbl.name}) — seat open. Suggested: <b>${sub.n}</b> · ${sub.co} <button class="btn sm" onclick="seatSub(${sub.id},${tbl.id})">Seat ${sub.n.split(' ')[0]}</button>`
+    :`<b>No-show:</b> ${g.n} (${tbl.name}) — seat open. Waitlist empty.`;
+  pushMsg("Fern","#1D9E75",`⚠️ No-show: <b>${g.n}</b> at ${tbl.name}. Handling live re-seat.`,false);
+  if(tbl.host)pushMsg("Tool → Juan","#4a154b",`@Juan seat opened at the <b>sponsor head table</b> — confirm replacement.`,true);
+  renderTables();
+}
+function seatSub(wid,tid){const wi=waitlist.findIndex(w=>w.id===wid);if(wi<0)return;const w=waitlist.splice(wi,1)[0];
+  guests.push({id:w.id,n:w.n,co:w.co,tier:w.tier,t:tid});const tbl=tables.find(t=>t.id===tid);
+  document.getElementById('alert').style.display='none';
+  pushMsg("Christina","#185FA5",`Seated <b>${w.n}</b> from waitlist at <b>${tbl.name}</b>. Place card reprinting.`,false);renderTables();
+}
+
+/* ---------- tabs / render ---------- */
+function setTab(t){
+  document.getElementById('tab-plan').classList.toggle('on',t==='plan');
+  document.getElementById('tab-seat').classList.toggle('on',t==='seat');
+  document.getElementById('view-plan').classList.toggle('hide',t!=='plan');
+  document.getElementById('view-seat').classList.toggle('hide',t!=='seat');
+}
+function render(){renderPlan();renderTables();renderSeatTasks();}
+function regen(){pushMsg("Claude","#4f46e5","Regenerated <b>CFO Luncheon</b> plan — 13 phases, 61 luncheon tasks from template library.",false);}
+document.addEventListener('click',e=>{if(!e.target.closest('.seat')&&!e.target.closest('.alert')&&selected){selected=null;setNote("");renderTables();}});
+
+render();
+pushMsg("Claude","#4f46e5","Generated <b>CFO Luncheon</b> plan from your template library — 13 workstreams, 61 tasks. Board is live.",false);
+</script>
+</body>
+</html>
