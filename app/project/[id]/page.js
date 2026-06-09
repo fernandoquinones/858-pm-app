@@ -18,6 +18,8 @@ function attIcon(a) {
   return '📎'
 }
 
+const ACTIVATIONS = ['All events', 'Luncheon', 'Bird circles', '858 House', 'GRIP']
+
 export default function ProjectBoard() {
   const { id } = useParams()
   const [user, setUser] = useCurrentUser()
@@ -86,8 +88,9 @@ export default function ProjectBoard() {
   async function addTask(wsId) {
     if (!master) return
     const a = adding[wsId] || {}; const title = (a.title || '').trim(); if (!title) return
-    await supabase.from('tasks').insert({ project_id: id, workstream_id: wsId, title, owner: a.owner || 'Christina', applies_to: 'Luncheon', status: 'todo', sort_order: tasks.length + 1 })
-    setAdding(s => ({ ...s, [wsId]: { title: '', owner: a.owner || 'Christina' } })); load()
+    const { error } = await supabase.from('tasks').insert({ project_id: id, workstream_id: wsId, title, owner: a.owner || 'Christina', applies_to: a.act || 'All events', status: 'todo', sort_order: tasks.length + 1 })
+    if (error) { setErr('Add task failed: ' + error.message); return }
+    setAdding(s => ({ ...s, [wsId]: { title: '', owner: a.owner || 'Christina', act: a.act || 'All events' } })); load()
   }
   async function addWorkstream() {
     if (!master) return
@@ -127,17 +130,35 @@ export default function ProjectBoard() {
     load()
   }
 
+  async function setActivation(t, applies_to) {
+    if (!canEditTask(user, t)) return
+    setTasks(ts => ts.map(x => x.id === t.id ? { ...x, applies_to } : x))
+    const { error } = await supabase.from('tasks').update({ applies_to }).eq('id', t.id)
+    if (error) setErr('Update failed: ' + error.message)
+  }
+  async function moveTask(t, workstream_id) {
+    if (!canEditTask(user, t)) return
+    setTasks(ts => ts.map(x => x.id === t.id ? { ...x, workstream_id } : x))
+    const { error } = await supabase.from('tasks').update({ workstream_id }).eq('id', t.id)
+    if (error) { setErr('Move failed: ' + error.message) } else { load() }
+  }
   function inLibrary(wsName, t) { return library.has(wsName + '||' + t.title) }
   async function saveTaskToLibrary(wsName, t) {
-    await supabase.from('library_tasks').upsert({ workstream: wsName, title: t.title, owner: t.owner, applies_to: t.applies_to, notes: t.notes }, { onConflict: 'workstream,title' })
+    const { error } = await supabase.from('library_tasks').upsert({ workstream: wsName, title: t.title, owner: t.owner, applies_to: t.applies_to, notes: t.notes }, { onConflict: 'workstream,title' })
+    if (error) { setErr('Save to library failed: ' + error.message); return }
     load()
   }
   async function removeFromLibrary(wsName, t) {
-    await supabase.from('library_tasks').delete().eq('workstream', wsName).eq('title', t.title); load()
+    const { error } = await supabase.from('library_tasks').delete().eq('workstream', wsName).eq('title', t.title)
+    if (error) { setErr('Remove failed: ' + error.message); return }
+    load()
   }
   async function saveWorkstreamToLibrary(w) {
     const rows = tasks.filter(t => t.workstream_id === w.id).map(t => ({ workstream: w.name, title: t.title, owner: t.owner, applies_to: t.applies_to, notes: t.notes }))
-    if (rows.length) await supabase.from('library_tasks').upsert(rows, { onConflict: 'workstream,title' })
+    if (rows.length) {
+      const { error } = await supabase.from('library_tasks').upsert(rows, { onConflict: 'workstream,title' })
+      if (error) { setErr('Save workstream failed: ' + error.message); return }
+    }
     load()
   }
 
@@ -257,6 +278,19 @@ export default function ProjectBoard() {
                       </div>
                       {openThread[t.id] && (
                         <div className="thread sans">
+                          {editable && (
+                            <div className="librow">
+                              <span style={{ fontSize: 11, color: 'var(--faint)' }}>Applies to</span>
+                              <select value={ACTIVATIONS.includes(t.applies_to) ? t.applies_to : ''} onChange={e => setActivation(t, e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '4px 7px', fontFamily: 'inherit', fontSize: 12 }}>
+                                {!ACTIVATIONS.includes(t.applies_to) && <option value="">{t.applies_to || '\u2014'}</option>}
+                                {ACTIVATIONS.map(x => <option key={x} value={x}>{x}</option>)}
+                              </select>
+                              <span style={{ fontSize: 11, color: 'var(--faint)', marginLeft: 6 }}>Workstream</span>
+                              <select value={t.workstream_id || ''} onChange={e => moveTask(t, e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '4px 7px', fontFamily: 'inherit', fontSize: 12 }}>
+                                {workstreams.map(w2 => <option key={w2.id} value={w2.id}>{w2.name}</option>)}
+                              </select>
+                            </div>
+                          )}
                           {master && (
                             <div className="librow">
                               {inLibrary(w.name, t)
@@ -303,6 +337,9 @@ export default function ProjectBoard() {
                     <input placeholder="New task…" value={a.title || ''} onChange={e => setAdding(s => ({ ...s, [w.id]: { ...a, title: e.target.value } }))} onKeyDown={e => { if (e.key === 'Enter') addTask(w.id) }} />
                     <select value={a.owner || 'Christina'} onChange={e => setAdding(s => ({ ...s, [w.id]: { ...a, owner: e.target.value } }))}>
                       {OWNERS.map(o => <option key={o}>{o}</option>)}
+                    </select>
+                    <select value={a.act || 'All events'} onChange={e => setAdding(s => ({ ...s, [w.id]: { ...a, act: e.target.value } }))}>
+                      {ACTIVATIONS.map(x => <option key={x} value={x}>{x}</option>)}
                     </select>
                     <button className="btn sm" onClick={() => addTask(w.id)}>+ Add task</button>
                     <button className="btn tiny" onClick={() => saveWorkstreamToLibrary(w)}>★ Save workstream to library</button>
