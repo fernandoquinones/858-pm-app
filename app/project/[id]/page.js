@@ -154,11 +154,16 @@ export default function ProjectBoard() {
     load()
   }
   async function saveWorkstreamToLibrary(w) {
-    const rows = tasks.filter(t => t.workstream_id === w.id).map(t => ({ workstream: w.name, title: t.title, owner: t.owner, applies_to: t.applies_to, notes: t.notes }))
+    // de-duplicate by title so the batch never updates the same (workstream,title) row twice
+    const seen = new Set()
+    const rows = tasks.filter(t => t.workstream_id === w.id)
+      .map(t => ({ workstream: w.name, title: t.title, owner: t.owner, applies_to: t.applies_to, notes: t.notes }))
+      .filter(r => { const k = (r.title || '').trim().toLowerCase(); if (!k || seen.has(k)) return false; seen.add(k); return true })
     if (rows.length) {
       const { error } = await supabase.from('library_tasks').upsert(rows, { onConflict: 'workstream,title' })
       if (error) { setErr('Save workstream failed: ' + error.message); return }
     }
+    setErr(null)
     load()
   }
 
