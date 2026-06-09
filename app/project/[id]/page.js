@@ -45,6 +45,7 @@ export default function ProjectBoard() {
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
   const [msg, setMsg] = useState(null)
+  const [na, setNa] = useState({ title: '', wsId: '', owner: 'Christina', act: 'All events', toLib: false })
 
   const load = useCallback(async () => {
     const [p, ws, ts, cm, at, lt] = await Promise.all([
@@ -98,6 +99,24 @@ export default function ProjectBoard() {
     const name = newWs.trim(); if (!name) return
     await supabase.from('workstreams').insert({ project_id: id, name, timing: 'custom', sort_order: workstreams.length })
     setNewWs(''); setShowNewWs(false); load()
+  }
+  async function addTaskGlobal() {
+    if (!master) return
+    const title = (na.title || '').trim(); if (!title) return
+    const wsId = na.wsId || (workstreams[0] && workstreams[0].id)
+    if (!wsId) { setErr('Create a workstream first.'); return }
+    const wsName = (workstreams.find(w => w.id === wsId) || {}).name
+    const { error } = await supabase.from('tasks').insert({ project_id: id, workstream_id: wsId, title, owner: na.owner, applies_to: na.act, status: 'todo', sort_order: tasks.length + 1 })
+    if (error) { setErr('Add task failed: ' + error.message); return }
+    if (na.toLib) {
+      const { error: e2 } = await supabase.from('library_tasks').upsert({ workstream: wsName, title, owner: na.owner, applies_to: na.act, notes: '' }, { onConflict: 'workstream,title' })
+      if (e2) { setErr('Task added, but library save failed: ' + e2.message); load(); return }
+    }
+    setErr(null)
+    setMsg('Added \u201c' + title + '\u201d to \u201c' + wsName + '\u201d' + (na.toLib ? ' \u2605 and saved to the library.' : '.'))
+    setTimeout(() => setMsg(null), 3500)
+    setNa(n => ({ ...n, title: '', toLib: false }))   // reset title + library toggle each add; keep workstream/owner/activation
+    load()
   }
   async function extendPlan() {
     if (!master || !extendPrompt.trim()) return
@@ -249,12 +268,36 @@ export default function ProjectBoard() {
               style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, minWidth: 260 }} />
             <button className="btn" onClick={extendPlan} disabled={extending}>{extending ? 'Adding…' : 'Add'}</button>
           </div>
-          <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Claude pulls the right tasks from your library and appends them — or use &ldquo;+ Add task&rdquo; for one-offs.</div>
+          <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Claude pulls the right tasks from your library and appends them — or add one manually below.</div>
+        </div>
+      )}
+
+      {/* ADD A TASK — choose workstream, owner, activation, and whether it joins the library, all at once */}
+      {master && (
+        <div className="card sans">
+          <div className="subh">+ Add a task</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input placeholder="Task title…" value={na.title} onChange={e => setNa(n => ({ ...n, title: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addTaskGlobal() }} style={{ flex: 1, minWidth: 220, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
+            <select value={na.wsId || (workstreams[0] && workstreams[0].id) || ''} onChange={e => setNa(n => ({ ...n, wsId: e.target.value }))} title="Workstream" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+              {workstreams.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+            <select value={na.owner} onChange={e => setNa(n => ({ ...n, owner: e.target.value }))} title="Owner" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+              {OWNERS.map(o => <option key={o}>{o}</option>)}
+            </select>
+            <select value={na.act} onChange={e => setNa(n => ({ ...n, act: e.target.value }))} title="Applies to" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+              {ACTIVATIONS.map(x => <option key={x} value={x}>{x}</option>)}
+            </select>
+            <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12.5, fontWeight: 600, color: na.toLib ? '#0F6E56' : 'var(--muted)', whiteSpace: 'nowrap' }}>
+              <input type="checkbox" checked={na.toLib} onChange={e => setNa(n => ({ ...n, toLib: e.target.checked }))} /> ★ Save to library
+            </label>
+            <button className="btn" onClick={addTaskGlobal}>Add task</button>
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Pick the workstream and (optionally) tick &ldquo;Save to library&rdquo; to make it a reusable default for next time. Leave it unticked for a one-off.</div>
         </div>
       )}
 
       {workstreams.map(w => {
-        const list = byWs(w.id); const a = adding[w.id] || {}
+        const list = byWs(w.id)
         return (
           <div className="phase" key={w.id}>
             <div className="ph-head" onClick={() => setOpen(o => ({ ...o, [w.id]: !o[w.id] }))}>
@@ -343,15 +386,7 @@ export default function ProjectBoard() {
                 })}
                 {master && (
                   <div className="addrow sans">
-                    <input placeholder="New task…" value={a.title || ''} onChange={e => setAdding(s => ({ ...s, [w.id]: { ...a, title: e.target.value } }))} onKeyDown={e => { if (e.key === 'Enter') addTask(w.id) }} />
-                    <select value={a.owner || 'Christina'} onChange={e => setAdding(s => ({ ...s, [w.id]: { ...a, owner: e.target.value } }))}>
-                      {OWNERS.map(o => <option key={o}>{o}</option>)}
-                    </select>
-                    <select value={a.act || 'All events'} onChange={e => setAdding(s => ({ ...s, [w.id]: { ...a, act: e.target.value } }))}>
-                      {ACTIVATIONS.map(x => <option key={x} value={x}>{x}</option>)}
-                    </select>
-                    <button className="btn sm" onClick={() => addTask(w.id)}>+ Add task</button>
-                    {(() => { const allIn = list.length > 0 && list.every(t => inLibrary(w.name, t)); return <button className="btn tiny" onClick={() => saveWorkstreamToLibrary(w)} style={allIn ? { background: '#E1F5EE', color: '#0F6E56', borderColor: '#bfe6c9' } : {}}>{allIn ? '★ Workstream in library' : '★ Save workstream to library'}</button> })()}
+                    {(() => { const allIn = list.length > 0 && list.every(t => inLibrary(w.name, t)); return <button className="btn tiny" onClick={() => saveWorkstreamToLibrary(w)} style={allIn ? { background: '#E1F5EE', color: '#0F6E56', borderColor: '#bfe6c9' } : {}}>{allIn ? '★ Workstream in library' : '★ Save whole workstream to library'}</button> })()}
                   </div>
                 )}
               </div>
