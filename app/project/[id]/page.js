@@ -306,7 +306,8 @@ export default function ProjectBoard() {
                         <div className="tname">
                           <span className="nt">{t.title}</span>
                           <div className="acts">{parseActs(t.applies_to).map(x => <span className="pill" key={x}>{x}</span>)}</div>
-                          <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))}>💬 {cs.length} · 📎 {ats.length}</button>
+                          <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))}>{openThread[t.id] ? '▾ Hide details' : '✎ Edit · 💬 ' + cs.length + ' · 📎 ' + ats.length}</button>
+                          {canEditTask(user, t) && <button className="cmtbtn" onClick={() => deleteTask(t)} style={{ color: 'var(--red)', marginLeft: 12 }}>🗑 Delete</button>}
                         </div>
                         <div className="owner"><span className="av" style={{ width: 20, height: 20, fontSize: 9, background: OWNER_COLOR[t.owner] || '#888' }}>{ownInit(t.owner)}</span>{t.owner}</div>
                         <div className={`due sans ${editable ? '' : 'ro'}`}><input type="date" value={t.due_date || ''} disabled={!editable} onChange={e => setDue(t, e.target.value)} /></div>
@@ -365,11 +366,6 @@ export default function ProjectBoard() {
                             <input placeholder={`Comment as ${user}…`} value={draft[t.id] || ''} onChange={e => setDraft(d => ({ ...d, [t.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addComment(t.id) }} />
                             <button className="btn sm" onClick={() => addComment(t.id)}>Comment</button>
                           </div>
-                          {canEditTask(user, t) && (
-                            <div style={{ marginTop: 12, textAlign: 'right' }}>
-                              <button className="btn tiny" onClick={() => deleteTask(t)} style={{ color: 'var(--red)', background: '#fdeaea', borderColor: '#f3c4c4' }}>🗑 Delete task</button>
-                            </div>
-                          )}
                         </div>
                       )}
                     </div>
