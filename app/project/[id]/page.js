@@ -125,7 +125,10 @@ export default function ProjectBoard() {
   async function addWorkstream() {
     if (!master) return
     const name = newWs.trim(); if (!name) return
-    await supabase.from('workstreams').insert({ project_id: id, name, timing: 'custom', sort_order: workstreams.length })
+    const { data: w, error } = await supabase.from('workstreams').insert({ project_id: id, name, timing: 'custom', sort_order: workstreams.length }).select().single()
+    if (error) { setErr('Add workstream failed: ' + error.message); return }
+    setErr(null); setMsg('Added workstream “' + name + '” (at the bottom).'); setTimeout(() => setMsg(null), 3500)
+    if (w) setOpen(o => ({ ...o, [w.id]: true }))
     setNewWs(''); setShowNewWs(false); load()
   }
   async function extendPlan() {
@@ -179,6 +182,11 @@ export default function ProjectBoard() {
     setErr(null); setMsg('Deleted “' + t.title + '” from the plan.'); setTimeout(() => setMsg(null), 3000)
     load()
   }
+  async function setEventActivations(acts) {
+    setProject(p => ({ ...p, activations: acts.join(' / ') }))
+    const { error } = await supabase.from('projects').update({ activations: acts.join(' / ') }).eq('id', id)
+    if (error) setErr('Update activations failed: ' + error.message)
+  }
   async function connectRoom() {
     if (!chSel) return
     const c = chs.find(x => x.id === chSel)
@@ -214,6 +222,18 @@ export default function ProjectBoard() {
 
       {err && <div className="banner sans">{err}</div>}
       {msg && <div className="banner sans" style={{ background: '#E1F5EE', borderColor: '#5DCAA5', color: '#0F6E56' }}>{msg}</div>}
+
+      {project && (
+        <div className="card sans" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span className="subh" style={{ margin: 0 }}>Activations at this event</span>
+          {master
+            ? <ActivationChips value={parseActs(project.activations)} options={actOpts} onChange={setEventActivations} includeAllEvents={false} />
+            : (parseActs(project.activations).length
+                ? parseActs(project.activations).map(a => <span className="pill" key={a}>{a}</span>)
+                : <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>none set</span>)}
+          <span style={{ fontSize: 11, color: 'var(--faint)', flexBasis: '100%' }}>Labels for this event. Adding one here lists it; to pull its tasks, add &amp; tag tasks (or use &ldquo;Add to plan with Claude&rdquo;).</span>
+        </div>
+      )}
 
       {project && project.slack_channel_id ? (
         <div className="card sans" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>

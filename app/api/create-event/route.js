@@ -17,8 +17,14 @@ export async function POST(req) {
       return tags.some(t => acts.includes(t))
     })
 
-    const { data: project, error: pErr } = await sb.from('projects')
-      .insert({ name: name.trim(), type: 'event', event_date: date || null }).select().single()
+    let project, pErr
+    ;({ data: project, error: pErr } = await sb.from('projects')
+      .insert({ name: name.trim(), type: 'event', event_date: date || null, activations: acts.join(' / ') }).select().single())
+    if (pErr && /activations/i.test(pErr.message || '')) {
+      // column not added yet — create without it
+      ;({ data: project, error: pErr } = await sb.from('projects')
+        .insert({ name: name.trim(), type: 'event', event_date: date || null }).select().single())
+    }
     if (pErr) return Response.json({ error: pErr.message }, { status: 500 })
 
     // workstreams in order of first appearance in the library
