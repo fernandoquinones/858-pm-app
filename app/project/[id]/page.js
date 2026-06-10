@@ -205,7 +205,7 @@ export default function ProjectBoard() {
 
   return (
     <div className="wrap">
-      <div className="crumb sans"><Link href="/">← All events</Link></div>
+      <div className="crumb sans" style={{ display: 'flex', alignItems: 'center', gap: 10 }}><img src="/logo.svg" alt="858" style={{ height: 18 }} /><Link href="/">← All events</Link></div>
       <div className="topbar">
         <div>
           <h1>{project ? project.name : 'Project'}</h1>

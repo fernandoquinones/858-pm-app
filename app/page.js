@@ -65,9 +65,12 @@ export default function Home() {
   return (
     <div className="wrap">
       <div className="topbar">
-        <div>
-          <h1>858 Project Tool</h1>
-          <div className="sub sans">Multifunction event project plans — single source of truth</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src="/logo.svg" alt="858" style={{ height: 30 }} />
+          <div>
+            <h1>Project Tool</h1>
+            <div className="sub sans">Multifunction event project plans — single source of truth</div>
+          </div>
         </div>
         <div className="chips sans">
           <div className="chip"><span className="dot"></span> Live · Supabase</div>
