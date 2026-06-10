@@ -75,7 +75,7 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 16000,
         system,
         tools: [PLAN_TOOL],
         tool_choice: { type: 'tool', name: 'create_plan' },
@@ -91,6 +91,9 @@ export async function POST(req) {
     const toolUse = (data.content || []).find(b => b.type === 'tool_use')
     if (!toolUse) return Response.json({ error: 'Claude did not return a plan.' }, { status: 502 })
     const plan = toolUse.input
+    if (!plan.workstreams || !plan.workstreams.length) {
+      return Response.json({ error: 'Claude returned an empty plan (the response may have been cut off). Try again, or use "Create a new event" to build it from your library.' }, { status: 502 })
+    }
 
     // Write the plan to Supabase: project -> workstreams -> tasks
     const { data: project, error: pErr } = await supabase
