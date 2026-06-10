@@ -42,6 +42,7 @@ export default function ProjectBoard() {
   const [showNewWs, setShowNewWs] = useState(false)
   const [extendPrompt, setExtendPrompt] = useState('')
   const [extending, setExtending] = useState(false)
+  const [slackOpen, setSlackOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
   const [msg, setMsg] = useState(null)
@@ -191,6 +192,7 @@ export default function ProjectBoard() {
     if (!chSel) return
     const c = chs.find(x => x.id === chSel)
     await fetch('/api/slack/link-channel', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: id, channelId: chSel, channelName: c ? c.name : null }) })
+    setSlackOpen(false); setChSel('')
     load()
   }
 
@@ -215,6 +217,30 @@ export default function ProjectBoard() {
                 : (parseActs(project.activations).length ? parseActs(project.activations).map(a => <span className="pill" key={a}>{a}</span>) : <span style={{ fontSize: 11, color: 'var(--faint)' }}>none</span>)}
             </div>
           )}
+          {project && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '0 0 6px' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Slack</span>
+              {project.slack_channel_id && !slackOpen && (
+                <>
+                  <a className="pill" href={`https://slack.com/app_redirect?channel=${project.slack_channel_id}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>💬 #{project.slack_channel_name || 'channel'}</a>
+                  {master && <button type="button" onClick={() => setSlackOpen(true)} style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit', border: '1px dashed var(--line)', background: '#fff', color: 'var(--accent)' }}>change</button>}
+                </>
+              )}
+              {master && (slackOpen || !project.slack_channel_id) && (
+                chs.length > 0 ? (
+                  <>
+                    <select value={chSel} onChange={e => setChSel(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '4px 8px', fontFamily: 'inherit', fontSize: 12 }}>
+                      <option value="">Choose a channel…</option>
+                      {chs.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
+                    </select>
+                    <button type="button" className="btn tiny" onClick={connectRoom} disabled={!chSel}>Connect</button>
+                    {project.slack_channel_id && <button type="button" onClick={() => setSlackOpen(false)} style={{ fontSize: 11, color: 'var(--faint)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>cancel</button>}
+                  </>
+                ) : <span style={{ fontSize: 11, color: 'var(--faint)' }}>No Slack channels found (set up the Slack app).</span>
+              )}
+              {!master && !project.slack_channel_id && <span style={{ fontSize: 11, color: 'var(--faint)' }}>no room linked</span>}
+            </div>
+          )}
           <div className="sub sans">{done}/{tasks.length} tasks complete · {workstreams.length} workstreams</div>
         </div>
         <div className="chips sans">
@@ -231,35 +257,6 @@ export default function ProjectBoard() {
       {err && <div className="banner sans">{err}</div>}
       {msg && <div className="banner sans" style={{ background: '#E1F5EE', borderColor: '#5DCAA5', color: '#0F6E56' }}>{msg}</div>}
 
-      {project && project.slack_channel_id ? (
-        <div className="card sans" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span className="subh" style={{ margin: 0 }}>Slack room</span>
-          <a className="chip" href={`https://slack.com/app_redirect?channel=${project.slack_channel_id}`} target="_blank" rel="noreferrer">💬 #{project.slack_channel_name || 'channel'}</a>
-          <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>task pings post here</span>
-          {master && chs.length > 0 && (
-            <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-              <select value={chSel} onChange={e => setChSel(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '5px 8px', fontFamily: 'inherit', fontSize: 12 }}>
-                <option value="">Change room…</option>
-                {chs.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
-              </select>
-              <button className="btn tiny" onClick={connectRoom}>Connect</button>
-            </span>
-          )}
-        </div>
-      ) : master && (
-        <div className="card sans" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span className="subh" style={{ margin: 0 }}>Connect this event to its Slack room</span>
-          {chs.length > 0 ? (
-            <>
-              <select value={chSel} onChange={e => setChSel(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '6px 9px', fontFamily: 'inherit', fontSize: 12.5, minWidth: 200 }}>
-                <option value="">Choose an existing channel…</option>
-                {chs.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
-              </select>
-              <button className="btn sm" onClick={connectRoom} disabled={!chSel}>Connect room</button>
-            </>
-          ) : <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>No Slack channels found (configure the Slack app, or add the bot to your rooms).</span>}
-        </div>
-      )}
       {!master && <div className="banner sans" style={{ background: '#eef0fe', borderColor: '#AFA9EC', color: '#3C3489' }}>
         You have <b>{roleOf(user)}</b> access: view all, comment &amp; attach on any task, edit only your own. Switch &ldquo;Acting as&rdquo; to compare.
       </div>}
