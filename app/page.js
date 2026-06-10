@@ -62,6 +62,15 @@ export default function Home() {
     } catch (e) { setErr(String(e)); setGen(false) }
   }
 
+  async function deleteEvent(e, p) {
+    e.preventDefault(); e.stopPropagation()
+    if (!master) return
+    if (!window.confirm('Delete \u201c' + p.name + '\u201d and all of its tasks, comments and attachments? This cannot be undone.')) return
+    const { error } = await supabase.from('projects').delete().eq('id', p.id)
+    if (error) { setErr('Delete failed: ' + error.message); return }
+    setProjects(ps => ps.filter(x => x.id !== p.id))
+  }
+
   return (
     <div className="wrap">
       <div className="topbar">
@@ -126,7 +135,10 @@ export default function Home() {
                 <div style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Fira Sans Condensed, sans-serif' }}>{p.name}</div>
                 <div style={{ fontSize: 11.5, color: 'var(--faint)' }}>{p.type}{p.event_date ? ` · ${p.event_date}` : ''}</div>
               </div>
-              <span className="btn ghost sm">Open →</span>
+              <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {master && <button className="btn ghost sm" onClick={e => deleteEvent(e, p)} style={{ color: '#b42318', borderColor: '#f0c4c0' }}>Delete</button>}
+                <span className="btn ghost sm">Open →</span>
+              </span>
             </Link>
           ))}
         </div>

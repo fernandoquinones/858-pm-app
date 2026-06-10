@@ -98,6 +98,7 @@ export async function POST(req) {
     if (pErr) return Response.json({ error: pErr.message }, { status: 500 })
 
     let sort = 0
+    const newActs = new Set()   // activation tags this plan uses
     for (let i = 0; i < (plan.workstreams || []).length; i++) {
       const ws = plan.workstreams[i]
       const { data: wsRow, error: wErr } = await supabase
@@ -106,21 +107,30 @@ export async function POST(req) {
         .select().single()
       if (wErr) return Response.json({ error: wErr.message }, { status: 500 })
 
-      const taskRows = (ws.tasks || []).map(t => ({
-        project_id: project.id,
-        workstream_id: wsRow.id,
-        title: t.title,
-        owner: t.owner || 'Team',
-        applies_to: t.applies_to || '',
-        notes: t.notes || '',
-        due_date: t.due_date && /^\d{4}-\d{2}-\d{2}$/.test(t.due_date) ? t.due_date : null,
-        status: 'todo',
-        sort_order: sort++
-      }))
+      const taskRows = (ws.tasks || []).map(t => {
+        ;(t.applies_to || '').split(' / ').map(s => s.trim()).forEach(a => { if (a && a !== 'All events') newActs.add(a) })
+        return {
+          project_id: project.id,
+          workstream_id: wsRow.id,
+          title: t.title,
+          owner: t.owner || 'Team',
+          applies_to: t.applies_to || '',
+          notes: t.notes || '',
+          due_date: t.due_date && /^\d{4}-\d{2}-\d{2}$/.test(t.due_date) ? t.due_date : null,
+          status: 'todo',
+          sort_order: sort++
+        }
+      })
       if (taskRows.length) {
         const { error: tErr } = await supabase.from('tasks').insert(taskRows)
         if (tErr) return Response.json({ error: tErr.message }, { status: 500 })
       }
+    }
+
+    // Set the event's activations from the plan so the top bar reflects them.
+    if (newActs.size) {
+      try { await supabase.from('projects').update({ activations: [...newActs].join(' / ') }).eq('id', project.id) }
+      catch (e) { /* activations column may be absent in older schemas — ignore */ }
     }
 
     return Response.json({ projectId: project.id, name: project.name })

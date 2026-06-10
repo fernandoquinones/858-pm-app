@@ -81,6 +81,7 @@ export async function POST(req) {
     let sort = count || 0
     let nextWsOrder = (existing || []).length
     let added = 0
+    const newActs = new Set()   // activation tags this addition introduces
 
     for (const ws of (toolUse.input.workstreams || [])) {
       let wsRow = byName[(ws.name || '').toLowerCase()]
@@ -91,17 +92,33 @@ export async function POST(req) {
         if (wErr) return Response.json({ error: wErr.message }, { status: 500 })
         wsRow = created; byName[(ws.name || '').toLowerCase()] = created
       }
-      const rows = (ws.tasks || []).map(t => ({
-        project_id: projectId, workstream_id: wsRow.id, title: t.title, owner: t.owner || 'Team',
-        applies_to: t.applies_to || '', notes: t.notes || '', status: 'todo', sort_order: sort++
-      }))
+      const rows = (ws.tasks || []).map(t => {
+        ;(t.applies_to || '').split(' / ').map(s => s.trim()).forEach(a => { if (a && a !== 'All events') newActs.add(a) })
+        return {
+          project_id: projectId, workstream_id: wsRow.id, title: t.title, owner: t.owner || 'Team',
+          applies_to: t.applies_to || '', notes: t.notes || '', status: 'todo', sort_order: sort++
+        }
+      })
       if (rows.length) {
         const { error: tErr } = await supabase.from('tasks').insert(rows)
         if (tErr) return Response.json({ error: tErr.message }, { status: 500 })
         added += rows.length
       }
     }
-    return Response.json({ added })
+
+    // Register any new activations on the event so the top bar reflects them.
+    if (newActs.size) {
+      try {
+        const { data: proj } = await supabase.from('projects').select('activations').eq('id', projectId).single()
+        const current = (proj?.activations || '').split(' / ').map(s => s.trim()).filter(Boolean)
+        const merged = [...new Set([...current, ...newActs])]
+        if (merged.length !== current.length) {
+          await supabase.from('projects').update({ activations: merged.join(' / ') }).eq('id', projectId)
+        }
+      } catch (e) { /* activations column may be absent in older schemas — ignore */ }
+    }
+
+    return Response.json({ added, activations: [...newActs] })
   } catch (e) {
     return Response.json({ error: String(e) }, { status: 500 })
   }
