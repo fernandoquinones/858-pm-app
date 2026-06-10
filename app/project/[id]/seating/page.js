@@ -106,7 +106,7 @@ export default function Seating() {
           You can build this seating chart — assign seats, swap, mark no-shows, seat from the waitlist.
         </div>
       ) : (
-        <div className="banner sans" style={{ background: '#eef0fe', borderColor: '#AFA9EC', color: '#3C3489' }}>
+        <div className="banner sans" style={{ background: '#E7F0FA', borderColor: '#9DC2E5', color: '#15263C' }}>
           View only — the seating chart is built by JG (and Christina/Fern). Switch &ldquo;Acting as&rdquo; to JG to edit.
         </div>
       )}

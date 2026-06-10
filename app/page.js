@@ -120,7 +120,7 @@ export default function Home() {
           {projects.map(p => (
             <Link key={p.id} href={`/project/${p.id}`} className="card sans" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Georgia, serif' }}>{p.name}</div>
+                <div style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Fira Sans Condensed, sans-serif' }}>{p.name}</div>
                 <div style={{ fontSize: 11.5, color: 'var(--faint)' }}>{p.type}{p.event_date ? ` · ${p.event_date}` : ''}</div>
               </div>
               <span className="btn ghost sm">Open →</span>

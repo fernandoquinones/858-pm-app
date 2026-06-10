@@ -257,7 +257,7 @@ export default function ProjectBoard() {
       {err && <div className="banner sans">{err}</div>}
       {msg && <div className="banner sans" style={{ background: '#E1F5EE', borderColor: '#5DCAA5', color: '#0F6E56' }}>{msg}</div>}
 
-      {!master && <div className="banner sans" style={{ background: '#eef0fe', borderColor: '#AFA9EC', color: '#3C3489' }}>
+      {!master && <div className="banner sans" style={{ background: '#E7F0FA', borderColor: '#9DC2E5', color: '#15263C' }}>
         You have <b>{roleOf(user)}</b> access: view all, comment &amp; attach on any task, edit only your own. Switch &ldquo;Acting as&rdquo; to compare.
       </div>}
 

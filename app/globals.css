@@ -1,16 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
 :root{
-  --bg:#faf9f5; --card:#fff; --surf2:#f5f4ef; --ink:#1a1a1a; --muted:#5f5e5a; --faint:#9b9a96;
-  --line:rgba(0,0,0,.10); --accent:#4f46e5; --accent-soft:#eef0fe;
-  --green:#16a34a; --green-soft:#e7f6ec; --amber:#d97706; --amber-soft:#fdf3e3;
-  --blue:#2563eb; --blue-soft:#e7effe; --red:#dc2626; --red-soft:#fdeaea; --slack:#4a154b;
+  /* 858 Partners brand */
+  --bg:#F4F7F9; --card:#ffffff; --surf2:#EEF3F6; --ink:#15263C; --muted:#6D8099; --faint:#9DAAB7;
+  --line:rgba(21,38,60,.12); --accent:#478BC5; --accent-soft:#E7F0FA;
+  --yellow:#FFCE0B; --yellow-soft:#FFF6D6;
+  --green:#4F8A2F; --green-soft:#EDF4DD; --amber:#A46304; --amber-soft:#FFF4D6;
+  --blue:#478BC5; --blue-soft:#E7F0FA; --red:#C0392B; --red-soft:#FBEAE7; --slack:#4A154B;
+  --font-head:'Fira Sans Condensed', system-ui, sans-serif;
+  --font-body:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:'Georgia','Times New Roman',serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+body{margin:0;font-family:var(--font-body);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
 a{color:inherit;text-decoration:none}
-.sans{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
+.sans{font-family:var(--font-body)}
 .wrap{max-width:1180px;margin:0 auto;padding:22px 22px 70px}
 .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:16px}
-h1{font-size:18px;margin:0;font-weight:600;letter-spacing:-.01em}
+h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em;font-family:var(--font-head)}
+.ttl,.ct,.name{font-family:var(--font-head)}
+.panel h2{font-family:var(--font-head)}
 .sub{color:var(--faint);font-size:11.5px;margin-top:3px}
 .crumb{font-size:11.5px;color:var(--faint);margin-bottom:6px}
 .crumb a:hover{color:var(--accent)}
