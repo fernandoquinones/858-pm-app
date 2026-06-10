@@ -29,7 +29,7 @@ const PLAN_TOOL = {
                 type: 'object',
                 properties: {
                   title: { type: 'string' },
-                  owner: { type: 'string', description: 'One of: Christina, Fern, Nic, JG, Chris, Marty, Team, or combos like Chris+JG' },
+                  owner: { type: 'string', description: 'One of: Christina, Fernando, Nic, JG, Chris, Marty, Team, or combos like Chris+JG. Normalize Fern to Fernando and Juan to JG' },
                   applies_to: { type: 'string' },
                   due_date: { type: 'string', description: 'YYYY-MM-DD if an event date was given, else empty' },
                   notes: { type: 'string' }
@@ -63,7 +63,7 @@ export async function POST(req) {
       'Given a short description of an event, select the relevant phases and tasks, keep the owners from the library, ' +
       'and only include tasks that fit the described activations (always include "All events" tasks). ' +
       'If the description names a date, set due_date for each task working backward from its phase timing; otherwise leave due_date empty. ' +
-      'Return your answer ONLY by calling the create_plan tool.\n\nTEMPLATE LIBRARY:\n' +
+      'Owner-name rule: Fern means Fernando and Juan means JG — always record owners as Fernando / JG. Return your answer ONLY by calling the create_plan tool.\n\nTEMPLATE LIBRARY:\n' +
       JSON.stringify(LIBRARY)
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {

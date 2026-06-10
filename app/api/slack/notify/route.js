@@ -11,7 +11,6 @@ export async function POST(req) {
     const { data: task } = await sb.from('tasks').select('id,title,owner,status,project_id,due_date').eq('id', taskId).single()
     if (!task) return Response.json({ error: 'Task not found' }, { status: 404 })
 
-    // route to the project's own channel; fall back to a default env channel if set
     const { data: project } = await sb.from('projects').select('slack_channel_id').eq('id', task.project_id).single()
     const channel = (project && project.slack_channel_id) || process.env.SLACK_CHANNEL_ID
     if (!channel) return Response.json({ ok: false, skipped: 'No Slack room linked to this event' })

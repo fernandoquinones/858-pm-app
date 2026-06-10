@@ -113,7 +113,7 @@ export default function Home() {
         </>
       ) : (
         <div className="card sans" style={{ color: 'var(--faint)' }}>
-          You have <b style={{ color: 'var(--ink)' }}>{roleOf(user)}</b> access — view everything, comment on any task, and update your own. Creating events is limited to Christina and Fern.
+          You have <b style={{ color: 'var(--ink)' }}>{roleOf(user)}</b> access — view everything, comment on any task, and update your own. Creating events is limited to Christina and Fernando.
         </div>
       )}
 

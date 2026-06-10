@@ -107,7 +107,7 @@ export default function Seating() {
         </div>
       ) : (
         <div className="banner sans" style={{ background: '#E7F0FA', borderColor: '#9DC2E5', color: '#15263C' }}>
-          View only — the seating chart is built by JG (and Christina/Fern). Switch &ldquo;Acting as&rdquo; to JG to edit.
+          View only — the seating chart is built by JG (and Christina/Fernando). Switch &ldquo;Acting as&rdquo; to JG to edit.
         </div>
       )}
 

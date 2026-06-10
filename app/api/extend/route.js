@@ -26,7 +26,7 @@ const ADD_TOOL = {
                 type: 'object',
                 properties: {
                   title: { type: 'string' },
-                  owner: { type: 'string', description: 'Christina, Fern, Nic, JG, Chris, Marty, Team, or combos like Chris+JG' },
+                  owner: { type: 'string', description: 'Christina, Fernando, Nic, JG, Chris, Marty, Team, or combos like Chris+JG. Normalize Fern to Fernando and Juan to JG' },
                   applies_to: { type: 'string', description: 'activation tag(s), e.g. GRIP, Luncheon' },
                   notes: { type: 'string' }
                 },
@@ -58,7 +58,7 @@ export async function POST(req) {
       'You add to an EXISTING 858 event plan. Use the TEMPLATE LIBRARY to pull the right tasks (with their owners) for whatever the user asks to add — ' +
       'e.g. "add a GRIP activation" should bring in the GRIP-tagged tasks. Reuse an existing workstream name when the new tasks fit it; otherwise create a new workstream. ' +
       'If the request describes a workstream or tasks NOT in the library, create a sensible NEW workstream with appropriate tasks and the best-fit owner (default Christina if unclear). ' +
-      'Only return the tasks/workstreams to ADD (do not repeat the whole plan). Answer ONLY via the add_to_plan tool.\n\n' +
+      'Only return the tasks/workstreams to ADD (do not repeat the whole plan). Owner-name rule: Fern means Fernando and Juan means JG — always record owners as Fernando / JG. Answer ONLY via the add_to_plan tool.\n\n' +
       'EXISTING WORKSTREAMS: ' + JSON.stringify((existing || []).map(w => w.name)) + '\n\n' +
       'TEMPLATE LIBRARY:\n' + JSON.stringify(LIBRARY)
 
