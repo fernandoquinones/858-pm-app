@@ -105,6 +105,12 @@ export default function ProjectBoard() {
     const { error } = await supabase.from('tasks').update({ workstream_id }).eq('id', t.id)
     if (error) { setErr('Move failed: ' + error.message) } else { load() }
   }
+  async function setOwner(t, owner) {
+    if (!canEditTask(user, t)) return
+    setTasks(ts => ts.map(x => x.id === t.id ? { ...x, owner } : x))
+    const { error } = await supabase.from('tasks').update({ owner }).eq('id', t.id)   // event only; library untouched
+    if (error) setErr('Update failed: ' + error.message)
+  }
   async function addTaskGlobal() {
     if (!master) return
     const title = (na.title || '').trim(); if (!title) return
@@ -350,6 +356,16 @@ export default function ProjectBoard() {
                             <div className="librow" style={{ flexWrap: 'wrap' }}>
                               <span style={{ fontSize: 11, color: 'var(--faint)' }}>Applies to</span>
                               <ActivationChips value={parseActs(t.applies_to)} options={actOpts} onChange={acts => setActivation(t, acts)} />
+                            </div>
+                          )}
+                          {editable && (
+                            <div className="librow">
+                              <span style={{ fontSize: 11, color: 'var(--faint)' }}>Owner</span>
+                              <select value={OWNERS.includes(t.owner) ? t.owner : ''} onChange={e => setOwner(t, e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '4px 7px', fontFamily: 'inherit', fontSize: 12 }}>
+                                {!OWNERS.includes(t.owner) && t.owner && <option value={t.owner}>{t.owner}</option>}
+                                {OWNERS.map(o => <option key={o} value={o}>{o}</option>)}
+                              </select>
+                              <span style={{ fontSize: 10.5, color: 'var(--faint)' }}>this event only — not the library</span>
                             </div>
                           )}
                           {editable && (
