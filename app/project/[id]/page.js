@@ -43,6 +43,7 @@ export default function ProjectBoard() {
   const [extendPrompt, setExtendPrompt] = useState('')
   const [extending, setExtending] = useState(false)
   const [slackOpen, setSlackOpen] = useState(false)
+  const [chId, setChId] = useState('')
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
   const [msg, setMsg] = useState(null)
@@ -191,9 +192,15 @@ export default function ProjectBoard() {
   async function connectRoom() {
     if (!chSel) return
     const c = chs.find(x => x.id === chSel)
-    await fetch('/api/slack/link-channel', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: id, channelId: chSel, channelName: c ? c.name : null }) })
-    setSlackOpen(false); setChSel('')
-    load()
+    const r = await fetch('/api/slack/link-channel', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: id, channelId: chSel, channelName: c ? c.name : null }) })
+    const j = await r.json(); if (!r.ok) { setErr(j.error || 'Connect failed'); return }
+    setSlackOpen(false); setChSel(''); load()
+  }
+  async function connectById() {
+    const cid = chId.trim(); if (!cid) return
+    const r = await fetch('/api/slack/link-channel', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: id, channelId: cid, channelName: null }) })
+    const j = await r.json(); if (!r.ok) { setErr(j.error || 'Connect failed'); return }
+    setSlackOpen(false); setChId(''); load()
   }
 
   if (loading) return <div className="wrap"><div className="loading sans">Loading project…</div></div>
@@ -227,16 +234,21 @@ export default function ProjectBoard() {
                 </>
               )}
               {master && (slackOpen || !project.slack_channel_id) && (
-                chs.length > 0 ? (
-                  <>
-                    <select value={chSel} onChange={e => setChSel(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '4px 8px', fontFamily: 'inherit', fontSize: 12 }}>
-                      <option value="">Choose a channel…</option>
-                      {chs.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
-                    </select>
-                    <button type="button" className="btn tiny" onClick={connectRoom} disabled={!chSel}>Connect</button>
-                    {project.slack_channel_id && <button type="button" onClick={() => setSlackOpen(false)} style={{ fontSize: 11, color: 'var(--faint)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>cancel</button>}
-                  </>
-                ) : <span style={{ fontSize: 11, color: 'var(--faint)' }}>No Slack channels found (set up the Slack app).</span>
+                <>
+                  {chs.length > 0 && (
+                    <>
+                      <select value={chSel} onChange={e => setChSel(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '4px 8px', fontFamily: 'inherit', fontSize: 12 }}>
+                        <option value="">Choose a channel…</option>
+                        {chs.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
+                      </select>
+                      <button type="button" className="btn tiny" onClick={connectRoom} disabled={!chSel}>Connect</button>
+                      <span style={{ fontSize: 11, color: 'var(--faint)' }}>or</span>
+                    </>
+                  )}
+                  <input value={chId} onChange={e => setChId(e.target.value)} placeholder="paste channel ID (C…)" style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '4px 8px', fontFamily: 'inherit', fontSize: 12, width: 160 }} />
+                  <button type="button" className="btn tiny" onClick={connectById} disabled={!chId.trim()}>Connect ID</button>
+                  {project.slack_channel_id && <button type="button" onClick={() => setSlackOpen(false)} style={{ fontSize: 11, color: 'var(--faint)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>cancel</button>}
+                </>
               )}
               {!master && !project.slack_channel_id && <span style={{ fontSize: 11, color: 'var(--faint)' }}>no room linked</span>}
             </div>
