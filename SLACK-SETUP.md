@@ -8,14 +8,14 @@ You need a Slack workspace where you can add an app. ~20 minutes. The app must b
 
 ## 1. Create the Slack app
 1. Go to **api.slack.com/apps → Create New App → From scratch**. Name it "858 Project Tool", pick your workspace.
-2. **OAuth & Permissions → Bot Token Scopes**, add: `chat:write`, `reactions:read`, `channels:history`, `channels:read`, `groups:read`, `channels:join`, `users:read`. (The extra read/join scopes let the app list your existing rooms and connect to them.) Install the app to the workspace.
+2. **OAuth & Permissions → Bot Token Scopes**, add exactly these **4** (private-channel set): `chat:write`, `groups:read`, `groups:history`, `reactions:read`. **Do NOT add** `channels:join` (invite the bot manually instead), the `channels:*` scopes (those are for public channels — your rooms are private), or `users:read` (optional polish only). Install the app to the workspace.
 3. Copy the **Bot User OAuth Token** (`xoxb-…`) → `.env.local` as `SLACK_BOT_TOKEN`.
 4. **Basic Information → Signing Secret** → `.env.local` as `SLACK_SIGNING_SECRET`.
 5. In Slack, create/choose a channel (e.g. `#project-plans`), invite the app to it, and copy its **Channel ID** (channel details → bottom) → `.env.local` as `SLACK_CHANNEL_ID`.
 
 ## 2. Point Slack at your routes
 Use your deployed base URL (e.g. `https://858-pm.vercel.app`).
-- **Event Subscriptions** → enable → Request URL: `https://YOUR-URL/api/slack/events`. Slack will verify it (the route answers the handshake automatically). Under **Subscribe to bot events**, add: `reaction_added`, `message.channels`.
+- **Event Subscriptions** → enable → Request URL: `https://YOUR-URL/api/slack/events`. Slack will verify it (the route answers the handshake automatically). Under **Subscribe to bot events**, add: `reaction_added`, `message.groups`.
 - **Interactivity & Shortcuts** → enable → Request URL: `https://YOUR-URL/api/slack/interactions`.
 - Reinstall the app if Slack prompts you.
 
@@ -41,7 +41,7 @@ Use your deployed base URL (e.g. `https://858-pm.vercel.app`).
 ## Per-event rooms (you already have the channels)
 Each event/project connects to **its own existing Slack channel** — pings for that event go only to that room. Library stays shared across all events; the channel is per event.
 
-**Connect a room:** open a project → the **"Connect this event to its Slack room"** card → pick the existing channel → **Connect room**. The app joins the channel (public) and posts a confirmation. To move it later, use **Change room**. (`SLACK_CHANNEL_ID` in `.env.local` is now just an optional fallback for events with no room linked.)
+**Connect a room:** open a project → the **"Connect this event to its Slack room"** card → pick the existing channel → **Connect room**. **First invite the bot to that channel in Slack** (`/invite @858 Project Tool`), then pick it and Connect — the app posts a confirmation. To move it later, use **Change room**. (`SLACK_CHANNEL_ID` in `.env.local` is now just an optional fallback for events with no room linked.)
 
 How routing works: `/api/slack/notify` looks up the project's `slack_channel_id` and posts there; the message id is stored per channel in `slack_links`, so a ✅ reaction, the Mark-complete button, or a thread reply in *that* room updates *that* event's task. Different events, different rooms, no cross-talk.
 
