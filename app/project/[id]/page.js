@@ -45,6 +45,11 @@ export default function ProjectBoard() {
   const [reportPrompt, setReportPrompt] = useState('')
   const [reportBusy, setReportBusy] = useState(false)
   const [reportHtml, setReportHtml] = useState('')
+  const [filterOwner, setFilterOwner] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterAct, setFilterAct] = useState('')
+  const [sortBy, setSortBy] = useState('')
+  const [evLink, setEvLink] = useState({ name: '', url: '' })
   const [slackOpen, setSlackOpen] = useState(false)
   const [chId, setChId] = useState('')
   const [loading, setLoading] = useState(true)
@@ -173,6 +178,12 @@ export default function ProjectBoard() {
     setTimeout(() => URL.revokeObjectURL(url), 2000)
   }
   function openReport() { const w = window.open(); if (w) { w.document.write(reportHtml); w.document.close() } }
+  async function addEventLink() {
+    const url = (evLink.url || '').trim(); if (!url) return
+    await supabase.from('attachments').insert({ project_id: id, task_id: null, kind: 'link', name: (evLink.name || '').trim() || url, url, added_by: user })
+    setEvLink({ name: '', url: '' }); load()
+  }
+  async function removeEventLink(aId) { await supabase.from('attachments').delete().eq('id', aId); load() }
   async function addComment(taskId) {
     const body = (draft[taskId] || '').trim(); if (!body) return
     await supabase.from('comments').insert({ project_id: id, task_id: taskId, author: user, body, source: 'app' })
@@ -234,9 +245,18 @@ export default function ProjectBoard() {
 
   if (loading) return <div className="wrap"><div className="loading sans">Loading project…</div></div>
 
-  const byWs = wsId => tasks.filter(t => t.workstream_id === wsId)
+  const byWs = wsId => {
+    let list = tasks.filter(t => t.workstream_id === wsId)
+    if (filterOwner) list = list.filter(t => (t.owner || '').includes(filterOwner))
+    if (filterStatus) list = list.filter(t => t.status === filterStatus)
+    if (filterAct) list = list.filter(t => parseActs(t.applies_to).includes(filterAct))
+    if (sortBy === 'due') list = [...list].sort((a, b) => (a.due_date || '9999-12-31').localeCompare(b.due_date || '9999-12-31'))
+    return list
+  }
+  const filtering = !!(filterOwner || filterStatus || filterAct)
   const cmtsFor = tid => comments.filter(c => c.task_id === tid)
   const attsFor = tid => attachments.filter(a => a.task_id === tid)
+  const eventLinks = attachments.filter(a => !a.task_id)
   const done = tasks.filter(t => t.status === 'done').length
 
   return (
@@ -358,8 +378,48 @@ export default function ProjectBoard() {
         </div>}
       </div>
 
+      <div className="card sans">
+        <div className="subh">🔗 Helpful links</div>
+        {eventLinks.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+          {eventLinks.map(a => <div key={a.id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+            <a href={a.url} target="_blank" rel="noreferrer" style={{ color: '#2E5AAC' }}>{a.name || a.url}</a>
+            <button className="btn ghost sm" onClick={() => removeEventLink(a.id)} style={{ fontSize: 11 }}>remove</button>
+          </div>)}
+        </div>}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input placeholder="Label (e.g. Brand guidelines)" value={evLink.name} onChange={e => setEvLink(s => ({ ...s, name: e.target.value }))} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13, minWidth: 180 }} />
+          <input placeholder="Paste a URL…" value={evLink.url} onChange={e => setEvLink(s => ({ ...s, url: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addEventLink() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13, minWidth: 200 }} />
+          <button className="btn ghost" onClick={addEventLink}>Add link</button>
+        </div>
+        <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Event-level resources (Informa links, brand guidelines, decks). Visible to everyone on this plan.</div>
+      </div>
+
+      <div className="card sans" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>Filter</span>
+        <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+          <option value="">All owners</option>
+          {OWNERS.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+          <option value="">Any status</option>
+          <option value="todo">To do</option>
+          <option value="review">Needs review</option>
+          <option value="done">Done</option>
+        </select>
+        <select value={filterAct} onChange={e => setFilterAct(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+          <option value="">Any activation</option>
+          {actOpts.filter(a => a !== 'All events').map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+          <option value="">Default order</option>
+          <option value="due">Sort by due date</option>
+        </select>
+        {(filtering || sortBy) && <button className="btn ghost sm" onClick={() => { setFilterOwner(''); setFilterStatus(''); setFilterAct(''); setSortBy('') }}>Clear</button>}
+      </div>
+
       {workstreams.map(w => {
         const list = byWs(w.id)
+        if (filtering && !list.length) return null
         return (
           <div className="phase" key={w.id}>
             <div className="ph-head" onClick={() => setOpen(o => ({ ...o, [w.id]: !o[w.id] }))}>
