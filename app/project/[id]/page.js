@@ -275,7 +275,7 @@ export default function ProjectBoard() {
             </div>
           )}
           {project && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '0 0 6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', margin: '0 0 6px', overflowX: 'auto' }}>
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Slack</span>
               {project.slack_channel_id && !slackOpen && (
                 <>
@@ -390,14 +390,15 @@ export default function ProjectBoard() {
               {OWNERS.map(o => <option key={o}>{o}</option>)}
             </select>
           </div>
-          <div style={{ fontSize: 11.5, color: 'var(--faint)', marginBottom: 6 }}>Applies to (pick one or more, or leave blank for All events):</div>
-          <ActivationChips value={na.acts} options={actOpts} onChange={acts => setNa(n => ({ ...n, acts }))} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Applies to</span>
+            <ActivationChips value={na.acts} options={actOpts} onChange={acts => setNa(n => ({ ...n, acts }))} collapsible={true} />
+          </div>
           <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginTop: 12, flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12.5, fontWeight: 600, color: na.toLib ? '#0F6E56' : 'var(--muted)' }}>
               <input type="checkbox" checked={na.toLib} onChange={e => setNa(n => ({ ...n, toLib: e.target.checked }))} /> ★ Save to library
             </label>
             <button className="btn" onClick={addTaskGlobal}>Add task</button>
-            <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>Tick &ldquo;Save to library&rdquo; to make it reusable for future events; leave it for a one-off.</span>
           </div>
         </div>
         </div>
