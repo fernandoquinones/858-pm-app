@@ -326,7 +326,7 @@ export default function ProjectBoard() {
       </div>}
 
       {headerPanel && (
-        <div className="card sans">
+        <div className="card sans" style={{ width: 480, maxWidth: '100%', marginLeft: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button onClick={() => setHeaderPanel(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 18, lineHeight: 1, fontFamily: 'inherit' }}>×</button></div>
           {headerPanel === 'reports' && (
       <div className="sans">
