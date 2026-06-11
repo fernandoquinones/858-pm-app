@@ -20,6 +20,7 @@ export default function Home() {
   // structured create
   const [evName, setEvName] = useState('')
   const [evDate, setEvDate] = useState('')
+  const [evLoc, setEvLoc] = useState('')
   const [evActs, setEvActs] = useState([])
   const [creating, setCreating] = useState(false)
 
@@ -43,9 +44,11 @@ export default function Home() {
 
   async function createEvent() {
     if (!evName.trim()) { setErr('Give the event a name.'); return }
+    if (!evDate) { setErr('Pick an event date.'); return }
+    if (!evLoc.trim()) { setErr('Add a location (Venue, City, State).'); return }
     setCreating(true); setErr(null)
     try {
-      const r = await fetch('/api/create-event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: evName, date: evDate || null, activations: evActs }) })
+      const r = await fetch('/api/create-event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: evName, date: evDate || null, location: evLoc || null, activations: evActs }) })
       const j = await r.json()
       if (!r.ok) { setErr(j.error || 'Could not create event'); setCreating(false); return }
       router.push(`/project/${j.projectId}`)
@@ -53,10 +56,12 @@ export default function Home() {
   }
 
   async function generate() {
-    if (!prompt.trim()) return
+    if (!prompt.trim()) { setErr('Describe the event first.'); return }
+    if (!evDate) { setErr('Pick an event date.'); return }
+    if (!evLoc.trim()) { setErr('Add a location (Venue, City, State).'); return }
     setGen(true); setErr(null)
     try {
-      const r = await fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt }) })
+      const r = await fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt, date: evDate || null, location: evLoc || null }) })
       const j = await r.json()
       if (!r.ok) { setErr(j.error || 'Generation failed'); setGen(false); return }
       router.push(`/project/${j.projectId}`)
@@ -69,6 +74,7 @@ export default function Home() {
     return new Date(p.event_date + 'T00:00:00') < cutoff
   }
   function eventTime(p) { return p.event_date ? new Date(p.event_date + 'T00:00:00').getTime() : Infinity }
+  const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
   const shownProjects = projects
     .filter(p => eventFilter === 'current' ? !isPastEvent(p) : isPastEvent(p))
     .sort((a, b) => eventFilter === 'current' ? eventTime(a) - eventTime(b) : eventTime(b) - eventTime(a))
@@ -112,12 +118,13 @@ export default function Home() {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
               <input placeholder="Event name (e.g. 858 LA Holiday Party)" value={evName} onChange={e => setEvName(e.target.value)} style={{ flex: 1, minWidth: 240, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
               <input type="date" value={evDate} onChange={e => setEvDate(e.target.value)} title="Event date" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input placeholder="Venue, City, State" value={evLoc} onChange={e => setEvLoc(e.target.value)} style={{ flex: 1, minWidth: 180, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--faint)', marginBottom: 7 }}>Activations happening at this event:</div>
             <ActivationChips value={evActs} options={actOpts} onChange={setEvActs} includeAllEvents={false} />
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14 }}>
               <button className="btn" onClick={createEvent} disabled={creating}>{creating ? 'Building plan…' : 'Create event plan'}</button>
-              <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>Pulls every &ldquo;All events&rdquo; task plus the activations you pick — straight from your library. No AI needed.</span>
+              <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>Name, date &amp; location required. Pulls every &ldquo;All events&rdquo; task plus the activations you pick. No AI needed.</span>
             </div>
           </div>
 
@@ -125,9 +132,13 @@ export default function Home() {
           <div className="card sans">
             <div className="subh">✨ Or describe it to Claude</div>
             <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={2} placeholder="Describe the event in one sentence…" style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: '10px 12px', fontFamily: 'inherit', fontSize: 13, resize: 'vertical' }} />
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
+              <input type="date" value={evDate} onChange={e => setEvDate(e.target.value)} title="Event date" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input placeholder="Venue, City, State" value={evLoc} onChange={e => setEvLoc(e.target.value)} style={{ flex: 1, minWidth: 180, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
+            </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 10 }}>
               <button className="btn ghost" onClick={generate} disabled={gen}>{gen ? 'Claude is building…' : 'Generate with Claude'}</button>
-              <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>Free-form alternative (needs the Anthropic key turned on).</span>
+              <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>Description, date &amp; location required (needs the Anthropic key).</span>
             </div>
           </div>
         </>
@@ -152,7 +163,8 @@ export default function Home() {
             <Link key={p.id} href={`/project/${p.id}`} className="card sans" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Fira Sans Condensed, sans-serif' }}>{p.name}</div>
-                <div style={{ fontSize: 11.5, color: 'var(--faint)' }}>{p.type}{p.event_date ? ` · ${p.event_date}` : ''}</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{p.event_date ? fmtDate(p.event_date) : 'No date set'}{p.location ? ` · ${p.location}` : ''}</div>
+                {p.activations && parseActs(p.activations).length > 0 && <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 6 }}>{parseActs(p.activations).map(a => <span key={a} style={{ fontSize: 10.5, background: '#FFF6D6', border: '1px solid #D9A800', color: '#7a5e00', borderRadius: 999, padding: '2px 8px' }}>{a}</span>)}</div>}
               </div>
               <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 {master && <button className="btn ghost sm" onClick={e => deleteEvent(e, p)} style={{ color: '#b42318', borderColor: '#f0c4c0' }}>Delete</button>}

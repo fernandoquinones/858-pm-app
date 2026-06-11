@@ -230,6 +230,17 @@ export default function ProjectBoard() {
     const { error } = await supabase.from('projects').update({ activations: acts.join(' / ') }).eq('id', id)
     if (error) setErr('Update activations failed: ' + error.message)
   }
+  const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
+  async function setEventDate(v) {
+    setProject(p => ({ ...p, event_date: v || null }))
+    const { error } = await supabase.from('projects').update({ event_date: v || null }).eq('id', id)
+    if (error) setErr('Update date failed: ' + error.message)
+  }
+  function setLocalLocation(v) { setProject(p => ({ ...p, location: v })) }
+  async function saveLocation() {
+    const { error } = await supabase.from('projects').update({ location: (project && project.location) || null }).eq('id', id)
+    if (error) setErr('Update location failed: ' + error.message)
+  }
   async function connectRoom() {
     if (!chSel) return
     const c = chs.find(x => x.id === chSel)
@@ -272,6 +283,22 @@ export default function ProjectBoard() {
               {master
                 ? <ActivationChips value={parseActs(project.activations)} options={actOpts} onChange={setEventActivations} includeAllEvents={false} collapsible={true} />
                 : (parseActs(project.activations).length ? parseActs(project.activations).map(a => <span className="pill" key={a}>{a}</span>) : <span style={{ fontSize: 11, color: 'var(--faint)' }}>none</span>)}
+            </div>
+          )}
+          {project && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', margin: '0 0 6px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Date</span>
+                {master
+                  ? <input type="date" value={project.event_date || ''} onChange={e => setEventDate(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
+                  : <span style={{ fontSize: 12, color: 'var(--ink)' }}>{project.event_date ? fmtDate(project.event_date) : '—'}</span>}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 220px', minWidth: 0 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Location</span>
+                {master
+                  ? <input value={project.location || ''} onChange={e => setLocalLocation(e.target.value)} onBlur={saveLocation} placeholder="Venue, City, State" style={{ flex: 1, minWidth: 0, border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
+                  : <span style={{ fontSize: 12, color: 'var(--ink)' }}>{project.location || '—'}</span>}
+              </span>
             </div>
           )}
           {project && (

@@ -48,7 +48,7 @@ const PLAN_TOOL = {
 
 export async function POST(req) {
   try {
-    const { prompt } = await req.json()
+    const { prompt, date, location } = await req.json()
     if (!prompt || !prompt.trim()) {
       return Response.json({ error: 'Describe the event first.' }, { status: 400 })
     }
@@ -79,7 +79,7 @@ export async function POST(req) {
         system,
         tools: [PLAN_TOOL],
         tool_choice: { type: 'tool', name: 'create_plan' },
-        messages: [{ role: 'user', content: prompt }]
+        messages: [{ role: 'user', content: prompt + (date ? '\n\nEvent date: ' + date : '') }]
       })
     })
 
@@ -97,7 +97,7 @@ export async function POST(req) {
 
     // Write the plan to Supabase: project -> workstreams -> tasks
     const { data: project, error: pErr } = await supabase
-      .from('projects').insert({ name: plan.project_name, type: plan.type || 'event' }).select().single()
+      .from('projects').insert({ name: plan.project_name, type: plan.type || 'event', event_date: date || null, location: location || null }).select().single()
     if (pErr) return Response.json({ error: pErr.message }, { status: 500 })
 
     let sort = 0

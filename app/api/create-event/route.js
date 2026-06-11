@@ -4,7 +4,7 @@ import { sb } from '../../../lib/supabaseServer'
 // Pulls every "All events" task + every task tagged with any selected activation.
 export async function POST(req) {
   try {
-    const { name, date, activations } = await req.json()
+    const { name, date, activations, location } = await req.json()
     if (!name || !name.trim()) return Response.json({ error: 'Event name required' }, { status: 400 })
     const acts = Array.isArray(activations) ? activations.map(a => String(a).trim()).filter(Boolean) : []
 
@@ -19,9 +19,9 @@ export async function POST(req) {
 
     let project, pErr
     ;({ data: project, error: pErr } = await sb.from('projects')
-      .insert({ name: name.trim(), type: 'event', event_date: date || null, activations: acts.join(' / ') }).select().single())
-    if (pErr && /activations/i.test(pErr.message || '')) {
-      // column not added yet — create without it
+      .insert({ name: name.trim(), type: 'event', event_date: date || null, activations: acts.join(' / '), location: location || null }).select().single())
+    if (pErr && /(activations|location|column)/i.test(pErr.message || '')) {
+      // columns not added yet — create without the optional ones
       ;({ data: project, error: pErr } = await sb.from('projects')
         .insert({ name: name.trim(), type: 'event', event_date: date || null }).select().single())
     }
