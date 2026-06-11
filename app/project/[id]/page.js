@@ -275,7 +275,7 @@ export default function ProjectBoard() {
             </div>
           )}
           {project && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '0 0 6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', margin: '0 0 6px' }}>
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Slack</span>
               {project.slack_channel_id && !slackOpen && (
                 <>
@@ -287,7 +287,7 @@ export default function ProjectBoard() {
                 <>
                   {chs.length > 0 && (
                     <>
-                      <select value={chSel} onChange={e => setChSel(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
+                      <select value={chSel} onChange={e => setChSel(e.target.value)} style={{ flex: '1 1 0', minWidth: 0, border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
                         <option value="">Choose a channel…</option>
                         {chs.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
                       </select>
@@ -295,7 +295,7 @@ export default function ProjectBoard() {
                       <span style={{ fontSize: 11, color: 'var(--faint)' }}>or</span>
                     </>
                   )}
-                  <input value={chId} onChange={e => setChId(e.target.value)} placeholder="paste channel ID (C…)" style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', width: 150 }} />
+                  <input value={chId} onChange={e => setChId(e.target.value)} placeholder="paste channel ID (C…)" style={{ flex: '1 1 0', minWidth: 0, border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
                   <button type="button" onClick={connectById} disabled={!chId.trim()} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 11px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>Connect ID</button>
                   {project.slack_channel_id && <button type="button" onClick={() => setSlackOpen(false)} style={{ fontSize: 11, color: 'var(--faint)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>cancel</button>}
                 </>
