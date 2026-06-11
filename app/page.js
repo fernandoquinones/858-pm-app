@@ -26,6 +26,7 @@ export default function Home() {
   // optional Claude box
   const [prompt, setPrompt] = useState('858 LA Holiday Party — evening reception, ~80 guests, Dec 12.')
   const [gen, setGen] = useState(false)
+  const [eventFilter, setEventFilter] = useState('current')
 
   async function load() {
     const [pr, lib] = await Promise.all([
@@ -61,6 +62,16 @@ export default function Home() {
       router.push(`/project/${j.projectId}`)
     } catch (e) { setErr(String(e)); setGen(false) }
   }
+
+  function isPastEvent(p) {
+    if (!p.event_date) return false
+    const cutoff = new Date(); cutoff.setHours(0, 0, 0, 0); cutoff.setDate(cutoff.getDate() - 1)
+    return new Date(p.event_date + 'T00:00:00') < cutoff
+  }
+  function eventTime(p) { return p.event_date ? new Date(p.event_date + 'T00:00:00').getTime() : Infinity }
+  const shownProjects = projects
+    .filter(p => eventFilter === 'current' ? !isPastEvent(p) : isPastEvent(p))
+    .sort((a, b) => eventFilter === 'current' ? eventTime(a) - eventTime(b) : eventTime(b) - eventTime(a))
 
   async function deleteEvent(e, p) {
     e.preventDefault(); e.stopPropagation()
@@ -126,10 +137,18 @@ export default function Home() {
         </div>
       )}
 
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '20px 0 4px' }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', fontFamily: 'Fira Sans Condensed, sans-serif', margin: 0 }}>Project plans</h2>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button type="button" onClick={() => setEventFilter('current')} style={{ fontSize: 12, borderRadius: 999, padding: '5px 13px', cursor: 'pointer', fontFamily: 'inherit', border: '1px solid ' + (eventFilter === 'current' ? 'var(--accent)' : 'var(--line)'), color: eventFilter === 'current' ? 'var(--accent)' : 'var(--muted)', background: eventFilter === 'current' ? '#eef3fb' : 'transparent', fontWeight: eventFilter === 'current' ? 700 : 400 }}>Current events</button>
+          <button type="button" onClick={() => setEventFilter('past')} style={{ fontSize: 12, borderRadius: 999, padding: '5px 13px', cursor: 'pointer', fontFamily: 'inherit', border: '1px solid ' + (eventFilter === 'past' ? 'var(--accent)' : 'var(--line)'), color: eventFilter === 'past' ? 'var(--accent)' : 'var(--muted)', background: eventFilter === 'past' ? '#eef3fb' : 'transparent', fontWeight: eventFilter === 'past' ? 700 : 400 }}>Past events</button>
+        </div>
+      </div>
+
       {loading ? <div className="loading sans">Loading…</div> : (
         <div>
-          {projects.length === 0 && <div className="card sans" style={{ color: 'var(--faint)' }}>No events yet. Create one above.</div>}
-          {projects.map(p => (
+          {shownProjects.length === 0 && <div className="card sans" style={{ color: 'var(--faint)' }}>{eventFilter === 'current' ? 'No current events — create one above.' : 'No past events yet.'}</div>}
+          {shownProjects.map(p => (
             <Link key={p.id} href={`/project/${p.id}`} className="card sans" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Fira Sans Condensed, sans-serif' }}>{p.name}</div>
