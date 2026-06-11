@@ -287,16 +287,16 @@ export default function ProjectBoard() {
                 <>
                   {chs.length > 0 && (
                     <>
-                      <select value={chSel} onChange={e => setChSel(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '4px 8px', fontFamily: 'inherit', fontSize: 12 }}>
+                      <select value={chSel} onChange={e => setChSel(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
                         <option value="">Choose a channel…</option>
                         {chs.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
                       </select>
-                      <button type="button" className="btn tiny" onClick={connectRoom} disabled={!chSel}>Connect</button>
+                      <button type="button" onClick={connectRoom} disabled={!chSel} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 11px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>Connect</button>
                       <span style={{ fontSize: 11, color: 'var(--faint)' }}>or</span>
                     </>
                   )}
-                  <input value={chId} onChange={e => setChId(e.target.value)} placeholder="paste channel ID (C…)" style={{ border: '1px solid var(--line)', borderRadius: 7, padding: '4px 8px', fontFamily: 'inherit', fontSize: 12, width: 160 }} />
-                  <button type="button" className="btn tiny" onClick={connectById} disabled={!chId.trim()}>Connect ID</button>
+                  <input value={chId} onChange={e => setChId(e.target.value)} placeholder="paste channel ID (C…)" style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', width: 150 }} />
+                  <button type="button" onClick={connectById} disabled={!chId.trim()} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 11px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>Connect ID</button>
                   {project.slack_channel_id && <button type="button" onClick={() => setSlackOpen(false)} style={{ fontSize: 11, color: 'var(--faint)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>cancel</button>}
                 </>
               )}
@@ -381,18 +381,24 @@ export default function ProjectBoard() {
         </div>
           <div className="card sans" style={{ margin: 0 }}>
             <div className="subh">+ Add a task</div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>
-            <input placeholder="Task title…" value={na.title} onChange={e => setNa(n => ({ ...n, title: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addTaskGlobal() }} style={{ flex: 1, minWidth: 220, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
-            <select value={na.wsId || (workstreams[0] && workstreams[0].id) || ''} onChange={e => setNa(n => ({ ...n, wsId: e.target.value }))} title="Workstream" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
-              {workstreams.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-            </select>
-            <select value={na.owner} onChange={e => setNa(n => ({ ...n, owner: e.target.value }))} title="Owner" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
-              {OWNERS.map(o => <option key={o}>{o}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Applies to</span>
-            <ActivationChips value={na.acts} options={actOpts} onChange={acts => setNa(n => ({ ...n, acts }))} collapsible={true} />
+          <input placeholder="Task title…" value={na.title} onChange={e => setNa(n => ({ ...n, title: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addTaskGlobal() }} style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13, marginBottom: 10 }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12, alignItems: 'start' }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 4 }}>Owner</div>
+              <select value={na.owner} onChange={e => setNa(n => ({ ...n, owner: e.target.value }))} style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+                {OWNERS.map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 4 }}>Workstream</div>
+              <select value={na.wsId || (workstreams[0] && workstreams[0].id) || ''} onChange={e => setNa(n => ({ ...n, wsId: e.target.value }))} style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+                {workstreams.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 4 }}>Activation</div>
+              <ActivationChips value={na.acts} options={actOpts} onChange={acts => setNa(n => ({ ...n, acts }))} collapsible={true} />
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginTop: 12, flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12.5, fontWeight: 600, color: na.toLib ? '#0F6E56' : 'var(--muted)' }}>
