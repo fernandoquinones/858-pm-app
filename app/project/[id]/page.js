@@ -263,8 +263,8 @@ export default function ProjectBoard() {
   return (
     <div className="wrap">
       <div className="crumb sans" style={{ display: 'flex', alignItems: 'center', gap: 10 }}><img src="/logo.svg" alt="858" style={{ height: 18 }} /><Link href="/">← All events</Link></div>
-      <div className="topbar">
-        <div>
+      <div className="topbar" style={{ alignItems: 'flex-start', flexWrap: 'nowrap', gap: 16 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1>{project ? project.name : 'Project'}</h1>
           {project && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '7px 0 5px' }}>
@@ -305,7 +305,7 @@ export default function ProjectBoard() {
           )}
           <div className="sub sans">{done}/{tasks.length} tasks complete · {workstreams.length} workstreams</div>
         </div>
-        <div className="chips sans">
+        <div className="chips sans" style={{ position: 'relative', display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', flexShrink: 0 }}>
           <div className="chip"><span className="dot"></span> Live · synced</div>
           <Link className="chip" href={`/project/${id}/seating`}>🪑 Seating →</Link>
           <button type="button" className="chip" onClick={() => setHeaderPanel(p => p === 'reports' ? null : 'reports')} style={{ cursor: 'pointer', fontFamily: 'inherit', borderColor: headerPanel === 'reports' ? 'var(--accent)' : undefined, color: headerPanel === 'reports' ? 'var(--accent)' : undefined, fontWeight: headerPanel === 'reports' ? 700 : undefined }}>📊 Reports</button>
@@ -325,8 +325,11 @@ export default function ProjectBoard() {
         You have <b>{roleOf(user)}</b> access: view all, comment &amp; attach on any task, edit only your own. Switch &ldquo;Acting as&rdquo; to compare.
       </div>}
 
-      {headerPanel === 'reports' && (
-      <div className="card sans">
+      {headerPanel && (
+        <div className="card sans">
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button onClick={() => setHeaderPanel(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 18, lineHeight: 1, fontFamily: 'inherit' }}>×</button></div>
+          {headerPanel === 'reports' && (
+      <div className="sans">
         <div className="subh">📊 Reports &amp; views with Claude</div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <input value={reportPrompt} onChange={e => setReportPrompt(e.target.value)} placeholder={'e.g. "status dashboard", "calendar of due dates", "what is overdue"'} onKeyDown={e => { if (e.key === 'Enter') generateReport() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, minWidth: 260 }} />
@@ -345,10 +348,9 @@ export default function ProjectBoard() {
           <iframe title="report" sandbox="allow-same-origin" srcDoc={reportHtml} style={{ width: '100%', height: 560, border: '1px solid var(--line)', borderRadius: 8, background: '#fff' }} />
         </div>}
       </div>
-      )}
-
-      {headerPanel === 'links' && (
-      <div className="card sans">
+          )}
+          {headerPanel === 'links' && (
+      <div className="sans">
         <div className="subh">🔗 Helpful links</div>
         {eventLinks.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
           {eventLinks.map(a => <div key={a.id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
@@ -363,23 +365,22 @@ export default function ProjectBoard() {
         </div>
         <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Event-level resources (Informa links, brand guidelines, decks). Visible to everyone on this plan.</div>
       </div>
+          )}
+        </div>
       )}
 
       {master && (
-        <div className="card sans">
-          <div className="subh">✨ Add to this plan with Claude</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'stretch' }}>
+          <div className="card sans" style={{ margin: 0 }}>
+            <div className="subh">✨ Add to this plan with Claude</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <input value={extendPrompt} onChange={e => setExtendPrompt(e.target.value)} placeholder='e.g. "Add a GRIP Meetings activation"' onKeyDown={e => { if (e.key === 'Enter') extendPlan() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, minWidth: 260 }} />
             <button className="btn ghost" onClick={extendPlan} disabled={extending}>{extending ? 'Adding…' : 'Add'}</button>
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Pulls matching tasks from your library (needs the Anthropic key). Or add one manually below.</div>
         </div>
-      )}
-
-      {/* ADD A TASK — workstream, owner, multi-select activations, and library toggle, all at once */}
-      {master && (
-        <div className="card sans">
-          <div className="subh">+ Add a task</div>
+          <div className="card sans" style={{ margin: 0 }}>
+            <div className="subh">+ Add a task</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>
             <input placeholder="Task title…" value={na.title} onChange={e => setNa(n => ({ ...n, title: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addTaskGlobal() }} style={{ flex: 1, minWidth: 220, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
             <select value={na.wsId || (workstreams[0] && workstreams[0].id) || ''} onChange={e => setNa(n => ({ ...n, wsId: e.target.value }))} title="Workstream" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
@@ -399,25 +400,26 @@ export default function ProjectBoard() {
             <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>Tick &ldquo;Save to library&rdquo; to make it reusable for future events; leave it for a one-off.</span>
           </div>
         </div>
+        </div>
       )}
 
-      <div className="card sans" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>Filter</span>
-        <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+      <div className="sans" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', background: 'transparent', border: 'none', padding: '2px 0', margin: '6px 0 2px' }}>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--faint)' }}>Filter</span>
+        <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
           <option value="">All owners</option>
           {OWNERS.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
           <option value="">Any status</option>
           <option value="todo">To do</option>
           <option value="review">Needs review</option>
           <option value="done">Done</option>
         </select>
-        <select value={filterAct} onChange={e => setFilterAct(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+        <select value={filterAct} onChange={e => setFilterAct(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
           <option value="">Any activation</option>
           {actOpts.filter(a => a !== 'All events').map(a => <option key={a} value={a}>{a}</option>)}
         </select>
-        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
           <option value="">Default order</option>
           <option value="due">Sort by due date</option>
         </select>
