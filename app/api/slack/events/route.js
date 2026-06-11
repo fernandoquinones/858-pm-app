@@ -1,6 +1,6 @@
 import { sb } from '../../../../lib/supabaseServer'
 import { verifySlack } from '../../../../lib/slackVerify'
-import { chatDelete } from '../../../../lib/slack'
+import { chatDelete, syncTaskCompleteMessages } from '../../../../lib/slack'
 
 const DONE_REACTIONS = ['white_check_mark', 'heavy_check_mark', 'ballot_box_with_check', '+1']
 
@@ -32,7 +32,11 @@ export async function POST(req) {
     // ✅ reaction => mark the linked task done
     if (e.type === 'reaction_added' && DONE_REACTIONS.includes(e.reaction) && e.item && e.item.ts) {
       const { data: link } = await sb.from('slack_links').select('task_id').eq('channel', e.item.channel).eq('ts', e.item.ts).single()
-      if (link) await sb.from('tasks').update({ status: 'done' }).eq('id', link.task_id)
+      if (link) {
+        await sb.from('tasks').update({ status: 'done' }).eq('id', link.task_id)
+        const who = await slackUserName(e.user)
+        await syncTaskCompleteMessages(sb, link.task_id, who)
+      }
     }
     // (undocumented) wastebasket reaction removes the bot's own message
     if (e.type === 'reaction_added' && e.reaction === 'wastebasket' && e.item && e.item.ts) {

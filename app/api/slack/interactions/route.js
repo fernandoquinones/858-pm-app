@@ -1,5 +1,6 @@
 import { sb } from '../../../../lib/supabaseServer'
 import { verifySlack } from '../../../../lib/slackVerify'
+import { syncTaskCompleteMessages } from '../../../../lib/slack'
 
 export async function POST(req) {
   const raw = await req.text()
@@ -14,8 +15,11 @@ export async function POST(req) {
 
   const action = (payload.actions || [])[0]
   if (action && action.action_id === 'mark_complete' && action.value) {
-    await sb.from('tasks').update({ status: 'done' }).eq('id', action.value)
-    return Response.json({ replace_original: false, text: '✅ Marked complete in the web app.' })
+    const taskId = action.value
+    await sb.from('tasks').update({ status: 'done' }).eq('id', taskId)
+    const who = (payload.user && (payload.user.name || payload.user.username)) || ''
+    await syncTaskCompleteMessages(sb, taskId, who)
+    return new Response('', { status: 200 })
   }
   return new Response('ok', { status: 200 })
 }

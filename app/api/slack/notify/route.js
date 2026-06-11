@@ -1,4 +1,5 @@
 import { sb } from '../../../../lib/supabaseServer'
+import { dmUser } from '../../../../lib/slack'
 
 // POST { taskId } -> post to THIS EVENT'S Slack room with a "Mark complete" button,
 // and store the message ts so a reaction/reply/button maps back to the task.
@@ -31,6 +32,19 @@ export async function POST(req) {
     if (!j.ok) return Response.json({ error: 'Slack: ' + j.error }, { status: 502 })
 
     await sb.from('slack_links').upsert({ task_id: task.id, project_id: task.project_id, channel: j.channel, ts: j.ts }, { onConflict: 'channel,ts' })
+
+    // Also DM the owner(s), if they're mapped in slack_users (combos like "Chris + JG" DM each).
+    const names = (task.owner || '').split('+').map(x => x.trim()).filter(Boolean)
+    if (names.length) {
+      const { data: users } = await sb.from('slack_users').select('name,slack_id').in('name', names)
+      for (const u of (users || [])) {
+        if (!u.slack_id) continue
+        const dm = await dmUser(u.slack_id, text, blocks)
+        if (dm && dm.ts) {
+          await sb.from('slack_links').upsert({ task_id: task.id, project_id: task.project_id, channel: dm.channel, ts: dm.ts }, { onConflict: 'channel,ts' })
+        }
+      }
+    }
     return Response.json({ ok: true, ts: j.ts })
   } catch (e) {
     return Response.json({ error: String(e) }, { status: 500 })

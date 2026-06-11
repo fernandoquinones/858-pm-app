@@ -42,6 +42,9 @@ export default function ProjectBoard() {
   const [showNewWs, setShowNewWs] = useState(false)
   const [extendPrompt, setExtendPrompt] = useState('')
   const [extending, setExtending] = useState(false)
+  const [reportPrompt, setReportPrompt] = useState('')
+  const [reportBusy, setReportBusy] = useState(false)
+  const [reportHtml, setReportHtml] = useState('')
   const [slackOpen, setSlackOpen] = useState(false)
   const [chId, setChId] = useState('')
   const [loading, setLoading] = useState(true)
@@ -90,6 +93,7 @@ export default function ProjectBoard() {
     setTasks(ts => ts.map(x => x.id === t.id ? { ...x, status } : x))
     await supabase.from('tasks').update({ status }).eq('id', t.id)
     if (status === 'review') { try { await fetch('/api/slack/notify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ taskId: t.id }) }) } catch (e) {} }
+    if (status === 'done') { try { await fetch('/api/slack/complete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ taskId: t.id, by: user }) }) } catch (e) {} }
   }
   async function setDue(t, due_date) { if (!canEditTask(user, t)) return; setTasks(ts => ts.map(x => x.id === t.id ? { ...x, due_date } : x)); await supabase.from('tasks').update({ due_date: due_date || null }).eq('id', t.id) }
   async function setActivation(t, acts) {
@@ -150,6 +154,25 @@ export default function ProjectBoard() {
     } catch (e) { setErr(String(e)) }
     setExtending(false)
   }
+
+  async function generateReport(p) {
+    const text = (typeof p === 'string' ? p : reportPrompt).trim()
+    if (!text) return
+    setReportBusy(true); setErr(null); setReportHtml('')
+    try {
+      const r = await fetch('/api/report', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: id, prompt: text }) })
+      const j = await r.json()
+      if (!r.ok) setErr(j.error || 'Could not build the view'); else setReportHtml(j.html || '')
+    } catch (e) { setErr(String(e)) }
+    setReportBusy(false)
+  }
+  function downloadReport() {
+    const blob = new Blob([reportHtml], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = ((project && project.name) || 'report') + '.html'; a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 2000)
+  }
+  function openReport() { const w = window.open(); if (w) { w.document.write(reportHtml); w.document.close() } }
   async function addComment(taskId) {
     const body = (draft[taskId] || '').trim(); if (!body) return
     await supabase.from('comments').insert({ project_id: id, task_id: taskId, author: user, body, source: 'app' })
@@ -314,6 +337,26 @@ export default function ProjectBoard() {
           </div>
         </div>
       )}
+
+      <div className="card sans">
+        <div className="subh">📊 Reports &amp; views with Claude</div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <input value={reportPrompt} onChange={e => setReportPrompt(e.target.value)} placeholder={'e.g. "status dashboard", "calendar of due dates", "what is overdue"'} onKeyDown={e => { if (e.key === 'Enter') generateReport() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, minWidth: 260 }} />
+          <button className="btn ghost" onClick={() => generateReport()} disabled={reportBusy}>{reportBusy ? 'Building…' : 'Build view'}</button>
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+          {['Status dashboard', 'Calendar of due dates', 'Timeline by workstream', 'What is overdue', 'This week\'s tasks', 'Workload by owner'].map(q =>
+            <button key={q} className="btn ghost sm" onClick={() => { setReportPrompt(q); generateReport(q) }} style={{ fontSize: 11.5 }}>{q}</button>)}
+        </div>
+        <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Builds a visual from this event&rsquo;s live data (uses the Anthropic key). Read-only &mdash; it never changes the plan.</div>
+        {reportHtml && <div style={{ marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <button className="btn ghost sm" onClick={openReport}>Open in new tab</button>
+            <button className="btn ghost sm" onClick={downloadReport}>Download .html</button>
+          </div>
+          <iframe title="report" sandbox="allow-same-origin" srcDoc={reportHtml} style={{ width: '100%', height: 560, border: '1px solid var(--line)', borderRadius: 8, background: '#fff' }} />
+        </div>}
+      </div>
 
       {workstreams.map(w => {
         const list = byWs(w.id)
