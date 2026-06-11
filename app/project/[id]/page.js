@@ -275,7 +275,7 @@ export default function ProjectBoard() {
             </div>
           )}
           {project && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', margin: '0 0 6px', overflowX: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '0 0 6px' }}>
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Slack</span>
               {project.slack_channel_id && !slackOpen && (
                 <>
