@@ -236,10 +236,10 @@ export default function ProjectBoard() {
     const { error } = await supabase.from('projects').update({ event_date: v || null }).eq('id', id)
     if (error) setErr('Update date failed: ' + error.message)
   }
-  function setLocalLocation(v) { setProject(p => ({ ...p, location: v })) }
-  async function saveLocation() {
-    const { error } = await supabase.from('projects').update({ location: (project && project.location) || null }).eq('id', id)
-    if (error) setErr('Update location failed: ' + error.message)
+  function setLocalField(k, v) { setProject(p => ({ ...p, [k]: v })) }
+  async function saveField(k) {
+    const { error } = await supabase.from('projects').update({ [k]: (project && project[k]) || null }).eq('id', id)
+    if (error) setErr('Update failed: ' + error.message)
   }
   async function connectRoom() {
     if (!chSel) return
@@ -293,11 +293,23 @@ export default function ProjectBoard() {
                   ? <input type="date" value={project.event_date || ''} onChange={e => setEventDate(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
                   : <span style={{ fontSize: 12, color: 'var(--ink)' }}>{project.event_date ? fmtDate(project.event_date) : '—'}</span>}
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 220px', minWidth: 0 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Location</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>City</span>
                 {master
-                  ? <input value={project.location || ''} onChange={e => setLocalLocation(e.target.value)} onBlur={saveLocation} placeholder="Venue, City, State" style={{ flex: 1, minWidth: 0, border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
-                  : <span style={{ fontSize: 12, color: 'var(--ink)' }}>{project.location || '—'}</span>}
+                  ? <input value={project.city || ''} onChange={e => setLocalField('city', e.target.value)} onBlur={() => saveField('city')} placeholder="City" style={{ width: 120, border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
+                  : <span style={{ fontSize: 12, color: 'var(--ink)' }}>{project.city || '—'}</span>}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>State</span>
+                {master
+                  ? <input value={project.state || ''} onChange={e => setLocalField('state', e.target.value)} onBlur={() => saveField('state')} placeholder="State" style={{ width: 70, border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
+                  : <span style={{ fontSize: 12, color: 'var(--ink)' }}>{project.state || '—'}</span>}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 160px', minWidth: 0 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Venue</span>
+                {master
+                  ? <input value={project.venue || ''} onChange={e => setLocalField('venue', e.target.value)} onBlur={() => saveField('venue')} placeholder="TBD" style={{ flex: 1, minWidth: 0, border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
+                  : <span style={{ fontSize: 12, color: 'var(--ink)' }}>{project.venue || 'TBD'}</span>}
               </span>
             </div>
           )}

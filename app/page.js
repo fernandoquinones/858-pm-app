@@ -20,7 +20,10 @@ export default function Home() {
   // structured create
   const [evName, setEvName] = useState('')
   const [evDate, setEvDate] = useState('')
-  const [evLoc, setEvLoc] = useState('')
+  const [evVenue, setEvVenue] = useState('')
+  const [evCity, setEvCity] = useState('')
+  const [evState, setEvState] = useState('')
+  const [venueDraft, setVenueDraft] = useState({})
   const [evActs, setEvActs] = useState([])
   const [creating, setCreating] = useState(false)
 
@@ -45,10 +48,11 @@ export default function Home() {
   async function createEvent() {
     if (!evName.trim()) { setErr('Give the event a name.'); return }
     if (!evDate) { setErr('Pick an event date.'); return }
-    if (!evLoc.trim()) { setErr('Add a location (Venue, City, State).'); return }
+    if (!evCity.trim()) { setErr('Add a city.'); return }
+    if (!evState.trim()) { setErr('Add a state.'); return }
     setCreating(true); setErr(null)
     try {
-      const r = await fetch('/api/create-event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: evName, date: evDate || null, location: evLoc || null, activations: evActs }) })
+      const r = await fetch('/api/create-event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: evName, date: evDate || null, venue: evVenue || null, city: evCity || null, state: evState || null, activations: evActs }) })
       const j = await r.json()
       if (!r.ok) { setErr(j.error || 'Could not create event'); setCreating(false); return }
       router.push(`/project/${j.projectId}`)
@@ -58,10 +62,11 @@ export default function Home() {
   async function generate() {
     if (!prompt.trim()) { setErr('Describe the event first.'); return }
     if (!evDate) { setErr('Pick an event date.'); return }
-    if (!evLoc.trim()) { setErr('Add a location (Venue, City, State).'); return }
+    if (!evCity.trim()) { setErr('Add a city.'); return }
+    if (!evState.trim()) { setErr('Add a state.'); return }
     setGen(true); setErr(null)
     try {
-      const r = await fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt, date: evDate || null, location: evLoc || null }) })
+      const r = await fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt, date: evDate || null, venue: evVenue || null, city: evCity || null, state: evState || null }) })
       const j = await r.json()
       if (!r.ok) { setErr(j.error || 'Generation failed'); setGen(false); return }
       router.push(`/project/${j.projectId}`)
@@ -75,6 +80,13 @@ export default function Home() {
   }
   function eventTime(p) { return p.event_date ? new Date(p.event_date + 'T00:00:00').getTime() : Infinity }
   const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
+  const cityState = (p) => [p.city, p.state].filter(Boolean).join(', ')
+  async function saveVenue(p) {
+    const v = venueDraft[p.id]; if (v === undefined) return
+    const { error } = await supabase.from('projects').update({ venue: v || null }).eq('id', p.id)
+    if (error) setErr('Update venue failed: ' + error.message)
+    else setProjects(ps => ps.map(x => x.id === p.id ? { ...x, venue: v || null } : x))
+  }
   const shownProjects = projects
     .filter(p => eventFilter === 'current' ? !isPastEvent(p) : isPastEvent(p))
     .sort((a, b) => eventFilter === 'current' ? eventTime(a) - eventTime(b) : eventTime(b) - eventTime(a))
@@ -118,7 +130,9 @@ export default function Home() {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
               <input placeholder="Event name (e.g. 858 LA Holiday Party)" value={evName} onChange={e => setEvName(e.target.value)} style={{ flex: 1, minWidth: 240, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
               <input type="date" value={evDate} onChange={e => setEvDate(e.target.value)} title="Event date" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13 }} />
-              <input placeholder="Venue, City, State" value={evLoc} onChange={e => setEvLoc(e.target.value)} style={{ flex: 1, minWidth: 180, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input placeholder="City" value={evCity} onChange={e => setEvCity(e.target.value)} style={{ flex: 1, minWidth: 120, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input placeholder="State" value={evState} onChange={e => setEvState(e.target.value)} style={{ width: 90, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input placeholder="Venue (optional)" value={evVenue} onChange={e => setEvVenue(e.target.value)} style={{ flex: 1, minWidth: 140, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--faint)', marginBottom: 7 }}>Activations happening at this event:</div>
             <ActivationChips value={evActs} options={actOpts} onChange={setEvActs} includeAllEvents={false} />
@@ -134,7 +148,9 @@ export default function Home() {
             <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={2} placeholder="Describe the event in one sentence…" style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: '10px 12px', fontFamily: 'inherit', fontSize: 13, resize: 'vertical' }} />
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
               <input type="date" value={evDate} onChange={e => setEvDate(e.target.value)} title="Event date" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13 }} />
-              <input placeholder="Venue, City, State" value={evLoc} onChange={e => setEvLoc(e.target.value)} style={{ flex: 1, minWidth: 180, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input placeholder="City" value={evCity} onChange={e => setEvCity(e.target.value)} style={{ flex: 1, minWidth: 120, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input placeholder="State" value={evState} onChange={e => setEvState(e.target.value)} style={{ width: 90, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input placeholder="Venue (optional)" value={evVenue} onChange={e => setEvVenue(e.target.value)} style={{ flex: 1, minWidth: 140, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 10 }}>
               <button className="btn ghost" onClick={generate} disabled={gen}>{gen ? 'Claude is building…' : 'Generate with Claude'}</button>
@@ -160,17 +176,23 @@ export default function Home() {
         <div>
           {shownProjects.length === 0 && <div className="card sans" style={{ color: 'var(--faint)' }}>{eventFilter === 'current' ? 'No current events — create one above.' : 'No past events yet.'}</div>}
           {shownProjects.map(p => (
-            <Link key={p.id} href={`/project/${p.id}`} className="card sans" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Fira Sans Condensed, sans-serif' }}>{p.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{p.event_date ? fmtDate(p.event_date) : 'No date set'}{p.location ? ` · ${p.location}` : ''}</div>
+            <div key={p.id} className="card sans" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ minWidth: 0 }}>
+                <Link href={`/project/${p.id}`} style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Fira Sans Condensed, sans-serif', color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{p.event_date ? fmtDate(p.event_date) : 'No date set'}{cityState(p) ? ` · ${cityState(p)}` : ''}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Venue</span>
+                  {master
+                    ? <input value={venueDraft[p.id] !== undefined ? venueDraft[p.id] : (p.venue || '')} onChange={e => setVenueDraft(d => ({ ...d, [p.id]: e.target.value }))} onBlur={() => saveVenue(p)} placeholder="TBD" style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', minWidth: 130 }} />
+                    : <span style={{ fontSize: 12, color: 'var(--muted)' }}>{p.venue || 'TBD'}</span>}
+                </div>
                 {p.activations && parseActs(p.activations).length > 0 && <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 6 }}>{parseActs(p.activations).map(a => <span key={a} style={{ fontSize: 10.5, background: '#FFF6D6', border: '1px solid #D9A800', color: '#7a5e00', borderRadius: 999, padding: '2px 8px' }}>{a}</span>)}</div>}
               </div>
               <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 {master && <button className="btn ghost sm" onClick={e => deleteEvent(e, p)} style={{ color: '#b42318', borderColor: '#f0c4c0' }}>Delete</button>}
-                <span className="btn ghost sm">Open →</span>
+                <Link href={`/project/${p.id}`} className="btn ghost sm" style={{ textDecoration: 'none' }}>Open →</Link>
               </span>
-            </Link>
+            </div>
           ))}
         </div>
       )}
