@@ -50,6 +50,7 @@ export default function ProjectBoard() {
   const [filterAct, setFilterAct] = useState('')
   const [sortBy, setSortBy] = useState('')
   const [evLink, setEvLink] = useState({ name: '', url: '' })
+  const [headerPanel, setHeaderPanel] = useState(null)
   const [slackOpen, setSlackOpen] = useState(false)
   const [chId, setChId] = useState('')
   const [loading, setLoading] = useState(true)
@@ -307,6 +308,8 @@ export default function ProjectBoard() {
         <div className="chips sans">
           <div className="chip"><span className="dot"></span> Live · synced</div>
           <Link className="chip" href={`/project/${id}/seating`}>🪑 Seating →</Link>
+          <button type="button" className="chip" onClick={() => setHeaderPanel(p => p === 'reports' ? null : 'reports')} style={{ cursor: 'pointer', fontFamily: 'inherit', borderColor: headerPanel === 'reports' ? 'var(--accent)' : undefined, color: headerPanel === 'reports' ? 'var(--accent)' : undefined, fontWeight: headerPanel === 'reports' ? 700 : undefined }}>📊 Reports</button>
+          <button type="button" className="chip" onClick={() => setHeaderPanel(p => p === 'links' ? null : 'links')} style={{ cursor: 'pointer', fontFamily: 'inherit', borderColor: headerPanel === 'links' ? 'var(--accent)' : undefined, color: headerPanel === 'links' ? 'var(--accent)' : undefined, fontWeight: headerPanel === 'links' ? 700 : undefined }}>🔗 Links</button>
           <label className="chip" style={{ gap: 6 }}>Acting as
             <select value={user} onChange={e => setUser(e.target.value)} style={{ border: 'none', background: 'transparent', fontFamily: 'inherit', fontWeight: 700, color: 'var(--ink)', cursor: 'pointer' }}>
               {PEOPLE.map(p => <option key={p.name} value={p.name}>{p.name} ({p.role})</option>)}
@@ -321,6 +324,46 @@ export default function ProjectBoard() {
       {!master && <div className="banner sans" style={{ background: '#E7F0FA', borderColor: '#9DC2E5', color: '#15263C' }}>
         You have <b>{roleOf(user)}</b> access: view all, comment &amp; attach on any task, edit only your own. Switch &ldquo;Acting as&rdquo; to compare.
       </div>}
+
+      {headerPanel === 'reports' && (
+      <div className="card sans">
+        <div className="subh">📊 Reports &amp; views with Claude</div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <input value={reportPrompt} onChange={e => setReportPrompt(e.target.value)} placeholder={'e.g. "status dashboard", "calendar of due dates", "what is overdue"'} onKeyDown={e => { if (e.key === 'Enter') generateReport() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, minWidth: 260 }} />
+          <button className="btn ghost" onClick={() => generateReport()} disabled={reportBusy}>{reportBusy ? 'Building…' : 'Build view'}</button>
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+          {['Status dashboard', 'Calendar of due dates', 'Timeline by workstream', 'What is overdue', 'This week\'s tasks', 'Workload by owner'].map(q =>
+            <button key={q} className="btn ghost sm" onClick={() => { setReportPrompt(q); generateReport(q) }} style={{ fontSize: 11.5 }}>{q}</button>)}
+        </div>
+        <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Builds a visual from this event&rsquo;s live data (uses the Anthropic key). Read-only &mdash; it never changes the plan.</div>
+        {reportHtml && <div style={{ marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <button className="btn ghost sm" onClick={openReport}>Open in new tab</button>
+            <button className="btn ghost sm" onClick={downloadReport}>Download .html</button>
+          </div>
+          <iframe title="report" sandbox="allow-same-origin" srcDoc={reportHtml} style={{ width: '100%', height: 560, border: '1px solid var(--line)', borderRadius: 8, background: '#fff' }} />
+        </div>}
+      </div>
+      )}
+
+      {headerPanel === 'links' && (
+      <div className="card sans">
+        <div className="subh">🔗 Helpful links</div>
+        {eventLinks.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+          {eventLinks.map(a => <div key={a.id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+            <a href={a.url} target="_blank" rel="noreferrer" style={{ color: '#2E5AAC' }}>{a.name || a.url}</a>
+            <button className="btn ghost sm" onClick={() => removeEventLink(a.id)} style={{ fontSize: 11 }}>remove</button>
+          </div>)}
+        </div>}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input placeholder="Label (e.g. Brand guidelines)" value={evLink.name} onChange={e => setEvLink(s => ({ ...s, name: e.target.value }))} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13, minWidth: 180 }} />
+          <input placeholder="Paste a URL…" value={evLink.url} onChange={e => setEvLink(s => ({ ...s, url: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addEventLink() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13, minWidth: 200 }} />
+          <button className="btn ghost" onClick={addEventLink}>Add link</button>
+        </div>
+        <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Event-level resources (Informa links, brand guidelines, decks). Visible to everyone on this plan.</div>
+      </div>
+      )}
 
       {master && (
         <div className="card sans">
@@ -357,42 +400,6 @@ export default function ProjectBoard() {
           </div>
         </div>
       )}
-
-      <div className="card sans">
-        <div className="subh">📊 Reports &amp; views with Claude</div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <input value={reportPrompt} onChange={e => setReportPrompt(e.target.value)} placeholder={'e.g. "status dashboard", "calendar of due dates", "what is overdue"'} onKeyDown={e => { if (e.key === 'Enter') generateReport() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, minWidth: 260 }} />
-          <button className="btn ghost" onClick={() => generateReport()} disabled={reportBusy}>{reportBusy ? 'Building…' : 'Build view'}</button>
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-          {['Status dashboard', 'Calendar of due dates', 'Timeline by workstream', 'What is overdue', 'This week\'s tasks', 'Workload by owner'].map(q =>
-            <button key={q} className="btn ghost sm" onClick={() => { setReportPrompt(q); generateReport(q) }} style={{ fontSize: 11.5 }}>{q}</button>)}
-        </div>
-        <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Builds a visual from this event&rsquo;s live data (uses the Anthropic key). Read-only &mdash; it never changes the plan.</div>
-        {reportHtml && <div style={{ marginTop: 12 }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-            <button className="btn ghost sm" onClick={openReport}>Open in new tab</button>
-            <button className="btn ghost sm" onClick={downloadReport}>Download .html</button>
-          </div>
-          <iframe title="report" sandbox="allow-same-origin" srcDoc={reportHtml} style={{ width: '100%', height: 560, border: '1px solid var(--line)', borderRadius: 8, background: '#fff' }} />
-        </div>}
-      </div>
-
-      <div className="card sans">
-        <div className="subh">🔗 Helpful links</div>
-        {eventLinks.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
-          {eventLinks.map(a => <div key={a.id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
-            <a href={a.url} target="_blank" rel="noreferrer" style={{ color: '#2E5AAC' }}>{a.name || a.url}</a>
-            <button className="btn ghost sm" onClick={() => removeEventLink(a.id)} style={{ fontSize: 11 }}>remove</button>
-          </div>)}
-        </div>}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input placeholder="Label (e.g. Brand guidelines)" value={evLink.name} onChange={e => setEvLink(s => ({ ...s, name: e.target.value }))} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13, minWidth: 180 }} />
-          <input placeholder="Paste a URL…" value={evLink.url} onChange={e => setEvLink(s => ({ ...s, url: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addEventLink() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13, minWidth: 200 }} />
-          <button className="btn ghost" onClick={addEventLink}>Add link</button>
-        </div>
-        <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Event-level resources (Informa links, brand guidelines, decks). Visible to everyone on this plan.</div>
-      </div>
 
       <div className="card sans" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>Filter</span>
