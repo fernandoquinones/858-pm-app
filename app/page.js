@@ -112,6 +112,7 @@ export default function Home() {
         </div>
         <div className="chips sans">
           <div className="chip"><span className="dot"></span> Live · Supabase</div>
+          <Link className="chip" href="/dossier-demo" style={{ textDecoration: 'none', cursor: 'pointer' }}>🗂 Client dossier (demo)</Link>
           <label className="chip" style={{ gap: 6 }}>Acting as
             <select value={user} onChange={e => setUser(e.target.value)} style={{ border: 'none', background: 'transparent', fontFamily: 'inherit', fontWeight: 700, color: 'var(--ink)', cursor: 'pointer' }}>
               {PEOPLE.map(p => <option key={p.name} value={p.name}>{p.name} ({p.role})</option>)}
