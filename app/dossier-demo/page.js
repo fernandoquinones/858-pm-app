@@ -41,51 +41,6 @@ function Avatar({ slug, name }) {
   return <img src={url} alt={name} onError={() => setI(i + 1)} style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', flex: 'none', background: '#eef0f3' }} />
 }
 
-function SeatingChart() {
-  const tables = [
-    { n: 1, label: 'Table 1', people: ['Aaron Weedy', 'AJ Francavilla', 'Angell Tsang', 'Ann Hufford', '', ''] },
-    { n: 2, label: 'Table 2', people: ['Anne Chaio', 'Bradley Parker', 'Brendon Gilbert', '', '', ''] },
-    { n: 3, label: 'Table 3', people: ['Brian Anderson', 'Achilles Papakonstantinou', 'April Brady', '', '', ''] },
-    { n: 4, label: 'Your table', you: true, people: ['Momentum (you)', 'Christina · 858', 'Target: Aaron W.', 'Target: Bradley P.', '', ''] },
-  ]
-  const pos = [{ x: 150, y: 120 }, { x: 410, y: 120 }, { x: 150, y: 300 }, { x: 410, y: 300 }]
-  const R = 42, dist = 66
-  return (
-    <div>
-      <svg viewBox="0 0 560 420" style={{ width: '100%', maxWidth: 560, display: 'block', margin: '10px auto 0' }} fontFamily="Fira Sans, sans-serif">
-        <rect x="8" y="8" width="544" height="404" rx="14" fill="#f7f7f5" stroke="#e2e5ea" />
-        {tables.map((t, ti) => {
-          const c = pos[ti]
-          return (
-            <g key={t.n}>
-              {t.people.map((p, k) => {
-                const ang = (k / t.people.length) * 2 * Math.PI - Math.PI / 2
-                const sx = c.x + dist * Math.cos(ang), sy = c.y + dist * Math.sin(ang)
-                const occ = !!p
-                return (
-                  <g key={k}>
-                    <circle cx={sx} cy={sy} r="12" fill={occ ? '#1B2A4A' : '#fff'} stroke={occ ? '#1B2A4A' : '#cfd4dc'} />
-                    <text x={sx} y={sy + 3} textAnchor="middle" fontSize="8" fontWeight="700" fill={occ ? '#fff' : '#cfd4dc'}>{occ ? initials(p) : '+'}</text>
-                    {occ && <title>{p}</title>}
-                  </g>
-                )
-              })}
-              <circle cx={c.x} cy={c.y} r={R} fill={t.you ? '#E6F1FB' : '#fff'} stroke={t.you ? '#2E5AAC' : '#cfd4dc'} strokeWidth={t.you ? 2 : 1} />
-              <text x={c.x} y={t.you ? c.y - 2 : c.y + 4} textAnchor="middle" fontSize="13" fontWeight="700" fill="#1B2A4A">{t.n}</text>
-              {t.you && <text x={c.x} y={c.y + 12} textAnchor="middle" fontSize="8" fontWeight="700" fill="#2E5AAC">YOU</text>}
-            </g>
-          )
-        })}
-      </svg>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12, fontSize: 12 }}>
-        {tables.map(t => (
-          <div key={t.n}><b style={{ color: t.you ? '#2E5AAC' : '#1B2A4A' }}>{t.label}</b>: <span style={{ color: '#5f6672' }}>{t.people.filter(Boolean).join(', ') || 'open'}</span></div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 const TIERS = ['—', 'Tier 1', 'Tier 2', 'Customer', 'Detractor']
 
 export default function DossierDemo() {
@@ -151,10 +106,6 @@ export default function DossierDemo() {
         </div>
       </div>
 
-      <div style={{ ...card, marginBottom: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#2E5AAC' }}>Room &amp; seating chart <span style={{ color: '#9aa1ad' }}>· sample · hover a seat for the name</span></div>
-        <SeatingChart />
-      </div>
       <div style={{ ...card, marginBottom: 14 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#2E5AAC' }}>1. Upload the organizer's attendee list</div>
         <div style={{ fontSize: 12.5, color: '#5f6672', margin: '6px 0 8px' }}>Paste rows as <code>Name, Email, Company</code> — organizer lists are sparse; we fill the rest.</div>

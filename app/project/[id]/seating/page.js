@@ -80,6 +80,30 @@ export default function Seating() {
     setNote(`${g.name} marked no-show — seat freed.`)
     await supabase.from('guests').update({ status: 'noshow', table_id: null }).eq('id', g.id)
   }
+  async function loadSample() {
+    if (!canEdit) return
+    if (!confirm('Load a sample seating chart? This replaces any existing tables/guests on this event.')) return
+    await supabase.from('guests').delete().eq('project_id', id)
+    await supabase.from('seating_tables').delete().eq('project_id', id)
+    const tdefs = [
+      { project_id: id, name: 'Table 1', capacity: 8, sort_order: 0 },
+      { project_id: id, name: 'Table 2', capacity: 8, sort_order: 1 },
+      { project_id: id, name: 'Table 3', capacity: 8, sort_order: 2 },
+      { project_id: id, name: 'Host table', capacity: 8, is_host: true, sort_order: 3 }
+    ]
+    const { data: T } = await supabase.from('seating_tables').insert(tdefs).select().order('sort_order')
+    if (!T) { load(); return }
+    const seat = (name, company, tier, ti, status = 'confirmed') => ({ project_id: id, name, company, tier, status, table_id: ti == null ? null : T[ti].id })
+    const gs = [
+      seat('Aaron Weedy', 'Ledo Pizza', 1, 0), seat('AJ Francavilla', 'Sodexo', 2, 0), seat('Brendon Gilbert', "Hattie B's", 2, 0),
+      seat('Angell Tsang', 'Tso Chinese', 1, 1), seat('Ann Hufford', 'Technomic', null, 1), seat('Brian Anderson', 'Upward Projects', 1, 1),
+      seat('Anne Chaio', 'Friedmans Hospitality', 2, 2), seat('Bradley Parker', 'Parker Hospitality', 1, 2), seat('Achilles Papakonstantinou', 'Nostimo Brands', null, 2),
+      seat('April Brady', 'Technomic', 2, 3), seat('Christina Auyeung', '858 Partners', null, 3), seat('JG', '858 Partners', null, 3),
+      seat('Jordan Wells', 'Unknown Co.', null, null, 'waitlist'), seat('Dana Lee', 'Coastline Restaurants', 2, null, 'waitlist')
+    ]
+    await supabase.from('guests').insert(gs)
+    load()
+  }
 
   if (loading) return <div className="wrap"><div className="loading sans">Loading seating…</div></div>
 
@@ -111,6 +135,7 @@ export default function Seating() {
         </div>
       )}
 
+      {canEdit && <div style={{ margin: '0 0 12px' }}><button className="btn" onClick={loadSample}>Load sample seating</button>{tables.length > 0 && <span style={{ fontSize: 11.5, color: 'var(--faint)', marginLeft: 10 }}>resets &amp; reloads the demo chart</span>}</div>}
       <div className="panel">
         <h2>Seating board <span className="meta sans">{canEdit ? 'click a guest, then an open seat to move · hover to mark no-show' : 'read-only'}</span></h2>
         <div className="pad">
