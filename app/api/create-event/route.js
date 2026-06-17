@@ -1,5 +1,19 @@
 import { sb } from '../../../lib/supabaseServer'
 
+// Turn a library offset (amount/unit/ref) into a real date relative to the event date.
+function shiftDate(eventDate, amount, unit, ref) {
+  if (!eventDate || !ref || ref === 'varies') return null
+  if (ref === 'on event date') return eventDate
+  const n = parseInt(amount, 10); if (isNaN(n)) return null
+  const d = new Date(eventDate + 'T00:00:00')
+  const sign = ref === 'before event' ? -1 : 1
+  if (unit === 'days') d.setDate(d.getDate() + sign * n)
+  else if (unit === 'weeks') d.setDate(d.getDate() + sign * 7 * n)
+  else if (unit === 'months') d.setMonth(d.getMonth() + sign * n)
+  else return null
+  return d.toISOString().slice(0, 10)
+}
+
 // POST { name, date, activations[] } -> builds a plan from the library, no AI.
 // Pulls every "All events" task + every task tagged with any selected activation.
 export async function POST(req) {
@@ -40,7 +54,11 @@ export async function POST(req) {
     let so = 0
     const rows = keep.map(r => ({
       project_id: project.id, workstream_id: wsIds[r.workstream], title: r.title,
-      owner: r.owner || 'Team', applies_to: r.applies_to || '', notes: r.notes || '', status: 'todo', sort_order: so++
+      owner: r.owner || 'Team', applies_to: r.applies_to || '', notes: r.notes || '', status: 'todo', sort_order: so++,
+      due_date: shiftDate(date, r.due_amount, r.due_unit, r.due_ref),
+      start_date: shiftDate(date, r.start_amount, r.start_unit, r.start_ref),
+      task_type: r.task_type || null,
+      recurrence: r.recurrence || null
     }))
     if (rows.length) { const { error: te } = await sb.from('tasks').insert(rows); if (te) return Response.json({ error: te.message }, { status: 500 }) }
 

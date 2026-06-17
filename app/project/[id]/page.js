@@ -257,6 +257,12 @@ export default function ProjectBoard() {
 
   if (loading) return <div className="wrap"><div className="loading sans">Loading project…</div></div>
 
+  const phaseOf = t => {
+    if (!t.due_date || !project || !project.event_date) return ''
+    if (t.due_date < project.event_date) return 'Pre-event'
+    if (t.due_date > project.event_date) return 'Post-event'
+    return 'Intra-event'
+  }
   const byWs = wsId => {
     let list = tasks.filter(t => t.workstream_id === wsId)
     if (filterOwner) list = list.filter(t => (t.owner || '').includes(filterOwner))
@@ -494,7 +500,7 @@ export default function ProjectBoard() {
                       <div className="trow">
                         <div className="tname">
                           <span className="nt">{t.title}</span>
-                          <div className="acts">{parseActs(t.applies_to).map(x => <span className="pill" key={x}>{x}</span>)}</div>
+                          <div className="acts">{phaseOf(t) && <span className="pill" style={{ background: '#EEF3FB', borderColor: '#cdd9f0', color: '#2E5AAC' }}>{phaseOf(t)}</span>}{t.recurrence && t.recurrence !== 'none' && <span className="pill" style={{ background: '#FAEEDA', borderColor: '#EF9F27', color: '#854F0B' }}>{t.recurrence}</span>}{parseActs(t.applies_to).map(x => <span className="pill" key={x}>{x}</span>)}</div>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))}>{openThread[t.id] ? '▾ Hide' : '✎ Edit'}</button>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ marginLeft: 12 }}>💬 Comment{cs.length ? ' (' + cs.length + ')' : ''}</button>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ marginLeft: 12 }}>📎 Add attachment{ats.length ? ' (' + ats.length + ')' : ''}</button>

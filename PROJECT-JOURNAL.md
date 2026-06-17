@@ -98,3 +98,7 @@ A multifunction **event project-management tool** that replaced 858's pass-aroun
 - **JG** — seating + deal strategy (member). **Chris** — comms (member).
 
 *Last updated: this session. Pick up at ROADMAP.md → Phase 2.*
+
+
+## Update — June 10, 2026
+See SESSION-2026-06-10.md. Live: board redesign, Reports & Views, Current/Past event filter, event date + venue/city/state (required date/city/state; optional editable venue). Parked: Slack Phase 2 (inert), activation-tasks bug (reverted), comment-notify. Waiting on Christina CSV for #40.

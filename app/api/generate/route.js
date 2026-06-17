@@ -59,7 +59,7 @@ export async function POST(req) {
     const LIBRARY = await loadLibrary(supabase)
     const system =
       'You build event project plans for 858 Partners. You are given a TEMPLATE LIBRARY of every task ' +
-      '858 has run, grouped by phase and tagged by activation type (Luncheon, Bird circles, 858 House, GRIP, All events). ' +
+      '858 has run, grouped by phase and tagged by activation type (Luncheon, Workshop, 858 House, GRIP Meetings, Presentation, Guest speaker, Evening networking, All events). ' +
       'Given a short description of an event, select the relevant phases and tasks, keep the owners from the library, ' +
       'and only include tasks that fit the described activations (always include "All events" tasks). ' +
       'If the description names a date, set due_date for each task working backward from its phase timing; otherwise leave due_date empty. ' +
