@@ -1,5 +1,5 @@
 import { sb } from '../../../../lib/supabaseServer'
-import { dmUser } from '../../../../lib/slack'
+import { dmUser, taskActionBlocks } from '../../../../lib/slack'
 
 // POST { taskId } -> post to THIS EVENT'S Slack room with a "Mark complete" button,
 // and store the message ts so a reaction/reply/button maps back to the task.
@@ -16,12 +16,7 @@ export async function POST(req) {
     const channel = (project && project.slack_channel_id) || process.env.SLACK_CHANNEL_ID
     if (!channel) return Response.json({ ok: false, skipped: 'No Slack room linked to this event' })
 
-    const text = `*${task.owner}* — task needs your attention: *${task.title}*${task.due_date ? ` (due ${task.due_date})` : ''}`
-    const blocks = [
-      { type: 'section', text: { type: 'mrkdwn', text } },
-      { type: 'actions', elements: [{ type: 'button', text: { type: 'plain_text', text: '✅ Mark complete' }, style: 'primary', action_id: 'mark_complete', value: task.id }] },
-      { type: 'context', elements: [{ type: 'mrkdwn', text: 'React ✅ or reply in thread to comment — it syncs to the web app.' }] }
-    ]
+    const { text, blocks } = taskActionBlocks(task)
 
     const r = await fetch('https://slack.com/api/chat.postMessage', {
       method: 'POST',

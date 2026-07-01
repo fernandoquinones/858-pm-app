@@ -188,6 +188,8 @@ export default function ProjectBoard() {
   async function addComment(taskId) {
     const body = (draft[taskId] || '').trim(); if (!body) return
     await supabase.from('comments').insert({ project_id: id, task_id: taskId, author: user, body, source: 'app' })
+    // mirror into the Slack thread(s) for this task (no-op if Slack isn't configured / no message yet)
+    try { await fetch('/api/slack/comment-notify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ taskId, author: user, body }) }) } catch (e) {}
     setDraft(d => ({ ...d, [taskId]: '' })); load()
   }
   async function addLink(taskId) {

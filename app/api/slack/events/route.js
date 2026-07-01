@@ -1,6 +1,6 @@
 import { sb } from '../../../../lib/supabaseServer'
 import { verifySlack } from '../../../../lib/slackVerify'
-import { chatDelete, syncTaskCompleteMessages } from '../../../../lib/slack'
+import { chatDelete, syncTaskCompleteMessages, restoreTaskMessages } from '../../../../lib/slack'
 
 const DONE_REACTIONS = ['white_check_mark', 'heavy_check_mark', 'ballot_box_with_check', '+1']
 
@@ -36,6 +36,14 @@ export async function POST(req) {
         await sb.from('tasks').update({ status: 'done' }).eq('id', link.task_id)
         const who = await slackUserName(e.user)
         await syncTaskCompleteMessages(sb, link.task_id, who)
+      }
+    }
+    // remove ✅ => reopen the linked task (revert status) and restore the actionable message
+    if (e.type === 'reaction_removed' && DONE_REACTIONS.includes(e.reaction) && e.item && e.item.ts) {
+      const { data: link } = await sb.from('slack_links').select('task_id').eq('channel', e.item.channel).eq('ts', e.item.ts).single()
+      if (link) {
+        await sb.from('tasks').update({ status: 'todo' }).eq('id', link.task_id)
+        await restoreTaskMessages(sb, link.task_id)
       }
     }
     // (undocumented) wastebasket reaction removes the bot's own message

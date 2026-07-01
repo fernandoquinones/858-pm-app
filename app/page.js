@@ -16,6 +16,7 @@ export default function Home() {
   const [actOpts, setActOpts] = useState(BASE_ACTIVATIONS)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
+  const [slackMsg, setSlackMsg] = useState(null)
 
   // structured create
   const [evName, setEvName] = useState('')
@@ -87,6 +88,17 @@ export default function Home() {
     if (error) setErr('Update venue failed: ' + error.message)
     else setProjects(ps => ps.map(x => x.id === p.id ? { ...x, venue: v || null } : x))
   }
+  async function pushSlack(kind) {
+    setSlackMsg('Sending…')
+    try {
+      const url = kind === 'remind' ? '/api/slack/remind' : '/api/slack/digest'
+      const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(kind === 'remind' ? {} : { type: kind }) })
+      const j = await r.json()
+      if (j.skipped) setSlackMsg('Slack not configured yet — ' + j.skipped)
+      else { const delivered = (j.sent || []).filter(x => x.ok).length; setSlackMsg('Sent · ' + (j.taskCount ?? 0) + ' task(s) in window · ' + delivered + ' DM(s) delivered') }
+    } catch (e) { setSlackMsg('Error: ' + e) }
+    setTimeout(() => setSlackMsg(null), 7000)
+  }
   const shownProjects = projects
     .filter(p => eventFilter === 'current' ? !isPastEvent(p) : isPastEvent(p))
     .sort((a, b) => eventFilter === 'current' ? eventTime(a) - eventTime(b) : eventTime(b) - eventTime(a))
@@ -156,6 +168,18 @@ export default function Home() {
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 10 }}>
               <button className="btn ghost" onClick={generate} disabled={gen}>{gen ? 'Claude is building…' : 'Generate with Claude'}</button>
               <span style={{ fontSize: 11.5, color: 'var(--faint)' }}>Description, date &amp; location required (needs the Anthropic key).</span>
+            </div>
+          </div>
+
+          {/* Slack digests + manual reminders */}
+          <div className="card sans">
+            <div className="subh">📣 Slack digests &amp; reminders</div>
+            <div style={{ fontSize: 11.5, color: 'var(--faint)', marginBottom: 10 }}>Auto: personal DMs every Monday (this week) &amp; Friday (next week) at 11am ET — you &amp; Christina also get the full cross-event view. Push manually anytime:</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="btn ghost sm" onClick={() => pushSlack('remind')}>⏰ Send day-before reminders</button>
+              <button className="btn ghost sm" onClick={() => pushSlack('weekly')}>📅 Send this-week digest now</button>
+              <button className="btn ghost sm" onClick={() => pushSlack('preview')}>👀 Send next-week preview now</button>
+              {slackMsg && <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>{slackMsg}</span>}
             </div>
           </div>
         </>
