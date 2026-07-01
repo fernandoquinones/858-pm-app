@@ -1,8 +1,7 @@
 import { sb } from '../../../../lib/supabaseServer'
-import { dmUser } from '../../../../lib/slack'
-import { windowFor, tasksInWindow, personalBlocks, REAL_PEOPLE } from '../../../../lib/digest'
+import { dmPersonalTasks } from '../../../../lib/slack'
+import { windowFor, tasksInWindow, ownedBy, REAL_PEOPLE } from '../../../../lib/digest'
 
-// POST -> manually push "due tomorrow" reminders as personal DMs (Christina/Fernando trigger this).
 export async function POST(req) {
   try {
     if (!process.env.SLACK_BOT_TOKEN) return Response.json({ ok: false, skipped: 'Slack not configured' })
@@ -14,11 +13,11 @@ export async function POST(req) {
 
     const sent = []
     for (const person of REAL_PEOPLE) {
-      const p = personalBlocks(person, tasks, meta, w.headline)
-      if (!p) continue
+      const mine = ownedBy(tasks, person)
+      if (!mine.length) continue
       if (!idOf[person]) { sent.push({ person, skipped: 'no slack_id' }); continue }
-      const r = await dmUser(idOf[person], p.text, p.blocks)
-      sent.push({ person, ok: !!(r && r.ts), error: r && r.error })
+      const n = await dmPersonalTasks(sb, idOf[person], person, mine, meta, w.headline)
+      sent.push({ person, delivered: n })
     }
     return Response.json({ ok: true, taskCount: tasks.length, sent })
   } catch (e) {
