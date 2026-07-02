@@ -56,6 +56,7 @@ export default function ProjectBoard() {
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
   const [msg, setMsg] = useState(null)
+  const [sel, setSel] = useState(new Set())
 
   const load = useCallback(async () => {
     const [p, ws, ts, cm, at, lt] = await Promise.all([
@@ -219,18 +220,40 @@ export default function ProjectBoard() {
     setErr(null); setMsg('Removed “' + t.title + '” from the library (still on this event).'); setTimeout(() => setMsg(null), 3000)
     load()
   }
+  const toggleSel = tid => setSel(s => { const n = new Set(s); n.has(tid) ? n.delete(tid) : n.add(tid); return n })
   async function deleteTask(t) {
-    if (!canEditTask(user, t)) return
+    if (user !== 'Christina') return
     if (typeof window !== 'undefined' && !window.confirm('Delete “' + t.title + '” from this plan? This cannot be undone.')) return
     const { error } = await supabase.from('tasks').delete().eq('id', t.id)
     if (error) { setErr('Delete failed: ' + error.message); return }
     setErr(null); setMsg('Deleted “' + t.title + '” from the plan.'); setTimeout(() => setMsg(null), 3000)
     load()
   }
+  async function deleteSelected() {
+    if (user !== 'Christina' || !sel.size) return
+    if (typeof window !== 'undefined' && !window.confirm('Delete ' + sel.size + ' task(s) from this plan? This cannot be undone.')) return
+    const ids = [...sel]
+    const { error } = await supabase.from('tasks').delete().in('id', ids)
+    if (error) { setErr('Bulk delete failed: ' + error.message); return }
+    setSel(new Set()); setErr(null); setMsg('Deleted ' + ids.length + ' task(s).'); setTimeout(() => setMsg(null), 3000)
+    load()
+  }
   async function setEventActivations(acts) {
+    const prev = parseActs(project.activations)
+    const added = acts.filter(a => !prev.includes(a) && a !== 'All events')
     setProject(p => ({ ...p, activations: acts.join(' / ') }))
     const { error } = await supabase.from('projects').update({ activations: acts.join(' / ') }).eq('id', id)
-    if (error) setErr('Update activations failed: ' + error.message)
+    if (error) { setErr('Update activations failed: ' + error.message); return }
+    for (const a of added) {
+      if (typeof window !== 'undefined' && !window.confirm('Add the “' + a + '” tasks from the library to this plan?')) continue
+      try {
+        const r = await fetch('/api/add-activation', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: id, activation: a }) })
+        const j = await r.json()
+        if (j.error) { setErr('Add “' + a + '” failed: ' + j.error); continue }
+        setMsg('Added ' + j.added + ' “' + a + '” task(s).'); setTimeout(() => setMsg(null), 4000)
+      } catch (e) { setErr(String(e)) }
+    }
+    if (added.length) load()
   }
   const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
   async function setEventDate(v) {
@@ -480,6 +503,14 @@ export default function ProjectBoard() {
         {(filtering || sortBy) && <button className="btn ghost sm" onClick={() => { setFilterOwner(''); setFilterStatus(''); setFilterAct(''); setSortBy('') }}>Clear</button>}
       </div>
 
+      {user === 'Christina' && sel.size > 0 && (
+        <div className="card sans" style={{ display: 'flex', alignItems: 'center', gap: 12, borderColor: '#f0c4c0', background: '#fdf3f2', marginBottom: 10 }}>
+          <b style={{ color: '#b42318' }}>{sel.size} selected</b>
+          <button className="btn sm" style={{ background: '#b42318', borderColor: '#b42318' }} onClick={deleteSelected}>🗑 Delete selected</button>
+          <button className="btn ghost sm" onClick={() => setSel(new Set())}>Clear</button>
+        </div>
+      )}
+
       {workstreams.map(w => {
         const list = byWs(w.id)
         if (filtering && !list.length) return null
@@ -501,12 +532,13 @@ export default function ProjectBoard() {
                     <div key={t.id}>
                       <div className="trow">
                         <div className="tname">
+                          {user === 'Christina' && <input type="checkbox" checked={sel.has(t.id)} onChange={() => toggleSel(t.id)} style={{ marginRight: 8, cursor: 'pointer' }} />}
                           <span className="nt">{t.title}</span>
                           <div className="acts">{phaseOf(t) && <span className="pill" style={{ background: '#EEF3FB', borderColor: '#cdd9f0', color: '#2E5AAC' }}>{phaseOf(t)}</span>}{t.recurrence && t.recurrence !== 'none' && <span className="pill" style={{ background: '#FAEEDA', borderColor: '#EF9F27', color: '#854F0B' }}>{t.recurrence}</span>}{parseActs(t.applies_to).map(x => <span className="pill" key={x}>{x}</span>)}</div>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))}>{openThread[t.id] ? '▾ Hide' : '✎ Edit'}</button>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ marginLeft: 12 }}>💬 Comment{cs.length ? ' (' + cs.length + ')' : ''}</button>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ marginLeft: 12 }}>📎 Add attachment{ats.length ? ' (' + ats.length + ')' : ''}</button>
-                          {canEditTask(user, t) && <button className="cmtbtn" onClick={() => deleteTask(t)} style={{ color: 'var(--red)', marginLeft: 12 }}>🗑 Delete</button>}
+                          {user === 'Christina' && <button className="cmtbtn" onClick={() => deleteTask(t)} style={{ color: 'var(--red)', marginLeft: 12 }}>🗑 Delete</button>}
                         </div>
                         <div className="owner"><span className="av" style={{ width: 20, height: 20, fontSize: 9, background: OWNER_COLOR[t.owner] || '#888' }}>{ownInit(t.owner)}</span>{t.owner}</div>
                         <div className={`due sans ${editable ? '' : 'ro'}`}><input type="date" value={t.due_date || ''} disabled={!editable} onChange={e => setDue(t, e.target.value)} /></div>
