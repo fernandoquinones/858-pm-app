@@ -4,20 +4,16 @@
 // small tweak once we see the real Attio schema.
 
 const SAMPLE = [
-  { id: 'aaron-weedy', name: 'Aaron Weedy', company: 'Ledo Pizza', metro: 'Baltimore', title: 'VP Operations', email: 'aaron@ledopizza.com' },
-  { id: 'aj-francavilla', name: 'AJ Francavilla', company: 'Sodexo', metro: 'New York', title: 'Director', email: 'aj@sodexo.com' },
-  { id: 'angell-tsang', name: 'Angell Tsang', company: 'Tso Chinese', metro: 'Austin', title: 'Founder', email: 'angell@tsochinese.com' },
-  { id: 'ann-hufford', name: 'Ann Hufford', company: 'Technomic', metro: 'Chicago', title: 'Principal', email: 'ann@technomic.com' },
-  { id: 'anne-chaio', name: 'Anne Chaio', company: 'Friedmans Hospitality', metro: 'New York', title: 'Partner', email: 'anne@friedmans.com' },
-  { id: 'bradley-parker', name: 'Bradley Parker', company: 'Parker Hospitality', metro: 'Chicago', title: 'CEO', email: 'bradley@parkerhospitality.com' },
-  { id: 'brendon-gilbert', name: 'Brendon Gilbert', company: "Hattie B's", metro: 'Nashville', title: 'COO', email: 'brendon@hattieb.com' },
-  { id: 'brian-anderson', name: 'Brian Anderson', company: 'Upward Projects', metro: 'Phoenix', title: 'Founder', email: 'brian@upwardprojects.com' },
-  { id: 'achilles-papakonstantinou', name: 'Achilles Papakonstantinou', company: 'Nostimo Brands', metro: '', title: 'Founder', email: 'achilles@nostimo.com' },
-  { id: 'april-brady', name: 'April Brady', company: 'Technomic', metro: 'Chicago', title: '', email: 'april@technomic.com' },
-  { id: 'ben-neon', name: '', company: 'Neon Deer Data Labs Inc.', metro: '', title: '', email: 'ben@neondeerdata.com' },
-  { id: 'melissa-neon', name: '', company: 'Neon Deer Data Labs Inc.', metro: '', title: '', email: 'melissa@neondeerdata.com' },
-  { id: 'jason-wolf', name: 'Jason Wolf', company: 'Neon Deer Data Labs Inc.', metro: '', title: '', email: 'jason@neondeerdata.com' },
-  { id: 'jordan-wells', name: 'Jordan Wells', company: 'Unknown Co.', metro: 'Denver', title: 'GM', email: 'jordan@unknown.co' },
+  { id: 'aaron-weedy', name: 'Aaron Weedy', company: 'Ledo Pizza', metro: '', title: '', email: '' },
+  { id: 'aj-francavilla', name: 'AJ Francavilla', company: 'Sodexo', metro: '', title: '', email: '' },
+  { id: 'angell-tsang', name: 'Angell Tsang', company: 'Tso Chinese', metro: '', title: '', email: '' },
+  { id: 'ann-hufford', name: 'Ann Hufford', company: 'Technomic', metro: '', title: '', email: '' },
+  { id: 'anne-chaio', name: 'Anne Chaio', company: 'Friedmans Hospitality', metro: '', title: '', email: '' },
+  { id: 'bradley-parker', name: 'Bradley Parker', company: 'Parker Hospitality', metro: '', title: '', email: '' },
+  { id: 'brendon-gilbert', name: 'Brendon Gilbert', company: "Hattie B's", metro: '', title: '', email: '' },
+  { id: 'brian-anderson', name: 'Brian Anderson', company: 'Upward Projects', metro: '', title: '', email: '' },
+  { id: 'achilles-papakonstantinou', name: 'Achilles Papakonstantinou', company: 'Nostimo Brands', metro: '', title: '', email: '' },
+  { id: 'april-brady', name: 'April Brady', company: 'Technomic', metro: '', title: '', email: '' },
 ]
 
 function first(v) { return Array.isArray(v) ? v[0] : v }

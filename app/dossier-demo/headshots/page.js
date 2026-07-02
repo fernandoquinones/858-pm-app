@@ -8,13 +8,14 @@ import { isMaster } from '../../../lib/roles'
 const EXTS = ['jpeg', 'png', 'jpg', 'webp']
 const PAGE = 25
 const initials = n => (n || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '—'
+const pub = path => supabase.storage.from('headshots').getPublicUrl(path).data.publicUrl
 
 export default function HeadshotsPage() {
   const [user] = useCurrentUser()
   const allowed = user === 'Christina' || isMaster(user)
 
   const [people, setPeople] = useState([])
-  const [fileByBase, setFileByBase] = useState({}) // id -> stored filename
+  const [shots, setShots] = useState({})   // id -> true(has) / false(missing)
   const [source, setSource] = useState('')
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
@@ -32,48 +33,27 @@ export default function HeadshotsPage() {
     } catch (e) { setErr('Could not load contacts: ' + e) }
     setLoading(false)
   }
-  async function loadFiles() {
-    try {
-      const { data, error } = await supabase.storage.from('headshots').list('', { limit: 2000 })
-      if (error) { setErr('Could not read headshots bucket: ' + error.message); return }
-      const map = {}
-      ;(data || []).forEach(f => { const base = f.name.replace(/\.[^.]+$/, ''); map[base] = f.name })
-      setFileByBase(map)
-    } catch (e) { setErr(String(e)) }
-  }
-  useEffect(() => { if (allowed) { loadPeople(); loadFiles() } }, [allowed])
+  useEffect(() => { if (allowed) loadPeople() }, [allowed])
+
+  const resolve = (id, has) => setShots(s => (s[id] === has ? s : { ...s, [id]: has }))
 
   const companies = useMemo(() => [...new Set(people.map(p => p.company).filter(Boolean))].sort(), [people])
   const metros = useMemo(() => [...new Set(people.map(p => p.metro).filter(Boolean))].sort(), [people])
-  const hasShot = id => !!fileByBase[id]
-  const withCount = useMemo(() => people.filter(p => hasShot(p.id)).length, [people, fileByBase])
+  const withCount = useMemo(() => Object.values(shots).filter(Boolean).length, [shots])
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
     return people.filter(p => {
       if (companyF && p.company !== companyF) return false
       if (metroF && p.metro !== metroF) return false
-      if (missingOnly && hasShot(p.id)) return false
+      if (missingOnly && shots[p.id] === true) return false
       if (s && !(`${p.name} ${p.email} ${p.company}`.toLowerCase().includes(s))) return false
       return true
     })
-  }, [people, q, companyF, metroF, missingOnly, fileByBase])
+  }, [people, q, companyF, metroF, missingOnly, shots])
 
   useEffect(() => { setPage(0) }, [q, companyF, metroF, missingOnly])
   const pageRows = filtered.slice(page * PAGE, page * PAGE + PAGE)
-  const shotUrl = id => fileByBase[id] ? supabase.storage.from('headshots').getPublicUrl(fileByBase[id]).data.publicUrl : null
-
-  async function upload(id, file) {
-    if (!file) return
-    setErr(null)
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-    const path = `${id}.${EXTS.includes(ext) ? ext : 'jpg'}`
-    // remove any existing file for this id (different ext) to avoid duplicates
-    if (fileByBase[id] && fileByBase[id] !== path) { try { await supabase.storage.from('headshots').remove([fileByBase[id]]) } catch (e) {} }
-    const up = await supabase.storage.from('headshots').upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' })
-    if (up.error) { setErr('Upload failed: ' + up.error.message + ' — the "headshots" Storage bucket needs to allow uploads.'); return }
-    setFileByBase(m => ({ ...m, [id]: path }))
-  }
 
   if (!allowed) return (
     <div className="wrap sans"><div className="card" style={{ color: 'var(--faint)' }}>
@@ -92,7 +72,7 @@ export default function HeadshotsPage() {
             {source && source !== 'attio' && <span style={{ marginLeft: 8, fontSize: 11, background: '#FAEEDA', color: '#854F0B', padding: '2px 7px', borderRadius: 999 }}>{source === 'sample' ? 'sample data — add ATTIO_API_KEY to go live' : source}</span>}
           </div>
         </div>
-        <button className="btn ghost" onClick={() => { loadPeople(); loadFiles() }}>⟳ Sync now</button>
+        <button className="btn ghost" onClick={loadPeople}>⟳ Sync now</button>
       </div>
 
       {err && <div className="banner">{err}</div>}
@@ -126,7 +106,7 @@ export default function HeadshotsPage() {
           </thead>
           <tbody>
             {pageRows.map(p => (
-              <Row key={p.id} p={p} url={shotUrl(p.id)} onUpload={f => upload(p.id, f)} />
+              <Row key={p.id} p={p} onResolved={resolve} setErr={setErr} />
             ))}
             {!loading && !pageRows.length && <tr><td colSpan={7} style={{ padding: 24, color: 'var(--faint)', textAlign: 'center' }}>No contacts match.</td></tr>}
           </tbody>
@@ -144,31 +124,55 @@ export default function HeadshotsPage() {
   )
 }
 
-function Row({ p, url, onUpload }) {
+// Probes the headshots bucket directly (id.jpeg -> .png -> .jpg -> .webp) and reports has/missing up.
+function Row({ p, onResolved, setErr }) {
   const inputRef = useRef(null)
   const [over, setOver] = useState(false)
-  const [imgOk, setImgOk] = useState(true)
-  const drop = e => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) onUpload(f) }
+  const [extIdx, setExtIdx] = useState(0)
+  const [status, setStatus] = useState('probing') // probing | has | missing
+  const [url, setUrl] = useState(null)
+  const reported = useRef(false)
+
+  const candidate = pub(`${p.id}.${EXTS[extIdx]}`)
+  const onLoad = () => { setStatus('has'); setUrl(candidate); if (!reported.current) { reported.current = true; onResolved(p.id, true) } }
+  const onErr = () => {
+    if (extIdx < EXTS.length - 1) setExtIdx(extIdx + 1)
+    else { setStatus('missing'); if (!reported.current) { reported.current = true; onResolved(p.id, false) } }
+  }
+
+  async function upload(file) {
+    if (!file) return
+    setErr(null)
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+    const path = `${p.id}.${EXTS.includes(ext) ? ext : 'jpg'}`
+    const up = await supabase.storage.from('headshots').upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' })
+    if (up.error) { setErr('Upload failed: ' + up.error.message + ' — the "headshots" Storage bucket needs to allow uploads.'); return }
+    setStatus('has'); setUrl(pub(path) + '?t=' + Date.now()); reported.current = true; onResolved(p.id, true)
+  }
+  const drop = e => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) upload(f) }
+  const has = status === 'has' && url
+
   return (
     <tr style={{ borderTop: '1px solid var(--line)' }}>
       <td style={{ padding: '8px 12px' }}>
-        {url && imgOk
-          ? <img src={url} alt="" onError={() => setImgOk(false)} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+        {has
+          ? <img src={url} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
           : <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e8eaef', color: '#8a90a0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>{initials(p.name)}</div>}
       </td>
       <td style={{ padding: '8px 12px' }}>
         <div onClick={() => inputRef.current && inputRef.current.click()} onDragOver={e => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={drop}
           title="Click or drop an image"
           style={{ width: 52, height: 52, borderRadius: 8, border: `1.5px dashed ${over ? 'var(--accent)' : '#c9ced8'}`, background: over ? '#eef3fb' : '#f6f7f9', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden' }}>
-          {url && imgOk ? <img src={url} alt="" onError={() => setImgOk(false)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#9aa1ad', fontSize: 20 }}>+</span>}
+          {has ? <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#9aa1ad', fontSize: 20 }}>+</span>}
         </div>
-        <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) onUpload(f) }} />
+        <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) upload(f) }} />
       </td>
       <td style={{ padding: '8px 12px', fontWeight: 600, color: p.name ? 'var(--ink)' : 'var(--faint)' }}>{p.name || '(no name)'}</td>
       <td style={{ padding: '8px 12px', color: 'var(--muted)' }}>{p.company || '—'}</td>
       <td style={{ padding: '8px 12px', color: 'var(--muted)' }}>{p.metro || '—'}</td>
       <td style={{ padding: '8px 12px', color: 'var(--muted)' }}>{p.title || '—'}</td>
       <td style={{ padding: '8px 12px', color: 'var(--muted)' }}>{p.email || '—'}</td>
+      {status === 'probing' && <td style={{ display: 'none' }}><img src={candidate} alt="" onLoad={onLoad} onError={onErr} /></td>}
     </tr>
   )
 }
