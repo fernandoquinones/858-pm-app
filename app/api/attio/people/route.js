@@ -14,6 +14,10 @@ const SAMPLE = [
   { id: 'brian-anderson', name: 'Brian Anderson', company: 'Upward Projects', metro: '', title: '', email: '' },
   { id: 'achilles-papakonstantinou', name: 'Achilles Papakonstantinou', company: 'Nostimo Brands', metro: '', title: '', email: '' },
   { id: 'april-brady', name: 'April Brady', company: 'Technomic', metro: '', title: '', email: '' },
+  { id: 'sample-empty-1', name: 'Jordan Wells', company: 'Bluebird Hospitality', metro: 'Denver', title: 'GM', email: '' },
+  { id: 'sample-empty-2', name: 'Maria Santos', company: 'Coastal Kitchen Group', metro: '', title: 'VP Ops', email: '' },
+  { id: 'sample-empty-3', name: 'Devin Hughes', company: 'Northside Concepts', metro: '', title: '', email: '' },
+  { id: 'sample-empty-4', name: '', company: 'Neon Deer Data Labs Inc.', metro: '', title: '', email: 'ben@neondeerdata.com' },
 ]
 
 function first(v) { return Array.isArray(v) ? v[0] : v }
