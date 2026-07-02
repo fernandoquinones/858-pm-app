@@ -87,9 +87,9 @@ Every query bar inherits the permissions gate, so the answer set is always "only
 - **Hub shell + logins + RLS** — the tiled landing page (with the hub query bar) + real authentication + row-level permissions. **Gates automatic Granola ingestion** and any shared client data. Moved AHEAD of auto-Granola. (Was parked Phase 4.)
 
 **Module: Project plans (events) — LIVE, still refining**
-- Phase 1: Library content & structure (Christina's CSV) — in progress.
-- #40: dates + phase logic — blocked on the CSV.
-- Slack connector (notifications) — built, inert; go-live is a decision.
+- Phase 1: Library content & structure (Christina's 163-task CSV) — ✅ DONE.
+- #40: dates + phase logic — ✅ DONE (due/start computed from library offsets + event date; pre/intra/post derived on the board; dates editable).
+- Slack connector — ✅ LIVE (per-event pings + personal DMs, this-week & next-week digests, per-task status dropdown, two-way per-task comments, ✅/un-✅ complete & reopen). Back burner: auto-schedule digests (needs Vercel Pro) + adding the rest of the team.
 
 **Module: Company brain (Granola) — START NOW**
 - Pilot (this week, via the Cowork connector, no app changes): pull a recent meeting → Claude extracts action items + owners + decisions → propose as tasks on the right event plan (human approves).

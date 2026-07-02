@@ -29,13 +29,18 @@ The single source of truth for everything built, in flight, decided, and next. P
 - Per-event Slack two-way loop exists in prod (status→Slack, reaction→done, comment sync) — dormant until the bot is invited.
 
 ## 2. Started building (in progress)
-- **Library content & structure (Phase 1)** — Christina refining the CSV (task types, timings, re-buckets, missing client tasks). Unblocks #40.
-- **Slack Phase 2 notifications** — built, deployed, INERT (no bot invite + no user IDs). Go-live is a decision, not a build.
+- _(nothing actively mid-build — see the DONE list below.)_
 
-## 3. Outstanding (specced/built, awaiting a trigger)
-- **#40 — Date + phase logic** — run the migration, build the CSV importer, compute due dates from offsets + event date, auto pre/intra/post-event tag, recurring/spanning tasks. Blocked on Christina's CSV. *Biggest remaining events-module build.*
-- **Weekly digest engine (Mon/Wed/Fri)** — depends on Slack DMs + #40 due dates.
-- **comment-notify** — app comment → Slack thread + @mention; rebuild at Slack go-live.
+## 2b. ✅ DONE (were outstanding, now shipped)
+- **Library content & structure (Phase 1)** — Christina's 163-task CSV imported. ✅
+- **#40 — Date + phase logic** — due/start computed from offsets + event date; pre/intra/post derived; recurrence pill; dates editable. ✅ (was the biggest remaining events-module build.)
+- **Slack connector** — LIVE: per-event pings, personal DMs, this-week & next-week digests, per-task status dropdown + two-way comments, ✅/un-✅ complete & reopen. ✅
+- **Weekly/preview digest engine** — built; runs from the homepage buttons (auto-schedule pending Vercel Pro — back burner). ✅
+- **comment-notify** — app comment → Slack thread; live. ✅
+
+## 3. Outstanding (specced, awaiting a trigger)
+- **Task automation of the 163-task library** — Traveler Profile → team registration (Tier 1) + hotel/flight assist (Tier 2). Internal Tier-1s can start now; PII/travel piece safer after logins/RLS.
+- **Granola pilot** — zero-dependency, start now (opt-in, non-sensitive meetings).
 
 ## 4. Decisions needed (from Fernando)
 1. **Activation-tasks behavior** — should adding an activation in the header auto-pull its library tasks? (Built then parked to think through.)
@@ -47,9 +52,9 @@ The single source of truth for everything built, in flight, decided, and next. P
 7. **Hub** — confirm module order; define the shared spine.
 
 ## 5. Pending (waiting, not blocked on us)
-- Slack Phase 2 — inert, awaiting go-live decision.
+- Slack — ✅ LIVE for Christina, Fernando, Nic (adding rest of team = back burner).
 - Granola opt-in pilot — ready to run the moment you pick a meeting + event.
-- Christina's CSV — the gate for #40.
+- Christina's CSV — ✅ delivered & imported (#40 shipped).
 
 ## 6. Not started yet
 - **Logins / permissions + RLS** — foundational; elevated ahead of auto-Granola + client data.
@@ -73,7 +78,7 @@ The single source of truth for everything built, in flight, decided, and next. P
 ## 8. Plan for tomorrow (June 12)
 1. **Christina** — first pass on the library CSV (she's out Friday, so aim to start).
 2. **Fernando** — make the activation-tasks call; decide whether to run the Granola opt-in pilot.
-3. **Claude (build)** — build #40 the moment the CSV lands; otherwise advance a foundational hub piece (define the spine / sketch the hub shell) or a quick win.
+3. **Claude (build)** — #40 shipped. Next: start-now items (Granola pilot / internal Tier-1 automations) or advance the foundational keystone (logins + RLS).
 4. **Prep the Monday team preview** (Slack integration + generate a plan + "visible to everyone" + seating).
 
 ## 9. How we track the build (ideation → completion)

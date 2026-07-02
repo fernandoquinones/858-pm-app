@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 
 // MOCK "Attio" contact records (stands in for the real CRM until connected).
@@ -92,7 +93,7 @@ export default function DossierDemo() {
 
   return (
     <div style={wrap}>
-      <div style={{ fontSize: 12, color: '#9aa1ad' }}>858 · Client dossier (demo)</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: 12, color: '#9aa1ad' }}>858 · Client dossier (demo)</span><Link href="/dossier-demo/headshots" style={{ fontSize: 12, color: '#2E5AAC', textDecoration: 'none', border: '1px solid #cdd9f0', borderRadius: 999, padding: '4px 10px' }}>🖼 Headshots manager</Link></div>
       <h1 style={{ fontSize: 26, margin: '4px 0 2px' }}>858 GRIP Summit — Chicago</h1>
       <div style={{ color: '#5f6672', fontSize: 14, marginBottom: 16 }}>Nov 8, 2026 · The Langham, Chicago, IL — <b>Momentum Foods</b> client dossier</div>
 
