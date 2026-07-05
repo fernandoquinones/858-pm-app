@@ -301,6 +301,9 @@ export default function ProjectBoard() {
   const attsFor = tid => attachments.filter(a => a.task_id === tid)
   const eventLinks = attachments.filter(a => !a.task_id)
   const done = tasks.filter(t => t.status === 'done').length
+  const openCount = tasks.length - done
+  const _tMid = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d })()
+  const overdue = tasks.filter(t => t.status !== 'done' && t.due_date && new Date(t.due_date + 'T00:00:00') < _tMid).length
 
   return (
     <div className="wrap">
@@ -501,6 +504,13 @@ export default function ProjectBoard() {
           <option value="due">Sort by due date</option>
         </select>
         {(filtering || sortBy) && <button className="btn ghost sm" onClick={() => { setFilterOwner(''); setFilterStatus(''); setFilterAct(''); setSortBy('') }}>Clear</button>}
+      </div>
+
+      <div className="tiles sans">
+        <div className="tile"><div className="tnum">{tasks.length}</div><div className="tlab">Total tasks</div></div>
+        <div className="tile good"><div className="tnum">{done}</div><div className="tlab">Done</div></div>
+        <div className="tile accent"><div className="tnum">{openCount}</div><div className="tlab">Open</div></div>
+        <div className="tile warn"><div className="tnum">{overdue}</div><div className="tlab">Overdue</div></div>
       </div>
 
       {user === 'Christina' && sel.size > 0 && (

@@ -122,3 +122,52 @@ select.st.done{color:var(--green);background:var(--green-soft);border-color:#bfe
 .libbtn:hover{filter:brightness(.97)}
 .libon{font-size:10.5px;font-weight:700;color:#0F6E56;background:#E1F5EE;border-radius:6px;padding:3px 9px}
 .librow{margin-bottom:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ============================================================
+   OPS DASHBOARD RESTYLE  (appended override — larger + cleaner)
+   ============================================================ */
+:root{
+  --bg:#F2F4F7; --card:#ffffff; --ink:#1A2333; --muted:#667085; --faint:#98A2B3;
+  --line:#E5E8EE; --accent:#3A7BD5; --accent-soft:#E9F1FB;
+}
+body{font-size:15px;line-height:1.55}
+.wrap{max-width:1200px;padding:30px 26px 90px}
+h1{font-size:27px;letter-spacing:-.015em}
+.sub{font-size:13px}
+.topbar{padding-bottom:18px;margin-bottom:22px}
+
+.card{border-radius:14px;padding:18px 20px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(16,24,40,.04);margin-bottom:14px}
+.panel{border-radius:14px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.panel h2{font-size:15px;padding:15px 20px}
+
+.phase{border-radius:14px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(16,24,40,.04);margin-bottom:14px}
+.ph-head{padding:16px 20px;gap:14px}
+.ph-head .timing{font-size:12px;min-width:120px}
+.ph-head .ttl{font-size:17px;font-weight:600}
+.ph-head .cnt{font-size:12.5px}
+
+.trow{padding:15px 20px;font-size:15px;gap:16px;border-bottom:1px solid #eef0f4}
+.trow .nt{font-size:15.5px;font-weight:600}
+.pill{font-size:11px;padding:3px 9px;border-radius:10px}
+.owner{font-size:13.5px;gap:8px}
+.owner .av{width:26px;height:26px;font-size:10px}
+.due{font-size:13.5px}
+.due input{padding:8px 10px;font-size:13.5px;border-radius:9px}
+select.st{font-size:14px;padding:9px 12px;border-radius:9px}
+
+.chip{font-size:13px;padding:7px 13px;border-radius:22px}
+.btn{font-size:13px;padding:9px 15px;border-radius:9px}
+.btn.sm{font-size:12px;padding:7px 12px}
+.tab{font-size:13px;padding:8px 16px;border-radius:9px}
+.subh{font-size:11px}
+.cmtbtn{font-size:12px}
+.banner{border-radius:12px;font-size:13.5px;padding:13px 16px}
+
+/* summary stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:2px 0 18px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.tile .tnum{font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--ink);line-height:1}
+.tile .tlab{font-size:12.5px;color:var(--muted);margin-top:7px;font-weight:500}
+.tile.accent .tnum{color:var(--accent)}
+.tile.warn .tnum{color:#B25A00}
+.tile.good .tnum{color:#0F6E56}

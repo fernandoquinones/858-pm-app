@@ -13,6 +13,7 @@ export default function Home() {
   const master = isMaster(user)
 
   const [projects, setProjects] = useState([])
+  const [allTasks, setAllTasks] = useState([])
   const [actOpts, setActOpts] = useState(BASE_ACTIVATIONS)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
@@ -34,11 +35,13 @@ export default function Home() {
   const [eventFilter, setEventFilter] = useState('current')
 
   async function load() {
-    const [pr, lib] = await Promise.all([
+    const [pr, lib, tk] = await Promise.all([
       supabase.from('projects').select('*').order('created_at', { ascending: false }),
-      supabase.from('library_tasks').select('applies_to')
+      supabase.from('library_tasks').select('applies_to'),
+      supabase.from('tasks').select('status,due_date,project_id')
     ])
     if (pr.error) setErr(pr.error.message); else setProjects(pr.data || [])
+    setAllTasks(tk.data || [])
     const found = new Set(BASE_ACTIVATIONS)
     ;(lib.data || []).forEach(r => parseActs(r.applies_to).forEach(a => { if (a !== 'All events') found.add(a) }))
     setActOpts([...found])
@@ -102,6 +105,10 @@ export default function Home() {
   const shownProjects = projects
     .filter(p => eventFilter === 'current' ? !isPastEvent(p) : isPastEvent(p))
     .sort((a, b) => eventFilter === 'current' ? eventTime(a) - eventTime(b) : eventTime(b) - eventTime(a))
+  const currentIds = new Set(projects.filter(p => !isPastEvent(p)).map(p => p.id))
+  const openTasks = allTasks.filter(t => currentIds.has(t.project_id) && t.status !== 'done')
+  const _todayMid = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d })()
+  const overdueCount = openTasks.filter(t => t.due_date && new Date(t.due_date + 'T00:00:00') < _todayMid).length
 
   async function deleteEvent(e, p) {
     e.preventDefault(); e.stopPropagation()
@@ -188,6 +195,12 @@ export default function Home() {
           You have <b style={{ color: 'var(--ink)' }}>{roleOf(user)}</b> access — view everything, comment on any task, and update your own. Creating events is limited to Christina and Fernando.
         </div>
       )}
+
+      <div className="tiles sans">
+        <div className="tile accent"><div className="tnum">{currentIds.size}</div><div className="tlab">Active events</div></div>
+        <div className="tile"><div className="tnum">{openTasks.length}</div><div className="tlab">Open tasks</div></div>
+        <div className="tile warn"><div className="tnum">{overdueCount}</div><div className="tlab">Overdue</div></div>
+      </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '20px 0 4px' }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', fontFamily: 'Fira Sans Condensed, sans-serif', margin: 0 }}>Project plans</h2>
