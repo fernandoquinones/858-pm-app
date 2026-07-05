@@ -289,14 +289,15 @@ export default function ProjectBoard() {
     return 'Intra-event'
   }
   const byWs = wsId => {
-    let list = tasks.filter(t => t.workstream_id === wsId)
+    let list = wsId === '__all__' ? [...tasks] : tasks.filter(t => t.workstream_id === wsId)
     if (filterOwner) list = list.filter(t => (t.owner || '').includes(filterOwner))
     if (filterStatus) list = list.filter(t => t.status === filterStatus)
     if (filterAct) list = list.filter(t => parseActs(t.applies_to).includes(filterAct))
-    if (sortBy === 'due') list = [...list].sort((a, b) => (a.due_date || '9999-12-31').localeCompare(b.due_date || '9999-12-31'))
+    if (sortBy === 'due' || wsId === '__all__') list = [...list].sort((a, b) => (a.due_date || '9999-12-31').localeCompare(b.due_date || '9999-12-31'))
     return list
   }
   const filtering = !!(filterOwner || filterStatus || filterAct)
+  const groups = sortBy === 'flat' ? [{ id: '__all__', name: 'All tasks \u00b7 by due date', timing: '' }] : workstreams
   const cmtsFor = tid => comments.filter(c => c.task_id === tid)
   const attsFor = tid => attachments.filter(a => a.task_id === tid)
   const eventLinks = attachments.filter(a => !a.task_id)
@@ -501,7 +502,8 @@ export default function ProjectBoard() {
         </select>
         <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
           <option value="">Default order</option>
-          <option value="due">Sort by due date</option>
+          <option value="due">Sort by due date (within group)</option>
+          <option value="flat">All tasks by due date</option>
         </select>
         {(filtering || sortBy) && <button className="btn ghost sm" onClick={() => { setFilterOwner(''); setFilterStatus(''); setFilterAct(''); setSortBy('') }}>Clear</button>}
       </div>
@@ -521,18 +523,19 @@ export default function ProjectBoard() {
         </div>
       )}
 
-      {workstreams.map(w => {
+      {groups.map(w => {
         const list = byWs(w.id)
         if (filtering && !list.length) return null
+        const isOpen = w.id === '__all__' ? open[w.id] !== false : !!open[w.id]
         return (
           <div className="phase" key={w.id}>
             <div className="ph-head" onClick={() => setOpen(o => ({ ...o, [w.id]: !o[w.id] }))}>
               <span className="timing sans">{w.timing || ''}</span>
               <span className="ttl">{w.name}</span>
               <span className="cnt sans">{list.length} task{list.length !== 1 ? 's' : ''}</span>
-              <span className="sans" style={{ fontSize: 11, color: 'var(--faint)' }}>{open[w.id] ? '▾' : '▸'}</span>
+              <span className="sans" style={{ fontSize: 11, color: 'var(--faint)' }}>{isOpen ? '▾' : '▸'}</span>
             </div>
-            {open[w.id] && (
+            {isOpen && (
               <div className="ph-body">
                 {list.map(t => {
                   const editable = canEditTask(user, t)
