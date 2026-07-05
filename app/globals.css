@@ -146,7 +146,8 @@ h1{font-size:27px;letter-spacing:-.015em}
 .ph-head .ttl{font-size:17px;font-weight:600}
 .ph-head .cnt{font-size:12.5px}
 
-.trow{padding:15px 20px;font-size:15px;gap:16px;border-bottom:1px solid #eef0f4}
+.trow{padding:15px 20px;font-size:15px;gap:16px;border-bottom:1px solid #E6E9EF}
+.ph-body .trow:last-child{border-bottom:none}
 .trow .nt{font-size:15.5px;font-weight:600}
 .pill{font-size:11px;padding:3px 9px;border-radius:10px}
 .owner{font-size:13.5px;gap:8px}
