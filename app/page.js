@@ -203,7 +203,7 @@ export default function Home() {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '20px 0 4px' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', fontFamily: 'Fira Sans Condensed, sans-serif', margin: 0 }}>Project plans</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', fontFamily: 'Instrument Sans, sans-serif', margin: 0 }}>Project plans</h2>
         <div style={{ display: 'flex', gap: 6 }}>
           <button type="button" onClick={() => setEventFilter('current')} style={{ fontSize: 12, borderRadius: 999, padding: '5px 13px', cursor: 'pointer', fontFamily: 'inherit', border: '1px solid ' + (eventFilter === 'current' ? 'var(--accent)' : 'var(--line)'), color: eventFilter === 'current' ? 'var(--accent)' : 'var(--muted)', background: eventFilter === 'current' ? '#eef3fb' : 'transparent', fontWeight: eventFilter === 'current' ? 700 : 400 }}>Current events</button>
           <button type="button" onClick={() => setEventFilter('past')} style={{ fontSize: 12, borderRadius: 999, padding: '5px 13px', cursor: 'pointer', fontFamily: 'inherit', border: '1px solid ' + (eventFilter === 'past' ? 'var(--accent)' : 'var(--line)'), color: eventFilter === 'past' ? 'var(--accent)' : 'var(--muted)', background: eventFilter === 'past' ? '#eef3fb' : 'transparent', fontWeight: eventFilter === 'past' ? 700 : 400 }}>Past events</button>
@@ -216,7 +216,7 @@ export default function Home() {
           {shownProjects.map(p => (
             <div key={p.id} className="card sans" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ minWidth: 0 }}>
-                <Link href={`/project/${p.id}`} style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Fira Sans Condensed, sans-serif', color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link>
+                <Link href={`/project/${p.id}`} style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Instrument Sans, sans-serif', color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link>
                 <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{p.event_date ? fmtDate(p.event_date) : 'No date set'}{cityState(p) ? ` · ${cityState(p)}` : ''}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Venue</span>

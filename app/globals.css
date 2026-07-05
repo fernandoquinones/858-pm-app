@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap');
 
 :root{
   /* 858 Partners brand */
@@ -129,6 +129,8 @@ select.st.done{color:var(--green);background:var(--green-soft);border-color:#bfe
 :root{
   --bg:#F2F4F7; --card:#ffffff; --ink:#1A2333; --muted:#667085; --faint:#98A2B3;
   --line:#E5E8EE; --accent:#3A7BD5; --accent-soft:#E9F1FB;
+  --font-head:'Instrument Sans', system-ui, sans-serif;
+  --font-body:'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 body{font-size:15px;line-height:1.55}
 .wrap{max-width:1200px;padding:30px 26px 90px}
@@ -146,8 +148,7 @@ h1{font-size:27px;letter-spacing:-.015em}
 .ph-head .ttl{font-size:17px;font-weight:600}
 .ph-head .cnt{font-size:12.5px}
 
-.trow{padding:15px 20px;font-size:15px;gap:16px;border-bottom:1px solid #D3D9E2}
-.ph-body .trow:last-child{border-bottom:none}
+.ph-body .trow{padding:15px 20px;font-size:15px;gap:16px;border-bottom:1px solid #CBD2DD}
 .trow .nt{font-size:15.5px;font-weight:600}
 .pill{font-size:11px;padding:3px 9px;border-radius:10px}
 .owner{font-size:13.5px;gap:8px}
@@ -172,3 +173,28 @@ select.st{font-size:14px;padding:9px 12px;border-radius:9px}
 .tile.accent .tnum{color:var(--accent)}
 .tile.warn .tnum{color:#B25A00}
 .tile.good .tnum{color:#0F6E56}
+
+/* +2pt size bump (larger, more readable) */
+body{font-size:17px}
+h1{font-size:29px}
+.sub{font-size:15px}
+.ph-head .ttl{font-size:19px}
+.ph-head .timing{font-size:14px}
+.ph-head .cnt{font-size:14px}
+.ph-body .trow{font-size:17px}
+.trow .nt{font-size:17.5px}
+.pill{font-size:12.5px;padding:4px 10px}
+.owner{font-size:15px}
+.owner .av{width:28px;height:28px;font-size:11px}
+.due{font-size:15px}
+.due input{font-size:15px;padding:9px 11px}
+select.st{font-size:16px;padding:10px 13px}
+.chip{font-size:15px;padding:8px 14px}
+.btn{font-size:15px;padding:10px 16px}
+.btn.sm{font-size:13.5px;padding:8px 13px}
+.tab{font-size:15px}
+.subh{font-size:13px}
+.cmtbtn{font-size:14px}
+.banner{font-size:15px}
+.tile .tnum{font-size:31px}
+.tile .tlab{font-size:14.5px}
