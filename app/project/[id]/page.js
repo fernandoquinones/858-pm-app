@@ -438,7 +438,32 @@ export default function ProjectBoard() {
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button onClick={() => setHeaderPanel(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 18, lineHeight: 1, fontFamily: 'inherit' }}>×</button></div>
           {headerPanel === 'reports' && (
       <div className="sans">
-        <div className="subh">📊 Reports &amp; views with Claude</div>
+        <div className="subh">📊 Status dashboard <span style={{ color: 'var(--faint)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· live</span></div>
+        {(() => {
+          const counts = {}; Object.keys(STATUS).forEach(k => counts[k] = 0)
+          tasks.forEach(t => { counts[t.status] = (counts[t.status] || 0) + 1 })
+          const total = tasks.length || 1
+          const colors = { todo: '#8A94A3', prog: '#3A7BD5', ongoing: '#5B45A8', review: '#B25A00', done: '#0F6E56' }
+          return <div style={{ display: 'grid', gap: 9, margin: '8px 0 4px' }}>
+            {Object.entries(STATUS).map(([k, v]) => <div key={k}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 3 }}><span>{v}</span><span style={{ fontWeight: 700 }}>{counts[k] || 0}</span></div>
+              <div style={{ height: 7, background: '#EEF0F4', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: ((counts[k] || 0) / total * 100) + '%', height: '100%', background: colors[k] }} /></div>
+            </div>)}
+          </div>
+        })()}
+        <div className="subh" style={{ marginTop: 16 }}>🗓 This week&rsquo;s tasks <span style={{ color: 'var(--faint)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· live</span></div>
+        {(() => {
+          const d = new Date(); d.setDate(d.getDate() + 6)
+          const end = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+          const week = tasks.filter(t => t.status !== 'done' && t.due_date && t.due_date >= _todayStr && t.due_date <= end).sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
+          if (!week.length) return <div style={{ fontSize: 12.5, color: 'var(--faint)', margin: '6px 0' }}>Nothing due in the next 7 days.</div>
+          return <div style={{ margin: '6px 0 2px' }}>{week.map(t => <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: '1px solid #eef0f4', fontSize: 13 }}>
+            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+            <span style={{ color: 'var(--muted)', flex: 'none', fontSize: 12 }}>{t.owner} · {t.due_date}</span>
+          </div>)}</div>
+        })()}
+        <div style={{ height: 1, background: 'var(--line)', margin: '16px 0' }} />
+        <div className="subh">✨ Build a custom view with Claude</div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <input value={reportPrompt} onChange={e => setReportPrompt(e.target.value)} placeholder={'e.g. "status dashboard", "calendar of due dates", "what is overdue"'} onKeyDown={e => { if (e.key === 'Enter') generateReport() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, minWidth: 260 }} />
           <button className="btn ghost" onClick={() => generateReport()} disabled={reportBusy}>{reportBusy ? 'Building…' : 'Build view'}</button>
