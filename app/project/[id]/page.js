@@ -648,9 +648,9 @@ export default function ProjectBoard() {
                               : <span className="nt" onClick={() => { if (editable) setTitleDraft(s => ({ ...s, [t.id]: t.title })) }} style={{ cursor: editable ? 'text' : 'default' }} title={editable ? 'Click to rename' : undefined}>{t.title}</span>}
                             {parseActs(t.applies_to).filter(a => a !== 'All events').map(x => <span className="apill" key={x}>{x}</span>)}
                           </div>
-                          <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))}>{openThread[t.id] ? '▾ Hide' : '✎ Edit'}</button>
-                          <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ marginLeft: 12 }}>💬 Comment{cs.length ? ' (' + cs.length + ')' : ''}</button>
-                          <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ marginLeft: 12 }}>📎 Add attachment{ats.length ? ' (' + ats.length + ')' : ''}</button>
+                          <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: o[t.id] === 'edit' ? null : 'edit' }))}>{openThread[t.id] === 'edit' ? '▾ Hide' : '✎ Edit'}</button>
+                          <button className="cmtbtn" style={{ marginLeft: 12 }} onClick={() => setOpenThread(o => ({ ...o, [t.id]: o[t.id] === 'comments' ? null : 'comments' }))}>💬 Comment{cs.length ? ' (' + cs.length + ')' : ''}</button>
+                          <button className="cmtbtn" style={{ marginLeft: 12 }} onClick={() => setOpenThread(o => ({ ...o, [t.id]: o[t.id] === 'attach' ? null : 'attach' }))}>📎 Add attachment{ats.length ? ' (' + ats.length + ')' : ''}</button>
                           {user === 'Christina' && <button className="cmtbtn" onClick={() => deleteTask(t)} style={{ color: 'var(--red)', marginLeft: 12 }}>🗑 Delete</button>}
                         </div>
                         <div className="owner"><span className="av" style={{ width: 20, height: 20, fontSize: 9, background: OWNER_COLOR[t.owner] || '#888' }}>{ownInit(t.owner)}</span>{editable
@@ -668,6 +668,7 @@ export default function ProjectBoard() {
                       </div>
                       {openThread[t.id] && (
                         <div className="thread sans">
+                          {openThread[t.id] === 'edit' && (<>
                           {editable && (
                             <div className="librow" style={{ flexWrap: 'wrap' }}>
                               <span style={{ fontSize: 11, color: 'var(--faint)' }}>Applies to</span>
@@ -699,6 +700,8 @@ export default function ProjectBoard() {
                                 : <><button className="libbtn" onClick={() => saveTaskToLibrary(w.name, t)}>☆ Save to library forever</button><span style={{ fontSize: 10.5, color: 'var(--faint)' }}>one-off for this event by default</span></>}
                             </div>
                           )}
+                          </>)}
+                          {openThread[t.id] === 'attach' && (<>
                           <div className="subh">Attachments &amp; links</div>
                           {ats.length > 0 && (
                             <div className="atts">
@@ -711,6 +714,8 @@ export default function ProjectBoard() {
                             <input type="text" placeholder="Paste a link…" value={l.url || ''} onChange={e => setLink(s => ({ ...s, [t.id]: { ...l, url: e.target.value } }))} onKeyDown={e => { if (e.key === 'Enter') addLink(t.id) }} />
                             <button className="btn sm" onClick={() => addLink(t.id)}>Add link</button>
                           </div>
+                          </>)}
+                          {openThread[t.id] === 'comments' && (<>
                           <div className="subh" style={{ marginTop: 12 }}>Comments</div>
                           {cs.length === 0 && <div style={{ color: 'var(--faint)', fontSize: 12, marginBottom: 6 }}>No comments yet.</div>}
                           {cs.map(c => {
@@ -736,6 +741,7 @@ export default function ProjectBoard() {
                             <input placeholder={`Comment as ${user}…`} value={draft[t.id] || ''} onChange={e => setDraft(d => ({ ...d, [t.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addComment(t.id) }} />
                             <button className="btn sm" onClick={() => addComment(t.id)}>Comment</button>
                           </div>
+                          </>)}
                         </div>
                       )}
                     </div>
