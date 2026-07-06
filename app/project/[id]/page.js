@@ -36,6 +36,8 @@ export default function ProjectBoard() {
   const [open, setOpen] = useState({})
   const [openThread, setOpenThread] = useState({})
   const [draft, setDraft] = useState({})
+  const [titleDraft, setTitleDraft] = useState({})
+  const [cmtEdit, setCmtEdit] = useState({})
   const [link, setLink] = useState({})
   const [na, setNa] = useState({ title: '', wsId: '', owner: 'Christina', acts: [], toLib: false })
   const [newWs, setNewWs] = useState('')
@@ -193,6 +195,26 @@ export default function ProjectBoard() {
     // mirror into the Slack thread(s) for this task (no-op if Slack isn't configured / no message yet)
     try { await fetch('/api/slack/comment-notify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ taskId, author: user, body }) }) } catch (e) {}
     setDraft(d => ({ ...d, [taskId]: '' })); load()
+  }
+  async function renameTask(t) {
+    const v = (titleDraft[t.id] !== undefined ? titleDraft[t.id] : t.title).trim()
+    if (!v || v === t.title) { setTitleDraft(s => { const n = { ...s }; delete n[t.id]; return n }); return }
+    const { error } = await supabase.from('tasks').update({ title: v }).eq('id', t.id)
+    if (error) { setErr('Rename failed: ' + error.message); return }
+    setTitleDraft(s => { const n = { ...s }; delete n[t.id]; return n }); setMsg('Task renamed.'); setTimeout(() => setMsg(null), 2500); load()
+  }
+  async function deleteComment(c) {
+    if (!(c.author === user || master)) return
+    if (typeof window !== 'undefined' && !window.confirm('Delete this comment?')) return
+    const { error } = await supabase.from('comments').delete().eq('id', c.id)
+    if (error) { setErr('Delete comment failed: ' + error.message); return }
+    load()
+  }
+  async function saveCommentEdit(c) {
+    const v = (cmtEdit[c.id] || '').trim(); if (!v) return
+    const { error } = await supabase.from('comments').update({ body: v }).eq('id', c.id)
+    if (error) { setErr('Edit failed: ' + error.message); return }
+    setCmtEdit(s => { const n = { ...s }; delete n[c.id]; return n }); load()
   }
   async function addLink(taskId) {
     const l = link[taskId] || {}; const url = (l.url || '').trim(); if (!url) return
@@ -641,6 +663,14 @@ export default function ProjectBoard() {
                         <div className="thread sans">
                           {editable && (
                             <div className="librow" style={{ flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 11, color: 'var(--faint)' }}>Task name</span>
+                              <input value={titleDraft[t.id] !== undefined ? titleDraft[t.id] : t.title} onChange={e => setTitleDraft(s => ({ ...s, [t.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') renameTask(t) }} style={{ flex: 1, minWidth: 220, border: '1px solid var(--line)', borderRadius: 7, padding: '6px 9px', fontFamily: 'inherit', fontSize: 13 }} />
+                              <button className="btn sm" onClick={() => renameTask(t)}>Save</button>
+                              <span style={{ fontSize: 10.5, color: 'var(--faint)' }}>this event only — not the library</span>
+                            </div>
+                          )}
+                          {editable && (
+                            <div className="librow" style={{ flexWrap: 'wrap' }}>
                               <span style={{ fontSize: 11, color: 'var(--faint)' }}>Applies to</span>
                               <ActivationChips value={parseActs(t.applies_to)} options={actOpts} onChange={acts => setActivation(t, acts)} />
                             </div>
@@ -684,14 +714,25 @@ export default function ProjectBoard() {
                           </div>
                           <div className="subh" style={{ marginTop: 12 }}>Comments</div>
                           {cs.length === 0 && <div style={{ color: 'var(--faint)', fontSize: 12, marginBottom: 6 }}>No comments yet.</div>}
-                          {cs.map(c => (
+                          {cs.map(c => {
+                            const canMod = c.author === user || master
+                            const editing = cmtEdit[c.id] !== undefined
+                            return (
                             <div className="cmt" key={c.id}>
                               <span className="ca">{c.author}</span>
                               {c.source === 'slack' && <span className="src">via Slack</span>}
                               <span className="tm">{new Date(c.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                              <div>{c.body}</div>
+                              {canMod && !editing && <span style={{ marginLeft: 8 }}><button className="cmtbtn" style={{ fontSize: 11 }} onClick={() => setCmtEdit(s => ({ ...s, [c.id]: c.body }))}>edit</button><button className="cmtbtn" style={{ fontSize: 11, color: 'var(--red)', marginLeft: 8 }} onClick={() => deleteComment(c)}>delete</button></span>}
+                              {editing
+                                ? <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                                    <input value={cmtEdit[c.id]} onChange={e => setCmtEdit(s => ({ ...s, [c.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') saveCommentEdit(c) }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 7, padding: '6px 9px', fontFamily: 'inherit', fontSize: 12 }} />
+                                    <button className="btn sm" onClick={() => saveCommentEdit(c)}>Save</button>
+                                    <button className="btn ghost sm" onClick={() => setCmtEdit(s => { const n = { ...s }; delete n[c.id]; return n })}>Cancel</button>
+                                  </div>
+                                : <div>{c.body}</div>}
                             </div>
-                          ))}
+                            )
+                          })}
                           <div className="cmtform">
                             <input placeholder={`Comment as ${user}…`} value={draft[t.id] || ''} onChange={e => setDraft(d => ({ ...d, [t.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addComment(t.id) }} />
                             <button className="btn sm" onClick={() => addComment(t.id)}>Comment</button>
