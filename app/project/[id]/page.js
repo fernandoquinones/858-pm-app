@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase, OWNERS, OWNER_COLOR, STATUS, BASE_ACTIVATIONS, parseActs, joinActs } from '../../../lib/supabaseClient'
+import { TaskTimeline } from '../../../lib/TaskTimeline'
 import { PEOPLE, isMaster, canEditTask, roleOf } from '../../../lib/roles'
 import { useCurrentUser } from '../../../lib/useCurrentUser'
 import { ActivationChips } from '../../../lib/ActivationChips'
@@ -456,6 +457,7 @@ export default function ProjectBoard() {
       </div>}
 
       {headerPanel === 'reports' && (<>
+        <div className="card sans"><TaskTimeline tasks={tasks} eventDate={project ? project.event_date : ''} eventName={project ? project.name : ''} /></div>
         <div className="card sans">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="subh" style={{ margin: 0 }}>📊 Status dashboard <span style={{ color: 'var(--faint)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· live</span></div>
