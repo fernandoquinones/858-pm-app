@@ -643,7 +643,9 @@ export default function ProjectBoard() {
                         <div className="tname">
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                             {user === 'Christina' && <input type="checkbox" checked={sel.has(t.id)} onChange={() => toggleSel(t.id)} style={{ cursor: 'pointer' }} />}
-                            <span className="nt">{t.title}</span>
+                            {editable && titleDraft[t.id] !== undefined
+                              ? <input autoFocus className="nt" value={titleDraft[t.id]} onChange={e => setTitleDraft(s => ({ ...s, [t.id]: e.target.value }))} onBlur={() => renameTask(t)} onKeyDown={e => { if (e.key === 'Enter') renameTask(t); if (e.key === 'Escape') setTitleDraft(s => { const n = { ...s }; delete n[t.id]; return n }) }} style={{ border: '1px solid var(--accent)', borderRadius: 6, padding: '2px 7px', fontFamily: 'inherit', minWidth: 260 }} />
+                              : <span className="nt" onClick={() => { if (editable) setTitleDraft(s => ({ ...s, [t.id]: t.title })) }} style={{ cursor: editable ? 'text' : 'default' }} title={editable ? 'Click to rename' : undefined}>{t.title}</span>}
                             {parseActs(t.applies_to).filter(a => a !== 'All events').map(x => <span className="apill" key={x}>{x}</span>)}
                           </div>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))}>{openThread[t.id] ? '▾ Hide' : '✎ Edit'}</button>
@@ -651,7 +653,12 @@ export default function ProjectBoard() {
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ marginLeft: 12 }}>📎 Add attachment{ats.length ? ' (' + ats.length + ')' : ''}</button>
                           {user === 'Christina' && <button className="cmtbtn" onClick={() => deleteTask(t)} style={{ color: 'var(--red)', marginLeft: 12 }}>🗑 Delete</button>}
                         </div>
-                        <div className="owner"><span className="av" style={{ width: 20, height: 20, fontSize: 9, background: OWNER_COLOR[t.owner] || '#888' }}>{ownInit(t.owner)}</span>{t.owner}</div>
+                        <div className="owner"><span className="av" style={{ width: 20, height: 20, fontSize: 9, background: OWNER_COLOR[t.owner] || '#888' }}>{ownInit(t.owner)}</span>{editable
+                          ? <select value={OWNERS.includes(t.owner) ? t.owner : '__combo__'} onChange={e => { if (e.target.value !== '__combo__') setOwner(t, e.target.value) }} style={{ border: 'none', background: 'transparent', fontFamily: 'inherit', fontSize: 14, color: 'var(--muted)', fontWeight: 500, cursor: 'pointer', maxWidth: 130 }}>
+                              {!OWNERS.includes(t.owner) && t.owner && <option value="__combo__">{t.owner}</option>}
+                              {OWNERS.map(o => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                          : <span>{t.owner}</span>}</div>
                         <div className={`due sans ${editable ? '' : 'ro'}`}><input type="date" value={t.due_date || ''} disabled={!editable} onChange={e => setDue(t, e.target.value)} /></div>
                         <div className={editable ? '' : 'ro'}>
                           <select className={`st sans ${t.status}`} value={t.status} disabled={!editable} onChange={e => setStatus(t, e.target.value)}>
@@ -661,14 +668,6 @@ export default function ProjectBoard() {
                       </div>
                       {openThread[t.id] && (
                         <div className="thread sans">
-                          {editable && (
-                            <div className="librow" style={{ flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 11, color: 'var(--faint)' }}>Task name</span>
-                              <input value={titleDraft[t.id] !== undefined ? titleDraft[t.id] : t.title} onChange={e => setTitleDraft(s => ({ ...s, [t.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') renameTask(t) }} style={{ flex: 1, minWidth: 220, border: '1px solid var(--line)', borderRadius: 7, padding: '6px 9px', fontFamily: 'inherit', fontSize: 13 }} />
-                              <button className="btn sm" onClick={() => renameTask(t)}>Save</button>
-                              <span style={{ fontSize: 10.5, color: 'var(--faint)' }}>this event only — not the library</span>
-                            </div>
-                          )}
                           {editable && (
                             <div className="librow" style={{ flexWrap: 'wrap' }}>
                               <span style={{ fontSize: 11, color: 'var(--faint)' }}>Applies to</span>
