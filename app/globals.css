@@ -198,3 +198,10 @@ select.st{font-size:16px;padding:10px 13px}
 .banner{font-size:15px}
 .tile .tnum{font-size:31px}
 .tile .tlab{font-size:14.5px}
+
+/* completed tasks: shaded + struck (visible, not hidden) */
+.trow.donerow{background:#EFF4F0}
+.trow.donerow .nt{text-decoration:line-through;color:var(--muted)}
+
+/* small activation pills, inline next to the task title */
+.apill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:10px;background:var(--accent-soft);color:var(--accent);border:1px solid #cdd9f0;white-space:nowrap}

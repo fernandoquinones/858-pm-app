@@ -45,9 +45,10 @@ export default function ProjectBoard() {
   const [reportPrompt, setReportPrompt] = useState('')
   const [reportBusy, setReportBusy] = useState(false)
   const [reportHtml, setReportHtml] = useState('')
-  const [filterOwner, setFilterOwner] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
-  const [filterAct, setFilterAct] = useState('')
+  const [fOwners, setFOwners] = useState([])
+  const [fStatuses, setFStatuses] = useState([])
+  const [fActs, setFActs] = useState([])
+  const [dueFilter, setDueFilter] = useState('')
   const [sortBy, setSortBy] = useState('')
   const [evLink, setEvLink] = useState({ name: '', url: '' })
   const [headerPanel, setHeaderPanel] = useState(null)
@@ -288,15 +289,22 @@ export default function ProjectBoard() {
     if (t.due_date > project.event_date) return 'Post-event'
     return 'Intra-event'
   }
+  const _todayStr = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') })()
+  const isOverdue = t => t.status !== 'done' && t.due_date && t.due_date < _todayStr
   const byWs = wsId => {
     let list = wsId === '__all__' ? [...tasks] : tasks.filter(t => t.workstream_id === wsId)
-    if (filterOwner) list = list.filter(t => (t.owner || '').includes(filterOwner))
-    if (filterStatus) list = list.filter(t => t.status === filterStatus)
-    if (filterAct) list = list.filter(t => parseActs(t.applies_to).includes(filterAct))
+    if (fOwners.length) list = list.filter(t => { const os = (t.owner || '').split('+').map(x => x.trim()); return fOwners.some(o => os.includes(o)) })
+    if (fStatuses.length) list = list.filter(t => fStatuses.includes(t.status))
+    if (fActs.length) list = list.filter(t => { const a = parseActs(t.applies_to); return fActs.some(x => a.includes(x)) })
+    if (dueFilter === 'overdue') list = list.filter(isOverdue)
+    else if (dueFilter === 'upcoming') list = list.filter(t => !isOverdue(t))
     if (sortBy === 'due' || wsId === '__all__') list = [...list].sort((a, b) => (a.due_date || '9999-12-31').localeCompare(b.due_date || '9999-12-31'))
     return list
   }
-  const filtering = !!(filterOwner || filterStatus || filterAct)
+  const filtering = !!(fOwners.length || fStatuses.length || fActs.length || dueFilter)
+  const toggleF = (arr, set, v) => set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v])
+  const ownersInUse = [...new Set(tasks.flatMap(t => (t.owner || '').split('+').map(x => x.trim())).filter(Boolean))]
+  const fchip = on => ({ fontSize: 13, padding: '5px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit', border: '1px solid ' + (on ? 'var(--accent)' : 'var(--line)'), background: on ? 'var(--accent-soft)' : 'transparent', color: on ? 'var(--accent)' : 'var(--muted)', fontWeight: on ? 700 : 500 })
   const groups = sortBy === 'flat' ? [{ id: '__all__', name: 'All tasks \u00b7 by due date', timing: '' }] : workstreams
   const cmtsFor = tid => comments.filter(c => c.task_id === tid)
   const attsFor = tid => attachments.filter(a => a.task_id === tid)
@@ -484,28 +492,28 @@ export default function ProjectBoard() {
         </div>
       )}
 
-      <div className="sans" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', background: 'transparent', border: 'none', padding: '2px 0', margin: '6px 0 2px' }}>
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--faint)' }}>Filter</span>
-        <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
-          <option value="">All owners</option>
-          {OWNERS.map(o => <option key={o} value={o}>{o}</option>)}
-        </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
-          <option value="">Any status</option>
-          <option value="todo">To do</option>
-          <option value="review">Needs review</option>
-          <option value="done">Done</option>
-        </select>
-        <select value={filterAct} onChange={e => setFilterAct(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
-          <option value="">Any activation</option>
-          {actOpts.filter(a => a !== 'All events').map(a => <option key={a} value={a}>{a}</option>)}
-        </select>
-        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
+      <div className="sans" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', margin: '10px 0 2px' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--faint)', marginRight: 2 }}>Owners</span>
+        {ownersInUse.map(o => <button key={o} style={fchip(fOwners.includes(o))} onClick={() => toggleF(fOwners, setFOwners, o)}>{o}</button>)}
+        <span style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px' }} />
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--faint)', marginRight: 2 }}>Status</span>
+        {Object.entries(STATUS).map(([k, v]) => <button key={k} style={fchip(fStatuses.includes(k))} onClick={() => toggleF(fStatuses, setFStatuses, k)}>{v}</button>)}
+      </div>
+      <div className="sans" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', margin: '4px 0 8px' }}>
+        {parseActs(project ? project.activations : '').filter(a => a !== 'All events').length > 0 && (<>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--faint)', marginRight: 2 }}>Activation</span>
+          {parseActs(project ? project.activations : '').filter(a => a !== 'All events').map(a => <button key={a} style={fchip(fActs.includes(a))} onClick={() => toggleF(fActs, setFActs, a)}>{a}</button>)}
+          <span style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px' }} />
+        </>)}
+        <button style={fchip(dueFilter === 'overdue')} onClick={() => setDueFilter(dueFilter === 'overdue' ? '' : 'overdue')}>⚠ Overdue</button>
+        <button style={fchip(dueFilter === 'upcoming')} onClick={() => setDueFilter(dueFilter === 'upcoming' ? '' : 'upcoming')}>On track</button>
+        <span style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px' }} />
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '6px 12px', fontFamily: 'inherit', fontSize: 13, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
           <option value="">Default order</option>
           <option value="due">Sort by due date (within group)</option>
           <option value="flat">All tasks by due date</option>
         </select>
-        {(filtering || sortBy) && <button className="btn ghost sm" onClick={() => { setFilterOwner(''); setFilterStatus(''); setFilterAct(''); setSortBy('') }}>Clear</button>}
+        {(filtering || sortBy) && <button className="btn ghost sm" onClick={() => { setFOwners([]); setFStatuses([]); setFActs([]); setDueFilter(''); setSortBy('') }}>Clear</button>}
       </div>
 
       <div className="tiles sans">
@@ -543,11 +551,13 @@ export default function ProjectBoard() {
                   const l = link[t.id] || {}
                   return (
                     <div key={t.id}>
-                      <div className="trow">
+                      <div className={t.status === 'done' ? 'trow donerow' : 'trow'}>
                         <div className="tname">
-                          {user === 'Christina' && <input type="checkbox" checked={sel.has(t.id)} onChange={() => toggleSel(t.id)} style={{ marginRight: 8, cursor: 'pointer' }} />}
-                          <span className="nt">{t.title}</span>
-                          <div className="acts">{phaseOf(t) && <span className="pill" style={{ background: '#EEF3FB', borderColor: '#cdd9f0', color: '#2E5AAC' }}>{phaseOf(t)}</span>}{t.recurrence && t.recurrence !== 'none' && <span className="pill" style={{ background: '#FAEEDA', borderColor: '#EF9F27', color: '#854F0B' }}>{t.recurrence}</span>}{parseActs(t.applies_to).map(x => <span className="pill" key={x}>{x}</span>)}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            {user === 'Christina' && <input type="checkbox" checked={sel.has(t.id)} onChange={() => toggleSel(t.id)} style={{ cursor: 'pointer' }} />}
+                            <span className="nt">{t.title}</span>
+                            {parseActs(t.applies_to).filter(a => a !== 'All events').map(x => <span className="apill" key={x}>{x}</span>)}
+                          </div>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))}>{openThread[t.id] ? '▾ Hide' : '✎ Edit'}</button>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ marginLeft: 12 }}>💬 Comment{cs.length ? ' (' + cs.length + ')' : ''}</button>
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ marginLeft: 12 }}>📎 Add attachment{ats.length ? ' (' + ats.length + ')' : ''}</button>
