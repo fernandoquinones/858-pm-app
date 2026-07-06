@@ -433,12 +433,12 @@ export default function ProjectBoard() {
         You have <b>{roleOf(user)}</b> access: view all, comment &amp; attach on any task, edit only your own. Switch &ldquo;Acting as&rdquo; to compare.
       </div>}
 
-      {headerPanel && (
-        <div className="card sans" style={{ width: 480, maxWidth: '100%', marginLeft: 'auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button onClick={() => setHeaderPanel(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 18, lineHeight: 1, fontFamily: 'inherit' }}>×</button></div>
-          {headerPanel === 'reports' && (
-      <div className="sans">
-        <div className="subh">📊 Status dashboard <span style={{ color: 'var(--faint)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· live</span></div>
+      {headerPanel === 'reports' && (<>
+        <div className="card sans">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="subh" style={{ margin: 0 }}>📊 Status dashboard <span style={{ color: 'var(--faint)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· live</span></div>
+            <button onClick={() => setHeaderPanel(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 18, lineHeight: 1, fontFamily: 'inherit' }}>×</button>
+          </div>
         {(() => {
           const counts = {}; Object.keys(STATUS).forEach(k => counts[k] = 0)
           tasks.forEach(t => { counts[t.status] = (counts[t.status] || 0) + 1 })
@@ -451,7 +451,9 @@ export default function ProjectBoard() {
             </div>)}
           </div>
         })()}
-        <div className="subh" style={{ marginTop: 16 }}>🗓 This week&rsquo;s tasks <span style={{ color: 'var(--faint)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· live</span></div>
+        </div>
+        <div className="card sans">
+        <div className="subh">🗓 This week&rsquo;s tasks <span style={{ color: 'var(--faint)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· live</span></div>
         {(() => {
           const d = new Date(); d.setDate(d.getDate() + 6)
           const end = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
@@ -462,7 +464,8 @@ export default function ProjectBoard() {
             <span style={{ color: 'var(--muted)', flex: 'none', fontSize: 12 }}>{t.owner} · {t.due_date}</span>
           </div>)}</div>
         })()}
-        <div style={{ height: 1, background: 'var(--line)', margin: '16px 0' }} />
+        </div>
+        <div className="card sans">
         <div className="subh">✨ Build a custom view with Claude</div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <input value={reportPrompt} onChange={e => setReportPrompt(e.target.value)} placeholder={'e.g. "status dashboard", "calendar of due dates", "what is overdue"'} onKeyDown={e => { if (e.key === 'Enter') generateReport() }} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, minWidth: 260 }} />
@@ -480,9 +483,11 @@ export default function ProjectBoard() {
           </div>
           <iframe title="report" sandbox="allow-same-origin" srcDoc={reportHtml} style={{ width: '100%', height: 560, border: '1px solid var(--line)', borderRadius: 8, background: '#fff' }} />
         </div>}
-      </div>
-          )}
-          {headerPanel === 'links' && (
+        </div>
+      </>)}
+      {headerPanel === 'links' && (
+        <div className="card sans" style={{ width: 480, maxWidth: '100%', marginLeft: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button onClick={() => setHeaderPanel(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 18, lineHeight: 1, fontFamily: 'inherit' }}>×</button></div>
       <div className="sans">
         <div className="subh">🔗 Helpful links</div>
         {eventLinks.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
@@ -498,11 +503,10 @@ export default function ProjectBoard() {
         </div>
         <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 7 }}>Event-level resources (Informa links, brand guidelines, decks). Visible to everyone on this plan.</div>
       </div>
-          )}
         </div>
       )}
 
-      {master && (
+      {master && headerPanel !== 'reports' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'stretch' }}>
           <div className="card sans" style={{ margin: 0 }}>
             <div className="subh">✨ Add to this plan with Claude</div>
