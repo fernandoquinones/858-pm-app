@@ -211,3 +211,9 @@ select.st{font-size:16px;padding:10px 13px}
 .ph-body .trow{padding:19px 20px;grid-template-columns:1fr 160px 152px 150px}
 .trow.donerow{background:#F1F2F4}
 .due input{width:100%;max-width:150px}
+
+/* more gap between task title line and the action buttons line */
+.tname .cmtbtn{margin-top:12px}
+
+/* Ongoing status color */
+select.st.ongoing{color:#5B45A8;background:#EEEBFA;border-color:#D6CCF2}

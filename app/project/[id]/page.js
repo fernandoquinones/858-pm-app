@@ -221,23 +221,47 @@ export default function ProjectBoard() {
     setErr(null); setMsg('Removed “' + t.title + '” from the library (still on this event).'); setTimeout(() => setMsg(null), 3000)
     load()
   }
+  const [undo, setUndo] = useState(null)
   const toggleSel = tid => setSel(s => { const n = new Set(s); n.has(tid) ? n.delete(tid) : n.add(tid); return n })
   async function deleteTask(t) {
     if (user !== 'Christina') return
-    if (typeof window !== 'undefined' && !window.confirm('Delete “' + t.title + '” from this plan? This cannot be undone.')) return
+    if (typeof window !== 'undefined' && !window.confirm('Delete “' + t.title + '”? You can undo right after.')) return
     const { error } = await supabase.from('tasks').delete().eq('id', t.id)
     if (error) { setErr('Delete failed: ' + error.message); return }
-    setErr(null); setMsg('Deleted “' + t.title + '” from the plan.'); setTimeout(() => setMsg(null), 3000)
+    setErr(null); setUndo({ kind: 'tasks', tasks: [t], label: '“' + t.title + '”' })
     load()
   }
   async function deleteSelected() {
     if (user !== 'Christina' || !sel.size) return
-    if (typeof window !== 'undefined' && !window.confirm('Delete ' + sel.size + ' task(s) from this plan? This cannot be undone.')) return
-    const ids = [...sel]
-    const { error } = await supabase.from('tasks').delete().in('id', ids)
+    if (typeof window !== 'undefined' && !window.confirm('Delete ' + sel.size + ' task(s)? You can undo right after.')) return
+    const rows = tasks.filter(t => sel.has(t.id))
+    const { error } = await supabase.from('tasks').delete().in('id', rows.map(t => t.id))
     if (error) { setErr('Bulk delete failed: ' + error.message); return }
-    setSel(new Set()); setErr(null); setMsg('Deleted ' + ids.length + ' task(s).'); setTimeout(() => setMsg(null), 3000)
+    setSel(new Set()); setErr(null); setUndo({ kind: 'tasks', tasks: rows, label: rows.length + ' tasks' })
     load()
+  }
+  async function deleteWorkstream(w) {
+    if (user !== 'Christina' || w.id === '__all__') return
+    const wsTasks = tasks.filter(t => t.workstream_id === w.id)
+    const q = wsTasks.length ? ('Remove the “' + w.name + '” workstream and its ' + wsTasks.length + ' task(s)? You can undo right after.') : ('Remove the empty “' + w.name + '” workstream? You can undo right after.')
+    if (typeof window !== 'undefined' && !window.confirm(q)) return
+    if (wsTasks.length) { const { error: te } = await supabase.from('tasks').delete().in('id', wsTasks.map(t => t.id)); if (te) { setErr('Delete failed: ' + te.message); return } }
+    const { error } = await supabase.from('workstreams').delete().eq('id', w.id)
+    if (error) { setErr('Delete failed: ' + error.message); return }
+    setErr(null); setUndo({ kind: 'workstream', ws: w, tasks: wsTasks, label: '“' + w.name + '” workstream' })
+    load()
+  }
+  async function restoreUndo() {
+    if (!undo) return
+    if (undo.kind === 'tasks') {
+      const { error } = await supabase.from('tasks').insert(undo.tasks)
+      if (error) { setErr('Undo failed: ' + error.message); return }
+    } else if (undo.kind === 'workstream') {
+      const { error: we } = await supabase.from('workstreams').insert(undo.ws)
+      if (we) { setErr('Undo failed: ' + we.message); return }
+      if (undo.tasks.length) { const { error: te } = await supabase.from('tasks').insert(undo.tasks); if (te) { setErr('Undo failed: ' + te.message); return } }
+    }
+    setUndo(null); setErr(null); load()
   }
   async function setEventActivations(acts) {
     const prev = parseActs(project.activations)
@@ -523,6 +547,14 @@ export default function ProjectBoard() {
         <div className="tile warn"><div className="tnum">{overdue}</div><div className="tlab">Overdue</div></div>
       </div>
 
+      {undo && (
+        <div className="card sans" style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#FFF8E6', borderColor: '#F0D8A8', marginBottom: 10 }}>
+          <span>Deleted {undo.label}.</span>
+          <button className="btn sm" onClick={restoreUndo}>↩ Undo</button>
+          <button className="btn ghost sm" onClick={() => setUndo(null)}>Dismiss</button>
+        </div>
+      )}
+
       {user === 'Christina' && sel.size > 0 && (
         <div className="card sans" style={{ display: 'flex', alignItems: 'center', gap: 12, borderColor: '#f0c4c0', background: '#fdf3f2', marginBottom: 10 }}>
           <b style={{ color: '#b42318' }}>{sel.size} selected</b>
@@ -541,6 +573,7 @@ export default function ProjectBoard() {
               <span className="timing sans">{w.timing || ''}</span>
               <span className="ttl">{w.name}</span>
               <span className="cnt sans">{list.length} task{list.length !== 1 ? 's' : ''}</span>
+              {user === 'Christina' && w.id !== '__all__' && <button onClick={e => { e.stopPropagation(); deleteWorkstream(w) }} title="Remove workstream" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 14, padding: '0 6px' }}>🗑</button>}
               <span className="sans" style={{ fontSize: 11, color: 'var(--faint)' }}>{isOpen ? '▾' : '▸'}</span>
             </div>
             {isOpen && (
