@@ -329,7 +329,9 @@ export default function ProjectBoard() {
   const toggleF = (arr, set, v) => set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v])
   const ownersInUse = [...new Set(tasks.flatMap(t => (t.owner || '').split('+').map(x => x.trim())).filter(Boolean))]
   const fchip = on => ({ fontSize: 13, padding: '5px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit', border: '1px solid ' + (on ? 'var(--accent)' : 'var(--line)'), background: on ? 'var(--accent-soft)' : 'transparent', color: on ? 'var(--accent)' : 'var(--muted)', fontWeight: on ? 700 : 500 })
-  const groups = sortBy === 'flat' ? [{ id: '__all__', name: 'All tasks \u00b7 by due date', timing: '' }] : workstreams
+  const flabel = { fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--faint)', width: 82, flex: 'none' }
+  const evActs = parseActs(project ? project.activations : '').filter(a => a !== 'All events')
+  const groups = (!master || sortBy === 'flat') ? [{ id: '__all__', name: 'All tasks \u00b7 by due date', timing: '' }] : workstreams
   const cmtsFor = tid => comments.filter(c => c.task_id === tid)
   const attsFor = tid => attachments.filter(a => a.task_id === tid)
   const eventLinks = attachments.filter(a => !a.task_id)
@@ -516,28 +518,30 @@ export default function ProjectBoard() {
         </div>
       )}
 
-      <div className="sans" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', margin: '10px 0 2px' }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--faint)', marginRight: 2 }}>Owners</span>
-        {ownersInUse.map(o => <button key={o} style={fchip(fOwners.includes(o))} onClick={() => toggleF(fOwners, setFOwners, o)}>{o}</button>)}
-        <span style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px' }} />
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--faint)', marginRight: 2 }}>Status</span>
-        {Object.entries(STATUS).map(([k, v]) => <button key={k} style={fchip(fStatuses.includes(k))} onClick={() => toggleF(fStatuses, setFStatuses, k)}>{v}</button>)}
-      </div>
-      <div className="sans" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', margin: '4px 0 8px' }}>
-        {parseActs(project ? project.activations : '').filter(a => a !== 'All events').length > 0 && (<>
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--faint)', marginRight: 2 }}>Activation</span>
-          {parseActs(project ? project.activations : '').filter(a => a !== 'All events').map(a => <button key={a} style={fchip(fActs.includes(a))} onClick={() => toggleF(fActs, setFActs, a)}>{a}</button>)}
-          <span style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px' }} />
-        </>)}
-        <button style={fchip(dueFilter === 'overdue')} onClick={() => setDueFilter(dueFilter === 'overdue' ? '' : 'overdue')}>⚠ Overdue</button>
-        <button style={fchip(dueFilter === 'upcoming')} onClick={() => setDueFilter(dueFilter === 'upcoming' ? '' : 'upcoming')}>On track</button>
-        <span style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px' }} />
-        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '6px 12px', fontFamily: 'inherit', fontSize: 13, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
-          <option value="">Default order</option>
-          <option value="due">Sort by due date (within group)</option>
-          <option value="flat">All tasks by due date</option>
-        </select>
-        {(filtering || sortBy) && <button className="btn ghost sm" onClick={() => { setFOwners([]); setFStatuses([]); setFActs([]); setDueFilter(''); setSortBy('') }}>Clear</button>}
+      <div style={{ margin: '10px 0 10px' }}>
+        <div className="sans" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
+          <span style={flabel}>Owners</span>
+          {ownersInUse.map(o => <button key={o} style={fchip(fOwners.includes(o))} onClick={() => toggleF(fOwners, setFOwners, o)}>{o}</button>)}
+        </div>
+        <div className="sans" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
+          <span style={flabel}>Status</span>
+          {Object.entries(STATUS).map(([k, v]) => <button key={k} style={fchip(fStatuses.includes(k))} onClick={() => toggleF(fStatuses, setFStatuses, k)}>{v}</button>)}
+        </div>
+        {evActs.length > 0 && <div className="sans" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
+          <span style={flabel}>Activation</span>
+          {evActs.map(a => <button key={a} style={fchip(fActs.includes(a))} onClick={() => toggleF(fActs, setFActs, a)}>{a}</button>)}
+        </div>}
+        <div className="sans" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={flabel}>View</span>
+          <button style={fchip(dueFilter === 'overdue')} onClick={() => setDueFilter(dueFilter === 'overdue' ? '' : 'overdue')}>⚠ Overdue</button>
+          <button style={fchip(dueFilter === 'upcoming')} onClick={() => setDueFilter(dueFilter === 'upcoming' ? '' : 'upcoming')}>On track</button>
+          {master && <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '6px 12px', fontFamily: 'inherit', fontSize: 13, background: 'transparent', color: 'var(--muted)', cursor: 'pointer' }}>
+            <option value="">Grouped by workstream</option>
+            <option value="due">Due date (within group)</option>
+            <option value="flat">All tasks by due date</option>
+          </select>}
+          {(filtering || sortBy) && <button className="btn ghost sm" onClick={() => { setFOwners([]); setFStatuses([]); setFActs([]); setDueFilter(''); setSortBy('') }}>Clear</button>}
+        </div>
       </div>
 
       <div className="tiles sans">
