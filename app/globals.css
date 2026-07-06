@@ -205,3 +205,9 @@ select.st{font-size:16px;padding:10px 13px}
 
 /* small activation pills, inline next to the task title */
 .apill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:10px;background:var(--accent-soft);color:var(--accent);border:1px solid #cdd9f0;white-space:nowrap}
+
+/* fine-tune: -1pt task title, more space between tasks, neutral-gray done shade, roomier date cell */
+.trow .nt{font-size:16.5px}
+.ph-body .trow{padding:19px 20px;grid-template-columns:1fr 160px 152px 150px}
+.trow.donerow{background:#F1F2F4}
+.due input{width:100%;max-width:150px}
