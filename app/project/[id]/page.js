@@ -40,7 +40,7 @@ export default function ProjectBoard() {
   const [titleDraft, setTitleDraft] = useState({})
   const [cmtEdit, setCmtEdit] = useState({})
   const [link, setLink] = useState({})
-  const [na, setNa] = useState({ title: '', wsId: '', owner: 'Christina', acts: [], toLib: false })
+  const [na, setNa] = useState({ title: '', wsId: '', owner: 'Christina', acts: [], toLib: false, due: '' })
   const [newWs, setNewWs] = useState('')
   const [showNewWs, setShowNewWs] = useState(false)
   const [extendPrompt, setExtendPrompt] = useState('')
@@ -52,7 +52,7 @@ export default function ProjectBoard() {
   const [fStatuses, setFStatuses] = useState([])
   const [fActs, setFActs] = useState([])
   const [dueFilter, setDueFilter] = useState('')
-  const [sortBy, setSortBy] = useState('')
+  const [sortBy, setSortBy] = useState('flat')
   const [evLink, setEvLink] = useState({ name: '', url: '' })
   const [headerPanel, setHeaderPanel] = useState(null)
   const [slackOpen, setSlackOpen] = useState(false)
@@ -133,7 +133,7 @@ export default function ProjectBoard() {
     if (!wsId) { setErr('Create a workstream first.'); return }
     const wsName = (workstreams.find(w => w.id === wsId) || {}).name
     const applies_to = na.acts.length ? joinActs(na.acts) : 'All events'
-    const { error } = await supabase.from('tasks').insert({ project_id: id, workstream_id: wsId, title, owner: na.owner, applies_to, status: 'todo', sort_order: tasks.length + 1 })
+    const { error } = await supabase.from('tasks').insert({ project_id: id, workstream_id: wsId, title, owner: na.owner, applies_to, due_date: na.due || null, status: 'todo', sort_order: tasks.length + 1 })
     if (error) { setErr('Add task failed: ' + error.message); return }
     if (na.toLib) {
       const { error: e2 } = await supabase.from('library_tasks').upsert({ workstream: wsName, title, owner: na.owner, applies_to, notes: '' }, { onConflict: 'workstream,title' })
@@ -142,7 +142,7 @@ export default function ProjectBoard() {
     setErr(null)
     setMsg('Added “' + title + '” to “' + wsName + '”' + (na.toLib ? ' ★ and saved to the library.' : '.'))
     setTimeout(() => setMsg(null), 3500)
-    setNa(n => ({ ...n, title: '', acts: [], toLib: false }))   // reset title, activations, library toggle each add
+    setNa(n => ({ ...n, title: '', acts: [], toLib: false, due: '' }))   // reset title, activations, library toggle, due each add
     load()
   }
   async function addWorkstream() {
@@ -332,9 +332,15 @@ export default function ProjectBoard() {
 
   const phaseOf = t => {
     if (!t.due_date || !project || !project.event_date) return ''
+    const end = project.event_end_date || project.event_date
     if (t.due_date < project.event_date) return 'Pre-event'
-    if (t.due_date > project.event_date) return 'Post-event'
+    if (t.due_date > end) return 'Post-event'
     return 'Intra-event'
+  }
+  async function setEventEnd(v) {
+    setProject(p => ({ ...p, event_end_date: v || null }))
+    const { error } = await supabase.from('projects').update({ event_end_date: v || null }).eq('id', id)
+    if (error) setErr('Update end date failed: ' + error.message)
   }
   const _todayStr = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') })()
   const isOverdue = t => t.status !== 'done' && t.due_date && t.due_date < _todayStr
@@ -385,6 +391,12 @@ export default function ProjectBoard() {
                   ? <input type="date" value={project.event_date || ''} onChange={e => setEventDate(e.target.value)} style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
                   : <span style={{ fontSize: 12, color: 'var(--ink)' }}>{project.event_date ? fmtDate(project.event_date) : '—'}</span>}
               </span>
+              {(master || project.event_end_date) && (<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>End</span>
+                {master
+                  ? <input type="date" value={project.event_end_date || ''} onChange={e => setEventEnd(e.target.value)} title="End date (for multi-day events)" style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
+                  : <span style={{ fontSize: 12, color: 'var(--ink)' }}>{project.event_end_date ? fmtDate(project.event_end_date) : '—'}</span>}
+              </span>)}
               <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>City</span>
                 {master
@@ -457,7 +469,7 @@ export default function ProjectBoard() {
       </div>}
 
       {headerPanel === 'reports' && (<>
-        <div className="card sans"><TaskTimeline tasks={tasks} eventDate={project ? project.event_date : ''} eventName={project ? project.name : ''} /></div>
+        <div className="card sans"><TaskTimeline tasks={tasks} eventDate={project ? project.event_date : ''} eventEndDate={project ? project.event_end_date : ''} eventName={project ? project.name : ''} /></div>
         <div className="card sans">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="subh" style={{ margin: 0 }}>📊 Status dashboard <span style={{ color: 'var(--faint)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· live</span></div>
@@ -549,6 +561,8 @@ export default function ProjectBoard() {
               <select value={na.owner} onChange={e => setNa(n => ({ ...n, owner: e.target.value }))} style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
                 {OWNERS.map(o => <option key={o}>{o}</option>)}
               </select>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', margin: '10px 0 4px' }}>Due date</div>
+              <input type="date" value={na.due || ''} onChange={e => setNa(n => ({ ...n, due: e.target.value }))} style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }} />
             </div>
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 4 }}>Workstream</div>
@@ -593,7 +607,7 @@ export default function ProjectBoard() {
             <option value="due">Due date (within group)</option>
             <option value="flat">All tasks by due date</option>
           </select>}
-          {(filtering || sortBy) && <button className="btn ghost sm" onClick={() => { setFOwners([]); setFStatuses([]); setFActs([]); setDueFilter(''); setSortBy('') }}>Clear</button>}
+          {(filtering || sortBy !== 'flat') && <button className="btn ghost sm" onClick={() => { setFOwners([]); setFStatuses([]); setFActs([]); setDueFilter(''); setSortBy('flat') }}>Clear</button>}
         </div>
       </div>
 

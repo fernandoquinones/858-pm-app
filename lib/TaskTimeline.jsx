@@ -12,16 +12,17 @@ const fmt = ymd => { const [y, m, d] = ymd.split('-').map(Number); return new Da
 const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') }
 
 // Live "open task timeline" — populated by To-do + In progress tasks that have a due date.
-export function TaskTimeline({ tasks = [], eventDate = '', eventName = '' }) {
+export function TaskTimeline({ tasks = [], eventDate = '', eventEndDate = '', eventName = '' }) {
   const [active, setActive] = useState(null)
   const [hover, setHover] = useState(null)
   const today = todayStr()
 
   const open = tasks.filter(t => (t.status === 'todo' || t.status === 'prog') && t.due_date)
   const cat = due => {
+    const end = eventEndDate || eventDate
     if (due < today) return 'overdue'
-    if (eventDate && due === eventDate) return 'event'
-    if (eventDate && due > eventDate) return 'post'
+    if (eventDate && due >= eventDate && due <= end) return 'event'
+    if (eventDate && due > end) return 'post'
     return 'upcoming'
   }
   const map = {}

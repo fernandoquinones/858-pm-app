@@ -22,6 +22,7 @@ export default function Home() {
   // structured create
   const [evName, setEvName] = useState('')
   const [evDate, setEvDate] = useState('')
+  const [evEnd, setEvEnd] = useState('')
   const [evVenue, setEvVenue] = useState('')
   const [evCity, setEvCity] = useState('')
   const [evState, setEvState] = useState('')
@@ -56,7 +57,7 @@ export default function Home() {
     if (!evState.trim()) { setErr('Add a state.'); return }
     setCreating(true); setErr(null)
     try {
-      const r = await fetch('/api/create-event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: evName, date: evDate || null, venue: evVenue || null, city: evCity || null, state: evState || null, activations: evActs }) })
+      const r = await fetch('/api/create-event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: evName, date: evDate || null, endDate: evEnd || null, venue: evVenue || null, city: evCity || null, state: evState || null, activations: evActs }) })
       const j = await r.json()
       if (!r.ok) { setErr(j.error || 'Could not create event'); setCreating(false); return }
       router.push(`/project/${j.projectId}`)
@@ -70,7 +71,7 @@ export default function Home() {
     if (!evState.trim()) { setErr('Add a state.'); return }
     setGen(true); setErr(null)
     try {
-      const r = await fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt, date: evDate || null, venue: evVenue || null, city: evCity || null, state: evState || null }) })
+      const r = await fetch('/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt, date: evDate || null, endDate: evEnd || null, venue: evVenue || null, city: evCity || null, state: evState || null }) })
       const j = await r.json()
       if (!r.ok) { setErr(j.error || 'Generation failed'); setGen(false); return }
       router.push(`/project/${j.projectId}`)
@@ -84,6 +85,14 @@ export default function Home() {
   }
   function eventTime(p) { return p.event_date ? new Date(p.event_date + 'T00:00:00').getTime() : Infinity }
   const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
+  const fmtRange = (s, e) => {
+    if (!s) return ''
+    if (!e || e === s) return fmtDate(s)
+    const ds = new Date(s + 'T00:00:00'), de = new Date(e + 'T00:00:00'), o = { month: 'short', day: 'numeric' }
+    if (ds.getFullYear() === de.getFullYear() && ds.getMonth() === de.getMonth()) return ds.toLocaleDateString('en-US', o) + '\u2013' + de.getDate() + ', ' + ds.getFullYear()
+    if (ds.getFullYear() === de.getFullYear()) return ds.toLocaleDateString('en-US', o) + ' \u2013 ' + de.toLocaleDateString('en-US', o) + ', ' + ds.getFullYear()
+    return fmtDate(s) + ' \u2013 ' + fmtDate(e)
+  }
   const cityState = (p) => [p.city, p.state].filter(Boolean).join(', ')
   async function saveVenue(p) {
     const v = venueDraft[p.id]; if (v === undefined) return
@@ -150,6 +159,7 @@ export default function Home() {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
               <input placeholder="Event name (e.g. 858 LA Holiday Party)" value={evName} onChange={e => setEvName(e.target.value)} style={{ flex: 1, minWidth: 240, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
               <input type="date" value={evDate} onChange={e => setEvDate(e.target.value)} title="Event date" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input type="date" value={evEnd} onChange={e => setEvEnd(e.target.value)} title="End date (optional — for multi-day events)" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)' }} />
               <input placeholder="City" value={evCity} onChange={e => setEvCity(e.target.value)} style={{ flex: 1, minWidth: 120, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
               <input placeholder="State" value={evState} onChange={e => setEvState(e.target.value)} style={{ width: 90, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
               <input placeholder="Venue (optional)" value={evVenue} onChange={e => setEvVenue(e.target.value)} style={{ flex: 1, minWidth: 140, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
@@ -168,6 +178,7 @@ export default function Home() {
             <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={2} placeholder="Describe the event in one sentence…" style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: '10px 12px', fontFamily: 'inherit', fontSize: 13, resize: 'vertical' }} />
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
               <input type="date" value={evDate} onChange={e => setEvDate(e.target.value)} title="Event date" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13 }} />
+              <input type="date" value={evEnd} onChange={e => setEvEnd(e.target.value)} title="End date (optional — for multi-day events)" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)' }} />
               <input placeholder="City" value={evCity} onChange={e => setEvCity(e.target.value)} style={{ flex: 1, minWidth: 120, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
               <input placeholder="State" value={evState} onChange={e => setEvState(e.target.value)} style={{ width: 90, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
               <input placeholder="Venue (optional)" value={evVenue} onChange={e => setEvVenue(e.target.value)} style={{ flex: 1, minWidth: 140, border: '1px solid var(--line)', borderRadius: 8, padding: '9px 11px', fontFamily: 'inherit', fontSize: 13 }} />
@@ -217,7 +228,7 @@ export default function Home() {
             <div key={p.id} className="card sans" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ minWidth: 0 }}>
                 <Link href={`/project/${p.id}`} style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Instrument Sans, sans-serif', color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{p.event_date ? fmtDate(p.event_date) : 'No date set'}{cityState(p) ? ` · ${cityState(p)}` : ''}</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{p.event_date ? fmtRange(p.event_date, p.event_end_date) : 'No date set'}{cityState(p) ? ` · ${cityState(p)}` : ''}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Venue</span>
                   {master

@@ -48,7 +48,7 @@ const PLAN_TOOL = {
 
 export async function POST(req) {
   try {
-    const { prompt, date, venue, city, state } = await req.json()
+    const { prompt, date, endDate, venue, city, state } = await req.json()
     if (!prompt || !prompt.trim()) {
       return Response.json({ error: 'Describe the event first.' }, { status: 400 })
     }
@@ -97,7 +97,7 @@ export async function POST(req) {
 
     // Write the plan to Supabase: project -> workstreams -> tasks
     const { data: project, error: pErr } = await supabase
-      .from('projects').insert({ name: plan.project_name, type: plan.type || 'event', event_date: date || null, venue: venue || null, city: city || null, state: state || null }).select().single()
+      .from('projects').insert({ name: plan.project_name, type: plan.type || 'event', event_date: date || null, event_end_date: endDate || null, venue: venue || null, city: city || null, state: state || null }).select().single()
     if (pErr) return Response.json({ error: pErr.message }, { status: 500 })
 
     let sort = 0
