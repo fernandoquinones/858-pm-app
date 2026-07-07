@@ -21,18 +21,12 @@ async function run(type, { enforceTime } = {}) {
 
   const sent = []
   for (const person of REAL_PEOPLE) {
-    const mine = ownedBy(tasks, person)
+    // Christina gets the full cross-event set; everyone else gets only their own — all per-task
+    const mine = person === 'Christina' ? tasks : ownedBy(tasks, person)
     if (!mine.length) continue
     if (!idOf[person]) { sent.push({ person, skipped: 'no slack_id' }); continue }
     const n = await dmPersonalTasks(sb, idOf[person], person, mine, meta, w.headline)
     sent.push({ person, delivered: n })
-  }
-  // full overview to leads (read-only summary, one message)
-  const full = fullBlocks(tasks, meta, w.headline)
-  for (const lead of LEADS) {
-    if (!idOf[lead]) { sent.push({ lead, skipped: 'no slack_id' }); continue }
-    const r = await dmUser(idOf[lead], full.text, full.blocks)
-    sent.push({ lead: lead + ' (full view)', ok: !!(r && r.ts), error: r && r.error })
   }
   return { ok: true, type, window: w, taskCount: tasks.length, sent }
 }
