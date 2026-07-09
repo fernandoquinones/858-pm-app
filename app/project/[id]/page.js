@@ -184,6 +184,26 @@ export default function ProjectBoard() {
     setTimeout(() => URL.revokeObjectURL(url), 2000)
   }
   function openReport() { const w = window.open(); if (w) { w.document.write(reportHtml); w.document.close() } }
+  function exportCsv() {
+    const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'
+    const wsById = {}; workstreams.forEach(w => { wsById[w.id] = w })
+    const ordered = [...tasks].sort((a, b) => {
+      const wa = (wsById[a.workstream_id] || {}).sort_order ?? 999, wb = (wsById[b.workstream_id] || {}).sort_order ?? 999
+      if (wa !== wb) return wa - wb
+      return (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    })
+    const rows = [['Workstream', 'Timing', 'Task', 'Owner', 'Status', 'Due date', 'Activation', 'Phase']]
+    ordered.forEach(t => {
+      const w = wsById[t.workstream_id] || {}
+      rows.push([w.name || '', w.timing || '', t.title, t.owner, STATUS[t.status] || t.status, t.due_date || '', parseActs(t.applies_to).join(' / '), phaseOf(t)])
+    })
+    const csv = rows.map(r => r.map(esc).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = ((project && project.name) || 'tasks').replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/^-|-$/g, '') + '-tasks.csv'
+    a.click(); URL.revokeObjectURL(a.href)
+  }
   async function addEventLink() {
     const url = (evLink.url || '').trim(); if (!url) return
     await supabase.from('attachments').insert({ project_id: id, task_id: null, kind: 'link', name: (evLink.name || '').trim() || url, url, added_by: user })
@@ -453,6 +473,7 @@ export default function ProjectBoard() {
           <Link className="chip" href={`/project/${id}/seating`}>🪑 Seating →</Link>
           <button type="button" className="chip" onClick={() => setHeaderPanel(p => p === 'reports' ? null : 'reports')} style={{ cursor: 'pointer', fontFamily: 'inherit', borderColor: headerPanel === 'reports' ? 'var(--accent)' : undefined, color: headerPanel === 'reports' ? 'var(--accent)' : undefined, fontWeight: headerPanel === 'reports' ? 700 : undefined }}>📊 Reports</button>
           <button type="button" className="chip" onClick={() => setHeaderPanel(p => p === 'links' ? null : 'links')} style={{ cursor: 'pointer', fontFamily: 'inherit', borderColor: headerPanel === 'links' ? 'var(--accent)' : undefined, color: headerPanel === 'links' ? 'var(--accent)' : undefined, fontWeight: headerPanel === 'links' ? 700 : undefined }}>🔗 Links</button>
+          <button type="button" className="chip" onClick={exportCsv} style={{ cursor: 'pointer', fontFamily: 'inherit' }}>⬇ Export CSV</button>
           <label className="chip" style={{ gap: 6 }}>Acting as
             <select value={user} onChange={e => setUser(e.target.value)} style={{ border: 'none', background: 'transparent', fontFamily: 'inherit', fontWeight: 700, color: 'var(--ink)', cursor: 'pointer' }}>
               {PEOPLE.map(p => <option key={p.name} value={p.name}>{p.name} ({p.role})</option>)}
