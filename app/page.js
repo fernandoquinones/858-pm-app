@@ -216,7 +216,7 @@ export default function Home() {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '20px 0 4px' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', fontFamily: 'Instrument Sans, sans-serif', margin: 0 }}>Project plans</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', fontFamily: 'Instrument Sans, sans-serif', margin: 0 }}>Events</h2>
         <div style={{ display: 'flex', gap: 6 }}>
           <button type="button" onClick={() => setEventFilter('current')} style={{ fontSize: 12, borderRadius: 999, padding: '5px 13px', cursor: 'pointer', fontFamily: 'inherit', border: '1px solid ' + (eventFilter === 'current' ? 'var(--accent)' : 'var(--line)'), color: eventFilter === 'current' ? 'var(--accent)' : 'var(--muted)', background: eventFilter === 'current' ? '#eef3fb' : 'transparent', fontWeight: eventFilter === 'current' ? 700 : 400 }}>Current events</button>
           <button type="button" onClick={() => setEventFilter('past')} style={{ fontSize: 12, borderRadius: 999, padding: '5px 13px', cursor: 'pointer', fontFamily: 'inherit', border: '1px solid ' + (eventFilter === 'past' ? 'var(--accent)' : 'var(--line)'), color: eventFilter === 'past' ? 'var(--accent)' : 'var(--muted)', background: eventFilter === 'past' ? '#eef3fb' : 'transparent', fontWeight: eventFilter === 'past' ? 700 : 400 }}>Past events</button>

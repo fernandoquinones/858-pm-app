@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { supabase, OWNERS, OWNER_COLOR, STATUS, BASE_ACTIVATIONS, parseActs, joinActs } from '../../../lib/supabaseClient'
 import { TaskTimeline } from '../../../lib/TaskTimeline'
 import { OwnerPicker } from '../../../lib/OwnerPicker'
+import { EventTabs } from '../../../lib/EventTabs'
 import { PEOPLE, isMaster, canEditTask, canSetStatus, roleOf } from '../../../lib/roles'
 import { useCurrentUser } from '../../../lib/useCurrentUser'
 import { ActivationChips } from '../../../lib/ActivationChips'
@@ -491,6 +492,8 @@ export default function ProjectBoard() {
           </label>}
         </div>
       </div>
+
+      <EventTabs id={id} active="event" />
 
       {err && <div className="banner sans">{err}</div>}
       {msg && <div className="banner sans" style={{ background: '#E1F5EE', borderColor: '#5DCAA5', color: '#0F6E56' }}>{msg}</div>}
