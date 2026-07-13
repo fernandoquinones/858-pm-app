@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase, BASE_ACTIVATIONS, parseActs } from '../lib/supabaseClient'
 import { PEOPLE, isMaster, roleOf } from '../lib/roles'
+import { AuthBar } from '../lib/AuthBar'
 import { useCurrentUser } from '../lib/useCurrentUser'
 import { ActivationChips } from '../lib/ActivationChips'
 
 export default function Home() {
   const router = useRouter()
-  const [user, setUser] = useCurrentUser()
+  const [user, setUser, authed] = useCurrentUser()
   const master = isMaster(user)
 
   const [projects, setProjects] = useState([])
@@ -141,11 +142,12 @@ export default function Home() {
         <div className="chips sans">
           <div className="chip"><span className="dot"></span> Live · Supabase</div>
           <Link className="chip" href="/dossier-demo" style={{ textDecoration: 'none', cursor: 'pointer' }}>🗂 Client dossier (demo)</Link>
-          <label className="chip" style={{ gap: 6 }}>Acting as
+          <AuthBar />
+          {!authed && <label className="chip" style={{ gap: 6 }}>Acting as
             <select value={user} onChange={e => setUser(e.target.value)} style={{ border: 'none', background: 'transparent', fontFamily: 'inherit', fontWeight: 700, color: 'var(--ink)', cursor: 'pointer' }}>
               {PEOPLE.map(p => <option key={p.name} value={p.name}>{p.name} ({p.role})</option>)}
             </select>
-          </label>
+          </label>}
         </div>
       </div>
 
