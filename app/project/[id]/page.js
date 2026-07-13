@@ -268,7 +268,7 @@ export default function ProjectBoard() {
   const [undo, setUndo] = useState(null)
   const toggleSel = tid => setSel(s => { const n = new Set(s); n.has(tid) ? n.delete(tid) : n.add(tid); return n })
   async function deleteTask(t) {
-    if (user !== 'Christina') return
+    if (!isMaster(user)) return
     if (typeof window !== 'undefined' && !window.confirm('Delete “' + t.title + '”? You can undo right after.')) return
     const { error } = await supabase.from('tasks').delete().eq('id', t.id)
     if (error) { setErr('Delete failed: ' + error.message); return }
@@ -276,7 +276,7 @@ export default function ProjectBoard() {
     load()
   }
   async function deleteSelected() {
-    if (user !== 'Christina' || !sel.size) return
+    if (!isMaster(user) || !sel.size) return
     if (typeof window !== 'undefined' && !window.confirm('Delete ' + sel.size + ' task(s)? You can undo right after.')) return
     const rows = tasks.filter(t => sel.has(t.id))
     const { error } = await supabase.from('tasks').delete().in('id', rows.map(t => t.id))
@@ -285,7 +285,7 @@ export default function ProjectBoard() {
     load()
   }
   async function deleteWorkstream(w) {
-    if (user !== 'Christina' || w.id === '__all__') return
+    if (!isMaster(user) || w.id === '__all__') return
     const wsTasks = tasks.filter(t => t.workstream_id === w.id)
     const q = wsTasks.length ? ('Remove the “' + w.name + '” workstream and its ' + wsTasks.length + ' task(s)? You can undo right after.') : ('Remove the empty “' + w.name + '” workstream? You can undo right after.')
     if (typeof window !== 'undefined' && !window.confirm(q)) return
@@ -655,7 +655,7 @@ export default function ProjectBoard() {
         </div>
       )}
 
-      {user === 'Christina' && sel.size > 0 && (
+      {isMaster(user) && sel.size > 0 && (
         <div className="card sans" style={{ display: 'flex', alignItems: 'center', gap: 12, borderColor: '#f0c4c0', background: '#fdf3f2', marginBottom: 10 }}>
           <b style={{ color: '#b42318' }}>{sel.size} selected</b>
           <button className="btn sm" style={{ background: '#b42318', borderColor: '#b42318' }} onClick={deleteSelected}>🗑 Delete selected</button>
@@ -673,7 +673,7 @@ export default function ProjectBoard() {
               <span className="timing sans">{w.timing || ''}</span>
               <span className="ttl">{w.name}</span>
               <span className="cnt sans">{list.length} task{list.length !== 1 ? 's' : ''}</span>
-              {user === 'Christina' && w.id !== '__all__' && <button onClick={e => { e.stopPropagation(); deleteWorkstream(w) }} title="Remove workstream" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 14, padding: '0 6px' }}>🗑</button>}
+              {isMaster(user) && w.id !== '__all__' && <button onClick={e => { e.stopPropagation(); deleteWorkstream(w) }} title="Remove workstream" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--faint)', fontSize: 14, padding: '0 6px' }}>🗑</button>}
               <span className="sans" style={{ fontSize: 11, color: 'var(--faint)' }}>{isOpen ? '▾' : '▸'}</span>
             </div>
             {isOpen && (
@@ -687,7 +687,7 @@ export default function ProjectBoard() {
                       <div className={t.status === 'done' ? 'trow donerow' : 'trow'}>
                         <div className="tname">
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            {user === 'Christina' && <input type="checkbox" checked={sel.has(t.id)} onChange={() => toggleSel(t.id)} style={{ cursor: 'pointer' }} />}
+                            {isMaster(user) && <input type="checkbox" checked={sel.has(t.id)} onChange={() => toggleSel(t.id)} style={{ cursor: 'pointer' }} />}
                             {editable && titleDraft[t.id] !== undefined
                               ? <input autoFocus className="nt" value={titleDraft[t.id]} onChange={e => setTitleDraft(s => ({ ...s, [t.id]: e.target.value }))} onBlur={() => renameTask(t)} onKeyDown={e => { if (e.key === 'Enter') renameTask(t); if (e.key === 'Escape') setTitleDraft(s => { const n = { ...s }; delete n[t.id]; return n }) }} style={{ border: '1px solid var(--accent)', borderRadius: 6, padding: '2px 7px', fontFamily: 'inherit', minWidth: 260 }} />
                               : <span className="nt" onClick={() => { if (editable) setTitleDraft(s => ({ ...s, [t.id]: t.title })) }} style={{ cursor: editable ? 'text' : 'default' }} title={editable ? 'Click to rename' : undefined}>{t.title}</span>}
@@ -696,7 +696,7 @@ export default function ProjectBoard() {
                           <button className="cmtbtn" onClick={() => setOpenThread(o => ({ ...o, [t.id]: o[t.id] === 'edit' ? null : 'edit' }))}>{openThread[t.id] === 'edit' ? '▾ Hide' : '✎ Edit'}</button>
                           <button className="cmtbtn" style={{ marginLeft: 12 }} onClick={() => setOpenThread(o => ({ ...o, [t.id]: o[t.id] === 'comments' ? null : 'comments' }))}>💬 Comment{cs.length ? ' (' + cs.length + ')' : ''}</button>
                           <button className="cmtbtn" style={{ marginLeft: 12 }} onClick={() => setOpenThread(o => ({ ...o, [t.id]: o[t.id] === 'attach' ? null : 'attach' }))}>📎 Add attachment{ats.length ? ' (' + ats.length + ')' : ''}</button>
-                          {user === 'Christina' && <button className="cmtbtn" onClick={() => deleteTask(t)} style={{ color: 'var(--red)', marginLeft: 12 }}>🗑 Delete</button>}
+                          {isMaster(user) && <button className="cmtbtn" onClick={() => deleteTask(t)} style={{ color: 'var(--red)', marginLeft: 12 }}>🗑 Delete</button>}
                         </div>
                         <div className="owner"><span className="av" style={{ width: 20, height: 20, fontSize: 9, background: OWNER_COLOR[t.owner] || '#888' }}>{ownInit(t.owner)}</span>{editable
                           ? <OwnerPicker value={t.owner} onChange={v => setOwner(t, v)} owners={OWNERS} />
