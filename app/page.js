@@ -135,7 +135,7 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src="/logo.svg" alt="858" style={{ height: 30 }} />
           <div>
-            <h1>Project Tool</h1>
+            <h1>Project Plan Agent</h1>
             <div className="sub sans">Multifunction event project plans — single source of truth</div>
           </div>
         </div>

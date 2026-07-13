@@ -33,7 +33,7 @@ export function AuthGate({ children }) {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F2F4F7', fontFamily: 'Inter, sans-serif', padding: 20 }}>
       <div style={{ width: 380, maxWidth: '92%', background: '#fff', border: '1px solid #E5E8EE', borderRadius: 16, padding: '34px 30px', boxShadow: '0 8px 30px rgba(20,35,60,.08)', textAlign: 'center' }}>
         <img src="/logo.svg" alt="858" style={{ height: 34, marginBottom: 16 }} />
-        <h1 style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 4px', color: '#1A2333' }}>858 Project Tool</h1>
+        <h1 style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 4px', color: '#1A2333' }}>Project Plan Agent</h1>
         <p style={{ color: '#667085', fontSize: 13.5, margin: '0 0 22px' }}>Sign in with your 858 email to continue.</p>
         <form onSubmit={send}>
           <input type="email" required placeholder="you@858partners.com" value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', border: '1px solid #E5E8EE', borderRadius: 10, padding: '11px 13px', fontFamily: 'inherit', fontSize: 14, marginBottom: 10, boxSizing: 'border-box' }} />

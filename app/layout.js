@@ -2,7 +2,7 @@ import './globals.css'
 import { AuthGate } from '../lib/AuthGate'
 
 export const metadata = {
-  title: '858 Project Tool',
+  title: 'Project Plan Agent',
   description: 'Multifunction event project plan + seating'
 }
 
