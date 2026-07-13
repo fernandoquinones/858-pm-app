@@ -1,9 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { supabase } from './supabaseClient'
 
 // Global login gate: no session -> clean login screen; session -> render the app.
 export function AuthGate({ children }) {
+  const pathname = usePathname()
   const [session, setSession] = useState(undefined)
   const [email, setEmail] = useState('')
   const [msg, setMsg] = useState('')
@@ -33,6 +35,7 @@ export function AuthGate({ children }) {
     setBusy(false)
   }
 
+  if (pathname && pathname.startsWith('/auth/')) return children
   if (session === undefined) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9DAAB7', fontFamily: 'Inter, sans-serif' }}>Loading…</div>
   if (session) return children
 

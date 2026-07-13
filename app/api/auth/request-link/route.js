@@ -18,7 +18,9 @@ export async function POST(req) {
     let res = await sb.auth.admin.generateLink({ type: 'magiclink', email: target, options: { redirectTo } })
     if (res.error) res = await sb.auth.admin.generateLink({ type: 'invite', email: target, options: { redirectTo } })
     if (res.error) return Response.json({ error: res.error.message }, { status: 502 })
-    const link = res.data && res.data.properties && res.data.properties.action_link
+    const props = (res.data && res.data.properties) || {}
+    const base = (redirectTo || '').replace(/\/$/, '')
+    const link = `${base}/auth/confirm?token_hash=${encodeURIComponent(props.hashed_token || '')}&type=${encodeURIComponent(props.verification_type || 'magiclink')}`
 
     const dm = await dmUser(su.slack_id, `🔑 Your *Project Plan Agent* sign-in link (one-time, expires ~1 hour):\n${link}`)
     if (dm && dm.ts) return Response.json({ ok: true })
