@@ -2,16 +2,16 @@
 create table if not exists profiles (
   email text primary key,
   name  text,
-  role  text default 'member'
+  role  text default 'user'
 );
 
--- Fill in each teammate's real login email. Names must match the app's people.
 insert into profiles (email, name, role) values
-  ('fernando@858partners.com', 'Fernando',  'master'),
-  ('CHRISTINA_EMAIL',          'Christina', 'master'),
-  ('JG_EMAIL',                 'JG',        'member'),
-  ('NIC_EMAIL',                'Nic',       'member'),
-  ('CAITLIN_EMAIL',            'Caitlin',   'member'),
-  ('BETH_EMAIL',               'Beth',      'member'),
-  ('MARTY_EMAIL',              'Marty',     'member')
+  ('fernando@858partners.com',          'Fernando',  'owner'),
+  ('christina.auyeung@858partners.com', 'Christina', 'admin'),
+  ('jg@858partners.com',                'JG',        'user'),
+  ('nic@858partners.com',               'Nic',       'user'),
+  ('caitlin@858partners.com',           'Caitlin',   'user'),
+  ('beth@858partners.com',              'Beth',      'user'),
+  ('marty@858partners.com',             'Marty',     'user'),
+  ('nola@858partners.com',              'Nola',      'user')
 on conflict (email) do update set name = excluded.name, role = excluded.role;

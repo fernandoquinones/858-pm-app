@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase, OWNERS, OWNER_COLOR, STATUS, BASE_ACTIVATIONS, parseActs, joinActs } from '../../../lib/supabaseClient'
 import { TaskTimeline } from '../../../lib/TaskTimeline'
-import { PEOPLE, isMaster, canEditTask, roleOf } from '../../../lib/roles'
+import { PEOPLE, isMaster, canEditTask, canSetStatus, roleOf } from '../../../lib/roles'
 import { useCurrentUser } from '../../../lib/useCurrentUser'
 import { ActivationChips } from '../../../lib/ActivationChips'
 
@@ -697,8 +697,8 @@ export default function ProjectBoard() {
                             </select>
                           : <span>{t.owner}</span>}</div>
                         <div className={`due sans ${editable ? '' : 'ro'}`}><input type="date" value={t.due_date || ''} disabled={!editable} onChange={e => setDue(t, e.target.value)} /></div>
-                        <div className={editable ? '' : 'ro'}>
-                          <select className={`st sans ${t.status}`} value={t.status} disabled={!editable} onChange={e => setStatus(t, e.target.value)}>
+                        <div className={canSetStatus(user, t) ? '' : 'ro'}>
+                          <select className={`st sans ${t.status}`} value={t.status} disabled={!canSetStatus(user, t)} onChange={e => setStatus(t, e.target.value)}>
                             {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                           </select>
                         </div>
