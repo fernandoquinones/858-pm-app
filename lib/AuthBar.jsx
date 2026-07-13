@@ -19,9 +19,15 @@ export function AuthBar() {
     e.preventDefault()
     const addr = email.trim().toLowerCase(); if (!addr) return
     setBusy(true); setMsg('')
-    const { error } = await supabase.auth.signInWithOtp({ email: addr, options: { emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined } })
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : undefined
+      const r = await fetch('/api/auth/request-link', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: addr, redirectTo: origin }) })
+      const j = await r.json()
+      if (j.ok) setMsg('Sent to your Slack DMs.')
+      else if (j.fallbackEmail) { const { error } = await supabase.auth.signInWithOtp({ email: addr, options: { emailRedirectTo: origin } }); setMsg(error ? ('Error: ' + error.message) : 'Sent to your email.') }
+      else setMsg(j.error || 'Could not send link.')
+    } catch (err) { setMsg('Error: ' + err) }
     setBusy(false)
-    setMsg(error ? ('Error: ' + error.message) : 'Check your email for the sign-in link.')
   }
   async function signOut() { await supabase.auth.signOut() }
 
