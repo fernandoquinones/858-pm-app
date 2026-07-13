@@ -4,7 +4,7 @@ import Link from 'next/link'
 // Tab bar shown at the top of every event: the three hubs.
 export function EventTabs({ id, active }) {
   const tabs = [
-    { key: 'event', label: '📋 Event Hub', href: `/project/${id}` },
+    { key: 'event', label: '📋 Event Hub', href: `/project/${id}/plan` },
     { key: 'client', label: '🤝 Client Hub', href: `/project/${id}/client` },
     { key: 'internal', label: '🗂 Internal Hub', href: `/project/${id}/internal` },
   ]
