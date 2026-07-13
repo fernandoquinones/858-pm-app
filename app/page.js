@@ -10,7 +10,7 @@ import { ActivationChips } from '../lib/ActivationChips'
 
 export default function Home() {
   const router = useRouter()
-  const [user, setUser, authed] = useCurrentUser()
+  const [user, setUser, authed, realUser] = useCurrentUser()
   const master = isMaster(user)
 
   const [projects, setProjects] = useState([])
@@ -143,7 +143,7 @@ export default function Home() {
           <div className="chip"><span className="dot"></span> Live · Supabase</div>
           {master && <Link className="chip" href="/dossier-demo" style={{ textDecoration: 'none', cursor: 'pointer' }}>🗂 Client dossier (demo)</Link>}
           <AuthBar />
-          {!authed && <label className="chip" style={{ gap: 6 }}>Acting as
+          {(!authed || isMaster(realUser)) && <label className="chip" style={{ gap: 6 }}>Acting as
             <select value={user} onChange={e => setUser(e.target.value)} style={{ border: 'none', background: 'transparent', fontFamily: 'inherit', fontWeight: 700, color: 'var(--ink)', cursor: 'pointer' }}>
               {PEOPLE.map(p => <option key={p.name} value={p.name}>{p.name} ({p.role})</option>)}
             </select>

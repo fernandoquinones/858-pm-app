@@ -23,7 +23,7 @@ function attIcon(a) {
 
 export default function ProjectBoard() {
   const { id } = useParams()
-  const [user, setUser] = useCurrentUser()
+  const [user, setUser, authed, realUser] = useCurrentUser()
   const master = isMaster(user)
 
   const [project, setProject] = useState(null)
@@ -484,11 +484,11 @@ export default function ProjectBoard() {
           <button type="button" className="chip" onClick={() => setHeaderPanel(p => p === 'reports' ? null : 'reports')} style={{ cursor: 'pointer', fontFamily: 'inherit', borderColor: headerPanel === 'reports' ? 'var(--accent)' : undefined, color: headerPanel === 'reports' ? 'var(--accent)' : undefined, fontWeight: headerPanel === 'reports' ? 700 : undefined }}>📊 Reports</button>
           <button type="button" className="chip" onClick={() => setHeaderPanel(p => p === 'links' ? null : 'links')} style={{ cursor: 'pointer', fontFamily: 'inherit', borderColor: headerPanel === 'links' ? 'var(--accent)' : undefined, color: headerPanel === 'links' ? 'var(--accent)' : undefined, fontWeight: headerPanel === 'links' ? 700 : undefined }}>🔗 Links</button>
           {master && <button type="button" className="chip" onClick={exportCsv} style={{ cursor: 'pointer', fontFamily: 'inherit' }}>⬇ Export CSV</button>}
-          <label className="chip" style={{ gap: 6 }}>Acting as
+          {(!authed || isMaster(realUser)) && <label className="chip" style={{ gap: 6 }}>Acting as
             <select value={user} onChange={e => setUser(e.target.value)} style={{ border: 'none', background: 'transparent', fontFamily: 'inherit', fontWeight: 700, color: 'var(--ink)', cursor: 'pointer' }}>
               {PEOPLE.map(p => <option key={p.name} value={p.name}>{p.name} ({p.role})</option>)}
             </select>
-          </label>
+          </label>}
         </div>
       </div>
 
