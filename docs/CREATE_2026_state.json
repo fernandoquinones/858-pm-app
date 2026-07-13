@@ -1,0 +1,850 @@
+{
+  "banner": "⚠️ WithCoverage debrief still needs booking",
+  "snapshot": [
+    {
+      "label": "Event",
+      "value": "858 × CREATE — Year 3 Title Sponsorship (Embedded)",
+      "id": "id-1"
+    },
+    {
+      "label": "Host",
+      "value": "Informa Connect / Foodservice Group",
+      "id": "id-2"
+    },
+    {
+      "label": "Audience",
+      "value": "Emerging Enterprise operators (10–100 units) · target 200 brand attendees",
+      "id": "id-3"
+    },
+    {
+      "label": "Host Fee",
+      "value": "$50,000 — due ~July 5, 2026 (15 days pre-event)",
+      "id": "id-4"
+    },
+    {
+      "label": "Signed Sponsors",
+      "value": "7 of 7 — Momos, Toast, WithCoverage, Buyers Edge, Axial Shift, Meez, Reachify",
+      "id": "id-5"
+    },
+    {
+      "label": "Entitlements",
+      "value": "16 stand max (858 sells 6) · 10 GRIP mtgs/co · 10-min main session intro · 1 breakout · 4 badges · 4 VIP dinner tickets",
+      "id": "id-6"
+    },
+    {
+      "label": "Hotel",
+      "value": "5 rooms at Terranea — Fernando, JG, Nic, Caitlin, Beth all booked",
+      "id": "id-7"
+    },
+    {
+      "label": "Registration",
+      "value": "C-Vent platform · Informa-controlled",
+      "id": "id-8"
+    }
+  ],
+  "contacts": [
+    {
+      "name": "JG (Juan George)",
+      "role": "858 Executive Sponsor",
+      "email": "jg@858partners.com",
+      "id": "id-9"
+    },
+    {
+      "name": "Fernando Quinones",
+      "role": "858 Event Lead",
+      "email": "fernando@858partners.com",
+      "id": "id-10"
+    },
+    {
+      "name": "Christina Auyeung",
+      "role": "858 Project Manager",
+      "email": "christina.auyeung@858partners.com",
+      "id": "id-11"
+    },
+    {
+      "name": "Nic Lazowski",
+      "role": "858 Onsite Support / ESM Lead",
+      "email": "nic@858partners.com",
+      "id": "id-12"
+    },
+    {
+      "name": "Cassaundra Washington",
+      "role": "Informa Vendor Contact",
+      "email": "—",
+      "id": "id-13"
+    },
+    {
+      "name": "Marcus",
+      "role": "Informa Approver (VIP dinner, logistics)",
+      "email": "—",
+      "id": "id-14"
+    }
+  ],
+  "quickStats": [
+    {
+      "label": "Clients Signed",
+      "value": "7 / 7",
+      "id": "id-15"
+    },
+    {
+      "label": "Prep Calls Booked",
+      "value": "7 / 7",
+      "id": "id-16"
+    },
+    {
+      "label": "Deal Strategy Calls",
+      "value": "7 / 7",
+      "id": "id-17"
+    },
+    {
+      "label": "Debrief Calls Booked",
+      "value": "6 / 7",
+      "id": "id-18"
+    }
+  ],
+  "keyNotes": [
+    {
+      "text": "Hotel booking policy: no company card — each person books their own room and forwards the confirmation to Christina.",
+      "id": "id-19"
+    },
+    {
+      "text": "Innovation Forum is BYOL — Fernando brings his own laptop for the breakout session.",
+      "id": "id-20"
+    },
+    {
+      "text": "GRIP 1:1 meetings run Tuesday 10:15am–12:45pm at Palos Verdes Terrace — up to 10 meetings per client company.",
+      "id": "id-21"
+    },
+    {
+      "text": "VIP Dinner check-in is managed by Informa via Luma — 4 tickets for the 858 team, 1 per client company.",
+      "id": "id-22"
+    },
+    {
+      "text": "Video & photo deliverables from Informa are expected within 90 days post-event.",
+      "id": "id-23"
+    }
+  ],
+  "links": [
+    {
+      "label": "CREATE 2026 Event Page",
+      "url": "https://www.create.restaurant",
+      "category": "Event",
+      "id": "id-24"
+    },
+    {
+      "label": "Terranea Resort",
+      "url": "https://www.terranea.com",
+      "category": "Venue",
+      "id": "id-25"
+    },
+    {
+      "label": "GRIP Platform",
+      "url": "https://grip.events",
+      "category": "Platform",
+      "id": "id-26"
+    },
+    {
+      "label": "858 Partners Slack",
+      "url": "https://858-partners.slack.com",
+      "category": "Internal",
+      "id": "id-27"
+    },
+    {
+      "label": "1:1 Meetings Guide",
+      "url": "https://informaconnect.com/create-sponsor-resource-page/1-1-meetings/",
+      "category": "Platform",
+      "id": "id-28"
+    },
+    {
+      "label": "Tech Stands Guide",
+      "url": "https://informaconnect.com/create-sponsor-resource-page/marketplace-hours/",
+      "category": "Event",
+      "id": "id-29"
+    },
+    {
+      "label": "Shipping Info",
+      "url": "https://informaconnect.com/create-sponsor-resource-page/shipping-information/",
+      "category": "Event",
+      "id": "id-30"
+    },
+    {
+      "label": "Lead Retrieval",
+      "url": "https://informaconnect.com/create-sponsor-resource-page/lead-retrieval/",
+      "category": "Event",
+      "id": "id-31"
+    },
+    {
+      "label": "Sponsor Registration",
+      "url": "https://web.cvent.com/event/0ae8fbb0-16d7-4b45-868d-a81373bacf4b/register?RefId=CREATE26-SponsorReg&rt=w9ueBHari0-RnmbRMjyIWg",
+      "category": "Platform",
+      "id": "id-32"
+    },
+    {
+      "label": "CREATE Google Drive",
+      "url": "https://drive.google.com/drive/folders/15ktdG9knbzlE0jB1jtvof7Powlm_N8Zj?usp=share_link",
+      "category": "Internal",
+      "id": "id-33"
+    }
+  ],
+  "reference": [
+    {
+      "label": "Type",
+      "value": "Year 3 Title Sponsorship Activation (Embedded)",
+      "id": "id-34"
+    },
+    {
+      "label": "Venue",
+      "value": "Terranea Resort, 100 Terranea Way, Rancho Palos Verdes, CA 90275",
+      "id": "id-35"
+    },
+    {
+      "label": "Branding",
+      "value": "Co-branded — 858 × CREATE",
+      "id": "id-36"
+    },
+    {
+      "label": "Registration",
+      "value": "C-Vent platform (not Luma) · Informa-controlled · weekly data delivered to 858",
+      "id": "id-37"
+    },
+    {
+      "label": "Tech Stands",
+      "value": "Up to 16 in main foyer, 858 sells 6 @ $20K each · 1m counter + graphic panel · top-of-counter collateral only · no pop-ups · A/V not included (order via Five-Star A/V)",
+      "id": "id-38"
+    },
+    {
+      "label": "Innovation Forum AV",
+      "value": "Podium, projector, screen, slide advancer, speakers, wireless mic, HDMI. BYOL — Fernando brings laptop. 8 rounds × 10 seats = 80 capacity.",
+      "id": "id-39"
+    }
+  ],
+  "openQs": [
+    {
+      "owner": "Marcus / JG",
+      "q": "Flexibility to swap badge for alternative sponsorship branding (Wi-Fi, key card, etc.)?",
+      "id": "id-40"
+    },
+    {
+      "owner": "Cassaundra",
+      "q": "Final VIP Dinner format details — confirmed at Nelson's, Mon Jul 20, 7–9pm",
+      "id": "id-41"
+    },
+    {
+      "owner": "Cassaundra",
+      "q": "Specific breakout / main-stage session assignments",
+      "id": "id-42"
+    },
+    {
+      "owner": "Informa",
+      "q": "Project Lead name, call cadence, and lead-in months — left blank in the signed contract",
+      "id": "id-43"
+    }
+  ],
+  "benefits": [
+    {
+      "text": "10 GRIP 1:1 meetings",
+      "id": "id-44"
+    },
+    {
+      "text": "1 VIP Dinner ticket per client company",
+      "id": "id-45"
+    },
+    {
+      "text": "Access to Founders Nest Dinner",
+      "id": "id-46"
+    },
+    {
+      "text": "Keycard or equivalent branding",
+      "id": "id-47"
+    },
+    {
+      "text": "Video & photo deliverables within 90 days post-event",
+      "id": "id-48"
+    },
+    {
+      "text": "2 main-session speaking spots + 1 breakout panel (858-wide)",
+      "id": "id-49"
+    }
+  ],
+  "gripTimeline": [
+    {
+      "date": "Jun 16",
+      "milestone": "Confirm GRIP preference designator (per partner)",
+      "id": "id-50"
+    },
+    {
+      "date": "Jun 23",
+      "milestone": "Operator preference selections open — choose top 40",
+      "id": "id-51"
+    },
+    {
+      "date": "Jul 3",
+      "milestone": "Review who's interested — platform has updated match data",
+      "id": "id-52"
+    },
+    {
+      "date": "Jul 7",
+      "milestone": "Final deadline to select operator preferences",
+      "id": "id-53"
+    },
+    {
+      "date": "Jul 14",
+      "milestone": "View preliminary meeting schedule",
+      "id": "id-54"
+    },
+    {
+      "date": "Jul 21",
+      "milestone": "GRIP Speed Networking day — up to 10 meetings × 10 min, Palos Verdes Terrace",
+      "id": "id-55"
+    }
+  ],
+  "gripNote": "How schedules are created: each partner selects their top 40 operators. GRIP scores match effectiveness — mutual selection scores highest — then fills remaining slots using \"Must Meet\", \"Meets\", and interest categories. The CREATE Operations team reviews every schedule individually before release. ⚠️ Jul 3 review falls in the July 4th holiday week, compressing the timeline into final selection on Jul 7.",
+  "techStandReqs": [
+    {
+      "label": "Design",
+      "value": "1-meter counter + graphic panel with sponsor logo; partners clustered together",
+      "id": "id-56"
+    },
+    {
+      "label": "Branding",
+      "value": "Partner logos + \"858 by Create\" subset branding",
+      "id": "id-57"
+    },
+    {
+      "label": "Hours",
+      "value": "Mon 8:00am–2:00pm · Tue 7:00am–3:30pm · Wed 7:00am–3:30pm",
+      "id": "id-58"
+    },
+    {
+      "label": "Not Included",
+      "value": "Electrical, Internet, A/V — order via Five-Star A/V (basic Wi-Fi available at event)",
+      "id": "id-59"
+    },
+    {
+      "label": "Not Allowed",
+      "value": "Pop-up banners or displays; collateral on counter top only",
+      "id": "id-60"
+    }
+  ],
+  "slots": {
+    "prep": "Week of Jul 6",
+    "deal": "Week of Jul 13",
+    "debrief": "Week of Jul 27"
+  },
+  "bookings": {
+    "Momos": {
+      "prep": {
+        "status": "Booked",
+        "date": "2026-07-09",
+        "notes": "Katherine Koski"
+      },
+      "deal": {
+        "status": "Booked",
+        "date": "2026-07-14",
+        "notes": "Katherine Koski"
+      },
+      "debrief": {
+        "status": "Booked",
+        "date": "2026-07-28",
+        "notes": "Katherine Koski"
+      }
+    },
+    "Toast": {
+      "prep": {
+        "status": "Booked",
+        "date": "2026-07-08",
+        "notes": "⚠️ Non-standard name: \"CREATE Kickoff (Toast Team Schliestett)\""
+      },
+      "deal": {
+        "status": "Booked",
+        "date": "2026-07-14",
+        "notes": "⚠️ Non-standard name: \"858: Deal Strategy Call (Toast  Schliestett)\""
+      },
+      "debrief": {
+        "status": "Booked",
+        "date": "2026-07-27",
+        "notes": "\"858 + Toast - CREATE debrief\" · Morgan McMains"
+      }
+    },
+    "WithCoverage": {
+      "prep": {
+        "status": "Booked",
+        "date": "2026-07-06",
+        "notes": "Sage Disch"
+      },
+      "deal": {
+        "status": "Booked",
+        "date": "2026-07-13",
+        "notes": "Sage Disch + Harrison"
+      },
+      "debrief": {
+        "status": "Not Booked",
+        "date": "",
+        "notes": "Not found on calendar. Recurring \"858 + With Coverage - Bi-weekly deal sync\" exists (next Jul 21) but isn't a CREATE debrief."
+      }
+    },
+    "Buyers Edge": {
+      "prep": {
+        "status": "Booked",
+        "date": "2026-07-08",
+        "notes": "Ciara Medina"
+      },
+      "deal": {
+        "status": "Booked",
+        "date": "2026-07-15",
+        "notes": "Ciara Medina — newly confirmed"
+      },
+      "debrief": {
+        "status": "Booked",
+        "date": "2026-07-28",
+        "notes": "Ciara Medina — newly confirmed"
+      }
+    },
+    "Axial Shift": {
+      "prep": {
+        "status": "Booked",
+        "date": "2026-07-06",
+        "notes": "Sarah Higgins"
+      },
+      "deal": {
+        "status": "Booked",
+        "date": "2026-07-16",
+        "notes": "Sarah Higgins"
+      },
+      "debrief": {
+        "status": "Booked",
+        "date": "2026-07-28",
+        "notes": "⚠️ Calendar shows Jul 28, not Jul 30 as previously logged"
+      }
+    },
+    "Meez": {
+      "prep": {
+        "status": "Booked",
+        "date": "2026-07-08",
+        "notes": "Liz Van Hoose"
+      },
+      "deal": {
+        "status": "Booked",
+        "date": "2026-07-15",
+        "notes": "Liz Van Hoose"
+      },
+      "debrief": {
+        "status": "Booked",
+        "date": "2026-07-28",
+        "notes": "Liz Van Hoose"
+      }
+    },
+    "Reachify": {
+      "prep": {
+        "status": "Booked",
+        "date": "2026-07-08",
+        "notes": "Zeel Jadia"
+      },
+      "deal": {
+        "status": "Booked",
+        "date": "2026-07-14",
+        "notes": "Zeel Jadia"
+      },
+      "debrief": {
+        "status": "Booked",
+        "date": "2026-07-27",
+        "notes": "Zeel Jadia — newly confirmed"
+      }
+    }
+  },
+  "scanFlags": [
+    {
+      "level": "High",
+      "text": "WithCoverage debrief still not booked — only outstanding meeting across all 21 tracked slots (7 clients × 3 meeting types).",
+      "id": "id-61"
+    },
+    {
+      "level": "Medium",
+      "text": "Axial Shift debrief is on the calendar for Jul 28, not Jul 30 as previously logged in the roster — dates should be reconciled.",
+      "id": "id-62"
+    },
+    {
+      "level": "Medium",
+      "text": "Toast's prep and deal strategy calls use non-standard event names (\"Toast Team Schliestett\" / \"Toast  Schliestett\") instead of the \"(Contact Name)\" convention.",
+      "id": "id-63"
+    },
+    {
+      "level": "Low",
+      "text": "Reachify debrief (Jul 27) and Buyers Edge deal strategy (Jul 15) + debrief (Jul 28) are now booked but were still marked ❌ in the last roster snapshot.",
+      "id": "id-64"
+    },
+    {
+      "level": "Low",
+      "text": "Fernando declined the prep-call invites for Axial Shift, Buyers Edge, and Momos — worth confirming he's getting recaps another way.",
+      "id": "id-65"
+    }
+  ],
+  "clientContacts": {
+    "Momos": {
+      "contact": "Katherine Koski",
+      "email": "katherine.koski@momos.com"
+    },
+    "Toast": {
+      "contact": "Amy Schliestett",
+      "email": "amy.schliestett@toasttab.com"
+    },
+    "WithCoverage": {
+      "contact": "Sage Disch",
+      "email": "sage@withcoverage.com"
+    },
+    "Buyers Edge": {
+      "contact": "Ciara Medina",
+      "email": "ciara.medina@buyersedgeplatform.com"
+    },
+    "Axial Shift": {
+      "contact": "Sarah Higgins",
+      "email": "sarah@axialcommerce.com"
+    },
+    "Meez": {
+      "contact": "Liz Van Hoose",
+      "email": "liz@getmeez.com"
+    },
+    "Reachify": {
+      "contact": "Zeel Jadia",
+      "email": "zjadia@reachify.io"
+    }
+  },
+  "clientTasks": {
+    "Momos": {
+      "attendees": [
+        {
+          "name": "",
+          "email": "",
+          "id": "id-66"
+        }
+      ],
+      "notes": ""
+    },
+    "Toast": {
+      "attendees": [
+        {
+          "name": "",
+          "email": "",
+          "id": "id-67"
+        }
+      ],
+      "notes": "Debrief attended by Morgan McMains rather than Amy Schliestett — confirm who owns follow-up."
+    },
+    "WithCoverage": {
+      "attendees": [
+        {
+          "name": "Sage Disch",
+          "email": "sage@withcoverage.com",
+          "id": "id-68"
+        },
+        {
+          "name": "Zach Zimmerman",
+          "email": "",
+          "id": "id-69"
+        }
+      ],
+      "notes": "Chase debrief booking with Sage."
+    },
+    "Buyers Edge": {
+      "attendees": [
+        {
+          "name": "Chris Anderson",
+          "email": "chris.anderson@insidetrackdata.com",
+          "id": "id-70"
+        },
+        {
+          "name": "Shannon Brooks",
+          "email": "shannon.brooks@consolidatedconcepts.net",
+          "id": "id-71"
+        }
+      ],
+      "notes": ""
+    },
+    "Axial Shift": {
+      "attendees": [
+        {
+          "name": "Sarah Higgins",
+          "email": "sarah@axialcommerce.com",
+          "id": "id-72"
+        },
+        {
+          "name": "Raechel Barnes",
+          "email": "raechel.barnes@axialcommerce.com",
+          "id": "id-73"
+        }
+      ],
+      "notes": "Confirm true debrief date with Sarah (roster said Jul 30, calendar says Jul 28)."
+    },
+    "Meez": {
+      "attendees": [
+        {
+          "name": "Joshua Sharkey — CEO",
+          "email": "",
+          "id": "id-74"
+        },
+        {
+          "name": "Sebastian Stryker — CRO",
+          "email": "",
+          "id": "id-75"
+        },
+        {
+          "name": "Dominic Casaus — Senior Account Executive",
+          "email": "",
+          "id": "id-76"
+        }
+      ],
+      "notes": ""
+    },
+    "Reachify": {
+      "attendees": [
+        {
+          "name": "Zeel Jadia",
+          "email": "zjadia@reachify.io",
+          "id": "id-77"
+        }
+      ],
+      "notes": ""
+    }
+  },
+  "outstanding": [
+    {
+      "client": "WithCoverage",
+      "item": "Debrief not booked — reach out to Sage Disch",
+      "id": "id-78"
+    },
+    {
+      "client": "Axial Shift",
+      "item": "Reconcile debrief date — roster says Jul 30, calendar says Jul 28",
+      "id": "id-79"
+    },
+    {
+      "client": "Toast",
+      "item": "Confirm who owns 1:1 follow-up — debrief was attended by Morgan McMains, not original contact Amy Schliestett",
+      "id": "id-80"
+    }
+  ],
+  "onsiteTeam": [
+    {
+      "name": "Fernando",
+      "role": "Event Lead",
+      "emoji": "⭐",
+      "hotel": "Terranea Resort",
+      "confirmationNumber": "1527616",
+      "checkIn": "Jul 19",
+      "checkOut": "Jul 24",
+      "email": "fernando@858partners.com",
+      "flightInDate": "Jul 19",
+      "flightInTime": "12:00 PM PST",
+      "flightInFrom": "—",
+      "flightOutDate": "Jul 22",
+      "flightOutTime": "11:00 AM PST",
+      "flightOutTo": "—",
+      "notes": "Flight numbers TBD.",
+      "id": "id-81"
+    },
+    {
+      "name": "JG",
+      "role": "Executive Sponsor",
+      "emoji": "🎙️",
+      "hotel": "Terranea Resort",
+      "confirmationNumber": "1527602",
+      "checkIn": "Jul 19",
+      "checkOut": "Jul 22",
+      "email": "jg@858partners.com",
+      "flightInDate": "—",
+      "flightInTime": "—",
+      "flightInFrom": "—",
+      "flightOutDate": "—",
+      "flightOutTime": "—",
+      "flightOutTo": "—",
+      "notes": "Driving to event — no flight.",
+      "id": "id-82"
+    },
+    {
+      "name": "Nic",
+      "role": "Onsite Support",
+      "emoji": "🤝",
+      "hotel": "Terranea Resort",
+      "confirmationNumber": "1527607",
+      "checkIn": "Jul 19",
+      "checkOut": "Jul 22",
+      "email": "nic@858partners.com",
+      "flightInDate": "Jul 19",
+      "flightInTime": "Arrives 10:00 AM",
+      "flightInFrom": "MCI",
+      "flightOutDate": "Jul 22",
+      "flightOutTime": "Departs 7:00 AM",
+      "flightOutTo": "MCI",
+      "notes": "Personal meetings Jul 19, 10:00 AM–4:30 PM · available for 858 after 4:30 PM.",
+      "id": "id-83"
+    },
+    {
+      "name": "Caitlin",
+      "role": "ESM",
+      "emoji": "📋",
+      "hotel": "Terranea Resort",
+      "confirmationNumber": "1527606",
+      "checkIn": "Jul 19",
+      "checkOut": "Jul 22",
+      "email": "caitlin@858partners.com",
+      "flightInDate": "Jul 19",
+      "flightInTime": "Departs 11:45 AM · Arrives 1:17 PM",
+      "flightInFrom": "DEN → LAX (UA 1013)",
+      "flightOutDate": "Jul 22",
+      "flightOutTime": "Departs 10:55 AM · Arrives 2:27 PM",
+      "flightOutTo": "LAX → DEN (UA 2061)",
+      "notes": "United confirmation: I8PWYD.",
+      "id": "id-84"
+    },
+    {
+      "name": "Beth",
+      "role": "ESM",
+      "emoji": "👤",
+      "hotel": "Terranea Resort",
+      "confirmationNumber": "CIAX8P (Southwest)",
+      "checkIn": "Jul 19",
+      "checkOut": "Jul 22",
+      "email": "beth@858partners.com / elizabeth.l.hillis@gmail.com",
+      "flightInDate": "Jul 19",
+      "flightInTime": "Departs 8:25 AM · Arrives 10:20 AM",
+      "flightInFrom": "STL → LAX (WN #3937)",
+      "flightOutDate": "Jul 22",
+      "flightOutTime": "Departs 4:10 PM → 9:55 PM · Arrives 11:45 PM",
+      "flightOutTo": "LAX → DAL (WN #0716) → STL (WN #1414)",
+      "notes": "Southwest confirmation: CIAX8P · Event registration: CTNY9LXL6C2.",
+      "id": "id-85"
+    }
+  ],
+  "rosDays": [
+    {
+      "label": "Day 1",
+      "date": "Monday, July 20, 2026",
+      "color": "#185FA5",
+      "items": [
+        {
+          "time": "8:00 AM – 2:00 PM",
+          "duration": "6 hrs",
+          "title": "Tech Stands Open",
+          "notes": "",
+          "id": "id-87"
+        },
+        {
+          "time": "11:10 AM",
+          "duration": "",
+          "title": "JG Main Stage Intro (Chipotle CEO)",
+          "notes": "",
+          "id": "id-88"
+        },
+        {
+          "time": "12:00 – 12:30 PM",
+          "duration": "30 min",
+          "title": "Innovation Forum Breakout",
+          "notes": "8 tables × 10 seats · 7 operator tables + 1 non-858 sponsor table",
+          "id": "id-89"
+        },
+        {
+          "time": "12:45 – 2:00 PM",
+          "duration": "1 hr 15",
+          "title": "Networking Lunch",
+          "notes": "",
+          "id": "id-90"
+        },
+        {
+          "time": "5:15 – 7:15 PM",
+          "duration": "2 hrs",
+          "title": "Welcome Reception",
+          "notes": "",
+          "id": "id-91"
+        },
+        {
+          "time": "7:00 – 9:00 PM",
+          "duration": "2 hrs",
+          "title": "VIP Dinner @ Nelson's",
+          "notes": "4 tickets for 858 team + 1 per client company · check-in via Luma",
+          "id": "id-92"
+        }
+      ],
+      "id": "id-86"
+    },
+    {
+      "label": "Day 2",
+      "date": "Tuesday, July 21, 2026",
+      "color": "#534AB7",
+      "items": [
+        {
+          "time": "7:00 AM – 3:30 PM",
+          "duration": "8.5 hrs",
+          "title": "Tech Stands Open",
+          "notes": "",
+          "id": "id-94"
+        },
+        {
+          "time": "10:15 AM – 12:45 PM",
+          "duration": "2.5 hrs",
+          "title": "GRIP Speed Networking",
+          "notes": "Palos Verdes Terrace · up to 10 mtgs × 10 min + 5 min break",
+          "id": "id-95"
+        },
+        {
+          "time": "12:45 – 2:00 PM",
+          "duration": "1 hr 15",
+          "title": "Networking Lunch",
+          "notes": "",
+          "id": "id-96"
+        },
+        {
+          "time": "5:30 – 6:30 PM",
+          "duration": "60 min",
+          "title": "Happy Hour Networking Reception",
+          "notes": "",
+          "id": "id-97"
+        }
+      ],
+      "id": "id-93"
+    },
+    {
+      "label": "Day 3",
+      "date": "Wednesday, July 22, 2026",
+      "color": "#0F6E56",
+      "items": [
+        {
+          "time": "7:00 AM – 3:30 PM",
+          "duration": "8.5 hrs",
+          "title": "Tech Stands Open",
+          "notes": "",
+          "id": "id-99"
+        },
+        {
+          "time": "3:30 PM",
+          "duration": "",
+          "title": "Event Closes",
+          "notes": "",
+          "id": "id-100"
+        }
+      ],
+      "id": "id-98"
+    }
+  ],
+  "rosNotes": [
+    {
+      "label": "Hotel",
+      "note": "5 rooms at Terranea — all 5 team members booked, check-in Jul 19",
+      "id": "id-101"
+    },
+    {
+      "label": "Badge / Access",
+      "note": "Standard badge vs. alternative branding (Wi-Fi, key card) decision still pending with Marcus/JG",
+      "id": "id-102"
+    },
+    {
+      "label": "VIP Dinner",
+      "note": "Confirmed — Nelson's at Terranea, Mon Jul 20, 7–9pm, check-in via Luma",
+      "id": "id-103"
+    },
+    {
+      "label": "Post-Event",
+      "note": "Video/photo deliverables from Informa expected within 90 days of close",
+      "id": "id-104"
+    }
+  ]
+}
