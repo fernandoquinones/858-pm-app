@@ -470,10 +470,10 @@ export default function ProjectBoard() {
         </div>
         <div className="chips sans" style={{ position: 'relative', display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', flexShrink: 0 }}>
           <div className="chip"><span className="dot"></span> Live · synced</div>
-          <Link className="chip" href={`/project/${id}/seating`}>🪑 Seating →</Link>
+          {master && <Link className="chip" href={`/project/${id}/seating`}>🪑 Seating →</Link>}
           <button type="button" className="chip" onClick={() => setHeaderPanel(p => p === 'reports' ? null : 'reports')} style={{ cursor: 'pointer', fontFamily: 'inherit', borderColor: headerPanel === 'reports' ? 'var(--accent)' : undefined, color: headerPanel === 'reports' ? 'var(--accent)' : undefined, fontWeight: headerPanel === 'reports' ? 700 : undefined }}>📊 Reports</button>
           <button type="button" className="chip" onClick={() => setHeaderPanel(p => p === 'links' ? null : 'links')} style={{ cursor: 'pointer', fontFamily: 'inherit', borderColor: headerPanel === 'links' ? 'var(--accent)' : undefined, color: headerPanel === 'links' ? 'var(--accent)' : undefined, fontWeight: headerPanel === 'links' ? 700 : undefined }}>🔗 Links</button>
-          <button type="button" className="chip" onClick={exportCsv} style={{ cursor: 'pointer', fontFamily: 'inherit' }}>⬇ Export CSV</button>
+          {master && <button type="button" className="chip" onClick={exportCsv} style={{ cursor: 'pointer', fontFamily: 'inherit' }}>⬇ Export CSV</button>}
           <label className="chip" style={{ gap: 6 }}>Acting as
             <select value={user} onChange={e => setUser(e.target.value)} style={{ border: 'none', background: 'transparent', fontFamily: 'inherit', fontWeight: 700, color: 'var(--ink)', cursor: 'pointer' }}>
               {PEOPLE.map(p => <option key={p.name} value={p.name}>{p.name} ({p.role})</option>)}

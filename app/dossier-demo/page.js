@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
+import { useCurrentUser } from '../../lib/useCurrentUser'
+import { isMaster } from '../../lib/roles'
 
 // MOCK "Attio" contact records (stands in for the real CRM until connected).
 // slug = the headshot filename in the Supabase "headshots" bucket: slug.jpeg
@@ -45,6 +47,7 @@ function Avatar({ slug, name }) {
 const TIERS = ['—', 'Tier 1', 'Tier 2', 'Customer', 'Detractor']
 
 export default function DossierDemo() {
+  const [cu] = useCurrentUser()
   const [raw, setRaw] = useState('')
   const [rows, setRows] = useState(null)
   const [tier, setTier] = useState({})
@@ -91,6 +94,7 @@ export default function DossierDemo() {
   ]
   const groupOf = i => (['Tier 1', 'Tier 2', 'Customer', 'Detractor'].includes(tier[i]) ? tier[i] : 'Unsorted')
 
+  if (!isMaster(cu)) return <div style={{ maxWidth: 640, margin: '60px auto', fontFamily: 'system-ui, sans-serif', color: '#5f6672' }}>🔒 The client dossier is available to Fernando and Christina only.</div>
   return (
     <div style={wrap}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: 12, color: '#9aa1ad' }}>858 · Client dossier (demo)</span><Link href="/dossier-demo/headshots" style={{ fontSize: 12, color: '#2E5AAC', textDecoration: 'none', border: '1px solid #cdd9f0', borderRadius: 999, padding: '4px 10px' }}>🖼 Headshots manager</Link></div>

@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase } from '../../../../lib/supabaseClient'
-import { PEOPLE, canEditSeating, roleOf } from '../../../../lib/roles'
+import { PEOPLE, canEditSeating, isMaster, roleOf } from '../../../../lib/roles'
 import { useCurrentUser } from '../../../../lib/useCurrentUser'
 
 function initials(n) { return (n || '?').split(' ').map(x => x[0]).slice(0, 2).join('') }
@@ -107,6 +107,7 @@ export default function Seating() {
 
   if (loading) return <div className="wrap"><div className="loading sans">Loading seating…</div></div>
 
+  if (!isMaster(user)) return <div style={{ maxWidth: 640, margin: '60px auto', fontFamily: 'system-ui, sans-serif', color: 'var(--faint)' }} className="wrap sans">🔒 The seating chart is available to Fernando and Christina only.</div>
   return (
     <div className="wrap">
       <div className="crumb sans"><Link href={`/project/${id}`}>← Project plan</Link></div>
