@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase, OWNERS, OWNER_COLOR, STATUS, BASE_ACTIVATIONS, parseActs, joinActs } from '../../../lib/supabaseClient'
 import { TaskTimeline } from '../../../lib/TaskTimeline'
+import { OwnerPicker } from '../../../lib/OwnerPicker'
 import { PEOPLE, isMaster, canEditTask, canSetStatus, roleOf } from '../../../lib/roles'
 import { useCurrentUser } from '../../../lib/useCurrentUser'
 import { ActivationChips } from '../../../lib/ActivationChips'
@@ -466,6 +467,15 @@ export default function ProjectBoard() {
               {!master && !project.slack_channel_id && <span style={{ fontSize: 11, color: 'var(--faint)' }}>no room linked</span>}
             </div>
           )}
+          {project && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 6px' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Attendees</span>
+              {master
+                ? <input value={project.attendee_list_url || ''} onChange={e => setLocalField('attendee_list_url', e.target.value)} onBlur={() => saveField('attendee_list_url')} placeholder="Paste attendee list link…" style={{ flex: 1, minWidth: 0, border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)' }} />
+                : (project.attendee_list_url ? <a className="pill" href={project.attendee_list_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>📋 Attendee list</a> : <span style={{ fontSize: 11, color: 'var(--faint)' }}>none</span>)}
+              {master && project.attendee_list_url && <a className="pill" href={project.attendee_list_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>open ↗</a>}
+            </div>
+          )}
           <div className="sub sans">{done}/{tasks.length} tasks complete · {workstreams.length} workstreams</div>
         </div>
         <div className="chips sans" style={{ position: 'relative', display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', flexShrink: 0 }}>
@@ -579,9 +589,7 @@ export default function ProjectBoard() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12, alignItems: 'start' }}>
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 4 }}>Owner</div>
-              <select value={na.owner} onChange={e => setNa(n => ({ ...n, owner: e.target.value }))} style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: '8px 9px', fontFamily: 'inherit', fontSize: 12.5 }}>
-                {OWNERS.map(o => <option key={o}>{o}</option>)}
-              </select>
+              <OwnerPicker value={na.owner} onChange={v => setNa(n => ({ ...n, owner: v }))} owners={OWNERS} full />
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)', margin: '10px 0 4px' }}>Due date</div>
               <input type="date" value={na.due || ''} onChange={e => setNa(n => ({ ...n, due: e.target.value }))} style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: '7px 9px', fontFamily: 'inherit', fontSize: 12.5 }} />
             </div>
@@ -691,10 +699,7 @@ export default function ProjectBoard() {
                           {user === 'Christina' && <button className="cmtbtn" onClick={() => deleteTask(t)} style={{ color: 'var(--red)', marginLeft: 12 }}>🗑 Delete</button>}
                         </div>
                         <div className="owner"><span className="av" style={{ width: 20, height: 20, fontSize: 9, background: OWNER_COLOR[t.owner] || '#888' }}>{ownInit(t.owner)}</span>{editable
-                          ? <select value={OWNERS.includes(t.owner) ? t.owner : '__combo__'} onChange={e => { if (e.target.value !== '__combo__') setOwner(t, e.target.value) }} style={{ border: 'none', background: 'transparent', fontFamily: 'inherit', fontSize: 14, color: 'var(--muted)', fontWeight: 500, cursor: 'pointer', maxWidth: 130 }}>
-                              {!OWNERS.includes(t.owner) && t.owner && <option value="__combo__">{t.owner}</option>}
-                              {OWNERS.map(o => <option key={o} value={o}>{o}</option>)}
-                            </select>
+                          ? <OwnerPicker value={t.owner} onChange={v => setOwner(t, v)} owners={OWNERS} />
                           : <span>{t.owner}</span>}</div>
                         <div className={`due sans ${editable ? '' : 'ro'}`}><input type="date" value={t.due_date || ''} disabled={!editable} onChange={e => setDue(t, e.target.value)} /></div>
                         <div className={canSetStatus(user, t) ? '' : 'ro'}>
