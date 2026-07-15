@@ -76,9 +76,10 @@ Flags: High for each Not Booked slot; Medium for any event whose title breaks th
     body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 8000, system: sys, messages: [{ role: 'user', content: user }] }),
   })
   const j = await r.json()
-  const text = (j.content && j.content[0] && j.content[0].text) || ''
+  if (!r.ok || j.error || !Array.isArray(j.content)) throw new Error('claude api: ' + JSON.stringify(j).slice(0, 400))
+  const text = j.content.map(b => b.text || '').join('')
   const s = text.indexOf('{'), e = text.lastIndexOf('}')
-  if (s < 0 || e < 0) throw new Error('claude parse: ' + text.slice(0, 200))
+  if (s < 0 || e < 0) throw new Error('claude no-json: ' + text.slice(0, 300))
   return JSON.parse(text.slice(s, e + 1))
 }
 
