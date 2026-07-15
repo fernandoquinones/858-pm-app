@@ -62,7 +62,7 @@ There are exactly 3 meeting types: prep, deal, debrief.
 - "CREATE Kickoff (...)" events = prep. "CREATE Debrief (...)" or any title with "CREATE debrief" = debrief. Both come from Nic's calendar.
 - "858: Deal Strategy Call (...)" events = deal. From JG's calendar.
 Map each event to ONE client company from the provided roster, using the contact name in the title or the attendee email domains. 
-Return STRICT JSON only (no prose, no code fence) of shape:
+Return STRICT, VALID JSON only (no prose, no code fence, no trailing commas). Inside any string value, NEVER use the double-quote character " — use single quotes instead (e.g. write 'Toast Team Schliestett', not "Toast Team Schliestett"). Shape:
 {"meetings":[{"client":"<exact roster company name>","type":"prep|deal|debrief","status":"Booked|Not Booked","date":"YYYY-MM-DD|null","time":"<e.g. 12:30 PM ET, or null>","title":"<event title or null>","participants":"<comma-separated external participant names, or null>"}],
  "flags":[{"level":"High|Medium|Low","text":"...","client":"<company or null>"}]}
 Rules: emit a row for EVERY company × EVERY type (21 rows for 7 companies). If no event matches, status "Not Booked", and date/time/title/participants all null.
@@ -73,7 +73,7 @@ Flags: High for each Not Booked slot; Medium for any event whose title breaks th
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 4000, system: sys, messages: [{ role: 'user', content: user }] }),
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 8000, system: sys, messages: [{ role: 'user', content: user }] }),
   })
   const j = await r.json()
   const text = (j.content && j.content[0] && j.content[0].text) || ''
