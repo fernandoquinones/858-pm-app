@@ -128,6 +128,7 @@ export default function ClientHub() {
       meeting_date: patch.meeting_date !== undefined ? (patch.meeting_date || null) : (ex.meeting_date ?? null),
       meeting_time: patch.meeting_time !== undefined ? (patch.meeting_time || null) : (ex.meeting_time ?? null),
       participants: patch.participants !== undefined ? (patch.participants || null) : (ex.participants ?? null),
+      declines: patch.declines !== undefined ? (patch.declines || null) : (ex.declines ?? null),
       notes: patch.notes !== undefined ? patch.notes : (ex.notes ?? ''),
       source: 'manual', updated_at: new Date().toISOString(),
     }, { onConflict: 'client_id,type' })
@@ -244,6 +245,12 @@ export default function ClientHub() {
                         <div style={{ marginTop: 7, fontSize: 12.5, color: 'var(--ink)' }}>
                           <EditText value={m.participants} canEdit={canEdit} placeholder="add participants" onSave={v => setMeeting(c, mt.id, { participants: v })} />
                         </div>
+                        {(m.declines || canEdit) && (
+                          <div style={{ marginTop: 3, fontSize: 12, color: '#b42318' }}>
+                            {m.declines && <span style={{ fontWeight: 700 }}>⊘ Declined: </span>}
+                            <EditText value={m.declines} canEdit={canEdit} placeholder="add declines" onSave={v => setMeeting(c, mt.id, { declines: v })} style={{ color: '#b42318' }} />
+                          </div>
+                        )}
                         <div style={{ marginTop: 4, fontSize: 12, color: 'var(--muted)' }}>
                           <EditText value={m.notes} canEdit={canEdit} placeholder="notes" onSave={v => setMeeting(c, mt.id, { notes: v })} />
                         </div>
