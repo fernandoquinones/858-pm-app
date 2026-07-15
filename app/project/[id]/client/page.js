@@ -245,10 +245,9 @@ export default function ClientHub() {
                         <div style={{ marginTop: 7, fontSize: 12.5, color: 'var(--ink)' }}>
                           <EditText value={m.participants} canEdit={canEdit} placeholder="add participants" onSave={v => setMeeting(c, mt.id, { participants: v })} />
                         </div>
-                        {(m.declines || canEdit) && (
+                        {m.declines && (
                           <div style={{ marginTop: 3, fontSize: 12, color: '#b42318' }}>
-                            {m.declines && <span style={{ fontWeight: 700 }}>⊘ Declined: </span>}
-                            <EditText value={m.declines} canEdit={canEdit} placeholder="add declines" onSave={v => setMeeting(c, mt.id, { declines: v })} style={{ color: '#b42318' }} />
+                            <span style={{ fontWeight: 700 }}>⊘ Declined: </span>{m.declines}
                           </div>
                         )}
                         <div style={{ marginTop: 4, fontSize: 12, color: 'var(--muted)' }}>
