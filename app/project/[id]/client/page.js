@@ -8,9 +8,9 @@ import { canEditClientHub } from '../../../../lib/roles'
 import { EventTabs } from '../../../../lib/EventTabs'
 
 const MTYPES = [
-  { id: 'prep', label: 'Prep Call', host: 'Nic', color: '#0F6E56' },
-  { id: 'deal', label: 'Deal Strategy Call', host: 'JG', color: '#185FA5' },
-  { id: 'debrief', label: 'Client Debrief Call', host: 'Nic', color: '#8E44AD' },
+  { id: 'prep', label: 'Prep Call', host: 'Nic', color: '#0F6E56', desc: 'Pre-event prep call to align on goals, GRIP strategy, and stand setup — "CREATE Kickoff (Contact Name)"', slot: 'Week of Jul 6' },
+  { id: 'deal', label: 'Deal Strategy Call', host: 'JG', color: '#185FA5', desc: 'Strategic call with JG to align on key targets and deal priorities — "858: Deal Strategy Call (Contact Name)"', slot: 'Week of Jul 13' },
+  { id: 'debrief', label: 'Client Debrief Call', host: 'Nic', color: '#8E44AD', desc: 'Post-event debrief to recap meetings, capture follow-ups, and assess ROI — "CREATE Debrief (Contact Name)"', slot: 'Week of Jul 27' },
 ]
 const M_STATUS = ['Not Booked', 'Booked', 'Completed', 'N/A']
 const M_COLOR = { 'Not Booked': '#94a3b8', 'Booked': '#3b82f6', 'Completed': '#22c55e', 'N/A': '#cbd5e1' }
@@ -60,6 +60,7 @@ export default function ClientHub() {
   const [flags, setFlags] = useState([])
   const [attendees, setAttendees] = useState([])
   const [outstanding, setOutstanding] = useState([])
+  const [meta, setMeta] = useState([])
   const [err, setErr] = useState(null)
   const [newClient, setNewClient] = useState('')
   const [todoDraft, setTodoDraft] = useState({})
@@ -70,7 +71,7 @@ export default function ClientHub() {
   const [outDraft, setOutDraft] = useState({})
 
   async function load() {
-    const [pr, cl, td, lb, mt, fl, at, os] = await Promise.all([
+    const [pr, cl, td, lb, mt, fl, at, os, mmeta] = await Promise.all([
       supabase.from('projects').select('id,name').eq('id', id).single(),
       supabase.from('event_clients').select('*').eq('project_id', id).order('sort_order'),
       supabase.from('client_todos').select('*').eq('project_id', id).order('sort_order'),
@@ -79,10 +80,11 @@ export default function ClientHub() {
       supabase.from('scan_flags').select('*').eq('project_id', id).eq('resolved', false).order('scanned_at', { ascending: false }),
       supabase.from('client_attendees').select('*').eq('project_id', id).order('sort_order'),
       supabase.from('client_outstanding').select('*').eq('project_id', id).order('sort_order'),
+      supabase.from('meeting_meta').select('*').eq('project_id', id),
     ])
     if (pr.data) setProject(pr.data)
     setClients(cl.data || []); setTodos(td.data || []); setLib(lb.data || [])
-    setMeetings(mt.data || []); setFlags(fl.data || []); setAttendees(at.data || []); setOutstanding(os.data || [])
+    setMeetings(mt.data || []); setFlags(fl.data || []); setAttendees(at.data || []); setOutstanding(os.data || []); setMeta(mmeta.data || [])
   }
   useEffect(() => { load() }, [id])
 
@@ -90,6 +92,17 @@ export default function ClientHub() {
   const attFor = cid => attendees.filter(a => a.client_id === cid)
   const outFor = cid => outstanding.filter(o => o.client_id === cid)
   const meetingFor = (cid, type) => meetings.find(m => m.client_id === cid && m.type === type)
+  const metaFor = type => meta.find(m => m.type === type) || {}
+  async function saveMeta(type, field, val) {
+    if (!canEdit) return
+    const ex = meta.find(m => m.type === type) || {}
+    await supabase.from('meeting_meta').upsert({
+      project_id: id, type,
+      description: field === 'description' ? (val || null) : (ex.description ?? null),
+      slot_window: field === 'slot_window' ? (val || null) : (ex.slot_window ?? null),
+    }, { onConflict: 'project_id,type' })
+    load()
+  }
 
   // ---- clients ----
   async function addClient() {
@@ -206,6 +219,32 @@ export default function ClientHub() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Meeting-type header cards */}
+      {clients.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 14 }}>
+          {MTYPES.map(mt => {
+            const mm = metaFor(mt.id)
+            const desc = mm.description ?? mt.desc
+            const slot = mm.slot_window ?? mt.slot
+            return (
+              <div key={mt.id} className="card sans" style={{ borderLeft: '4px solid ' + mt.color, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ fontFamily: 'Instrument Sans, sans-serif', fontWeight: 700, fontSize: 15 }}>{mt.label}</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted)', background: '#f0eee8', borderRadius: 6, padding: '2px 8px', whiteSpace: 'nowrap' }}>Host: {mt.host}</span>
+                </div>
+                <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.5 }}>
+                  <EditText value={desc} canEdit={canEdit} placeholder="add description" onSave={v => saveMeta(mt.id, 'description', v)} style={{ color: 'var(--muted)', width: '100%' }} />
+                </div>
+                <div style={{ marginTop: 10, fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--faint)' }}>Slot Window</div>
+                <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2 }}>
+                  <EditText value={slot} canEdit={canEdit} placeholder="Week of…" onSave={v => saveMeta(mt.id, 'slot_window', v)} />
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
