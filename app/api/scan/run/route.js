@@ -50,6 +50,8 @@ async function listEvents(token, calendarId, q, timeMin, timeMax) {
   return (j.items || []).map(e => ({
     title: e.summary || '',
     date: (e.start && (e.start.date || (e.start.dateTime || '').slice(0, 10))) || null,
+    start: (e.start && e.start.dateTime) || null,
+    tz: (e.start && e.start.timeZone) || null,
     attendees: (e.attendees || []).map(a => ({ email: a.email, response: a.responseStatus })),
   }))
 }
@@ -61,9 +63,11 @@ There are exactly 3 meeting types: prep, deal, debrief.
 - "858: Deal Strategy Call (...)" events = deal. From JG's calendar.
 Map each event to ONE client company from the provided roster, using the contact name in the title or the attendee email domains. 
 Return STRICT JSON only (no prose, no code fence) of shape:
-{"meetings":[{"client":"<exact roster company name>","type":"prep|deal|debrief","status":"Booked|Not Booked","date":"YYYY-MM-DD|null","title":"<event title or null>"}],
+{"meetings":[{"client":"<exact roster company name>","type":"prep|deal|debrief","status":"Booked|Not Booked","date":"YYYY-MM-DD|null","time":"<e.g. 12:30 PM ET, or null>","title":"<event title or null>","participants":"<comma-separated external participant names, or null>"}],
  "flags":[{"level":"High|Medium|Low","text":"...","client":"<company or null>"}]}
-Rules: emit a row for EVERY company × EVERY type (21 rows for 7 companies). If no event matches, status "Not Booked", date null, title null.
+Rules: emit a row for EVERY company × EVERY type (21 rows for 7 companies). If no event matches, status "Not Booked", and date/time/title/participants all null.
+"time": convert the event start into a short local time like "12:30 PM ET" (use the event timeZone). 
+"participants": the EXTERNAL attendees on THAT specific event only — client-company people and their guests — as a short comma-separated list of humanized names. EXCLUDE anyone @858partners.com and non-people (lu.ma, calendar-invite@, rooms). This is per-meeting (who was on the call), NOT an onsite roster.
 Flags: High for each Not Booked slot; Medium for any event whose title breaks the "(Contact Name)" convention (odd names, double spaces, non-standard debrief titles); Low for notable response anomalies (e.g. an 858 host shows declined/needsAction).`
   const user = `ROSTER (companies + primary contact email):\n${JSON.stringify(roster)}\n\nNIC CALENDAR EVENTS (prep + debrief):\n${JSON.stringify(prepDebrief)}\n\nJG CALENDAR EVENTS (deal):\n${JSON.stringify(deal)}`
   const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -112,6 +116,7 @@ async function run(req) {
       const { error } = await sb.from('client_meetings').upsert({
         project_id: proj.id, client_id: cid, type: m.type,
         status: m.status || 'Not Booked', meeting_date: m.date || null,
+        meeting_time: m.time || null, participants: m.participants || null,
         event_title: m.title || null, source: 'scan', updated_at: new Date().toISOString(),
       }, { onConflict: 'client_id,type' })
       if (!error) updated++

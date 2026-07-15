@@ -8,15 +8,45 @@ import { canEditClientHub } from '../../../../lib/roles'
 import { EventTabs } from '../../../../lib/EventTabs'
 
 const MTYPES = [
-  { id: 'prep', label: 'Prep Call' },
-  { id: 'deal', label: 'Deal Strategy' },
-  { id: 'debrief', label: 'Debrief' },
+  { id: 'prep', label: 'Prep Call', host: 'Nic', color: '#0F6E56' },
+  { id: 'deal', label: 'Deal Strategy Call', host: 'JG', color: '#185FA5' },
+  { id: 'debrief', label: 'Client Debrief Call', host: 'Nic', color: '#8E44AD' },
 ]
 const M_STATUS = ['Not Booked', 'Booked', 'Completed', 'N/A']
 const M_COLOR = { 'Not Booked': '#94a3b8', 'Booked': '#3b82f6', 'Completed': '#22c55e', 'N/A': '#cbd5e1' }
 const FLAG_COLOR = { High: '#dc2626', Medium: '#ca8a04', Low: '#15803d' }
 const FLAG_BG = { High: '#fef2f2', Medium: '#fefce8', Low: '#f0fdf4' }
 const fmtDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+
+function StatusPill({ status, canEdit, onChange }) {
+  const s = status || 'Not Booked'
+  const bg = M_COLOR[s]; const fg = s === 'N/A' ? '#475569' : '#fff'
+  if (canEdit) {
+    return (
+      <select value={s} onChange={e => onChange(e.target.value)}
+        style={{ border: 'none', borderRadius: 999, padding: '4px 8px', fontSize: 12, fontWeight: 700, color: fg, background: bg, cursor: 'pointer', fontFamily: 'inherit' }}>
+        {M_STATUS.map(o => <option key={o} value={o} style={{ color: '#000', background: '#fff' }}>{o}</option>)}
+      </select>
+    )
+  }
+  return <span style={{ display: 'inline-block', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700, color: fg, background: bg }}>{s}</span>
+}
+
+function EditText({ value, onSave, canEdit, placeholder, date, style }) {
+  const [editing, setEditing] = useState(false)
+  const display = date ? fmtDate(value) : value
+  if (canEdit && editing) {
+    return <input autoFocus type={date ? 'date' : 'text'} defaultValue={value || ''}
+      onBlur={e => { const v = e.target.value.trim(); if (v !== (value || '')) onSave(v); setEditing(false) }}
+      onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') setEditing(false) }}
+      style={{ font: 'inherit', border: '1px solid var(--line)', borderRadius: 6, padding: '2px 6px', boxSizing: 'border-box', maxWidth: '100%', ...style }} />
+  }
+  const empty = !value
+  if (empty && !canEdit) return null
+  return <span onClick={() => canEdit && setEditing(true)} style={{ cursor: canEdit ? 'text' : 'default', ...style }}>
+    {empty ? <span style={{ color: 'var(--faint)' }}>{placeholder || '\u2014'}</span> : display}
+  </span>
+}
 
 export default function ClientHub() {
   const { id } = useParams()
@@ -96,6 +126,8 @@ export default function ClientHub() {
       project_id: id, client_id: c.id, type,
       status: patch.status ?? ex.status ?? 'Not Booked',
       meeting_date: patch.meeting_date !== undefined ? (patch.meeting_date || null) : (ex.meeting_date ?? null),
+      meeting_time: patch.meeting_time !== undefined ? (patch.meeting_time || null) : (ex.meeting_time ?? null),
+      participants: patch.participants !== undefined ? (patch.participants || null) : (ex.participants ?? null),
       notes: patch.notes !== undefined ? patch.notes : (ex.notes ?? ''),
       source: 'manual', updated_at: new Date().toISOString(),
     }, { onConflict: 'client_id,type' })
@@ -178,38 +210,43 @@ export default function ClientHub() {
 
       {/* Meetings matrix */}
       {clients.length > 0 && (
-        <div className="card sans" style={{ marginBottom: 14, overflowX: 'auto' }}>
-          <div style={{ fontFamily: 'Instrument Sans, sans-serif', fontWeight: 700, fontSize: 15, marginBottom: 12 }}>📅 Client meetings</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div className="card sans" style={{ marginBottom: 14, padding: 0, overflow: 'hidden', overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 720 }}>
             <thead>
-              <tr>
-                <th style={{ textAlign: 'left', padding: '6px 8px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--muted)', borderBottom: '1px solid var(--line)' }}>Client</th>
-                {MTYPES.map(mt => <th key={mt.id} style={{ textAlign: 'left', padding: '6px 8px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--muted)', borderBottom: '1px solid var(--line)' }}>{mt.label}</th>)}
+              <tr style={{ background: '#f7f6f2' }}>
+                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 800, letterSpacing: '0.04em', color: 'var(--muted)', textTransform: 'uppercase', borderBottom: '1px solid var(--line)', verticalAlign: 'top' }}>Client</th>
+                {MTYPES.map(mt => (
+                  <th key={mt.id} style={{ textAlign: 'left', padding: '12px 16px', borderBottom: '1px solid var(--line)', borderLeft: '1px solid var(--line)', verticalAlign: 'top' }}>
+                    <div style={{ color: mt.color, fontWeight: 800, fontSize: 12, letterSpacing: '0.03em', textTransform: 'uppercase' }}>{mt.label}</div>
+                    <div style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 400, marginTop: 1 }}>Host: {mt.host}</div>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {clients.map(c => (
+              {clients.map((c, ri) => (
                 <tr key={c.id}>
-                  <td style={{ padding: '10px 8px', fontWeight: 600, borderBottom: '1px solid #eef0f4', verticalAlign: 'top' }}>{c.name}</td>
+                  <td style={{ padding: '14px 16px', verticalAlign: 'top', borderTop: ri ? '1px solid var(--line)' : 'none' }}>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>{c.name}</div>
+                    {c.contact_name && <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 2 }}>{c.contact_name}</div>}
+                  </td>
                   {MTYPES.map(mt => {
-                    const m = meetingFor(c.id, mt.id) || { status: 'Not Booked', meeting_date: null, notes: '' }
+                    const m = meetingFor(c.id, mt.id) || {}
                     return (
-                      <td key={mt.id} style={{ padding: '8px', borderBottom: '1px solid #eef0f4', verticalAlign: 'top', minWidth: 140 }}>
-                        {canEdit ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            <select value={m.status} onChange={e => setMeeting(c, mt.id, { status: e.target.value })} style={{ border: 'none', borderRadius: 8, padding: '3px 8px', fontSize: 11, fontWeight: 700, color: m.status === 'N/A' ? 'var(--muted)' : '#fff', background: M_COLOR[m.status], cursor: 'pointer', fontFamily: 'inherit' }}>
-                              {M_STATUS.map(s => <option key={s} value={s} style={{ color: '#000', background: '#fff' }}>{s}</option>)}
-                            </select>
-                            <input type="date" value={m.meeting_date || ''} onChange={e => setMeeting(c, mt.id, { meeting_date: e.target.value })} style={{ ...inputStyle, fontSize: 11, padding: '3px 6px' }} />
-                            <input placeholder="notes" defaultValue={m.notes || ''} onBlur={e => { if (e.target.value !== (m.notes || '')) setMeeting(c, mt.id, { notes: e.target.value }) }} style={{ ...inputStyle, fontSize: 11, padding: '3px 6px' }} />
-                          </div>
-                        ) : (
-                          <div>
-                            <span style={{ display: 'inline-block', borderRadius: 8, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: m.status === 'N/A' ? 'var(--muted)' : '#fff', background: M_COLOR[m.status] }}>{m.status}</span>
-                            {m.meeting_date && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 3 }}>{fmtDate(m.meeting_date)}</div>}
-                            {m.notes && <div style={{ fontSize: 11, color: 'var(--faint)', marginTop: 2 }}>{m.notes}</div>}
-                          </div>
-                        )}
+                      <td key={mt.id} style={{ padding: '14px 16px', verticalAlign: 'top', borderLeft: '1px solid var(--line)', borderTop: ri ? '1px solid var(--line)' : 'none', minWidth: 180 }}>
+                        <StatusPill status={m.status} canEdit={canEdit} onChange={v => setMeeting(c, mt.id, { status: v })} />
+                        <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600 }}>
+                          <EditText date value={m.meeting_date} canEdit={canEdit} placeholder="Set date" onSave={v => setMeeting(c, mt.id, { meeting_date: v })} />
+                        </div>
+                        <div style={{ marginTop: 3, fontSize: 12, color: 'var(--muted)' }}>
+                          <EditText value={m.meeting_time} canEdit={canEdit} placeholder="add time" onSave={v => setMeeting(c, mt.id, { meeting_time: v })} />
+                        </div>
+                        <div style={{ marginTop: 7, fontSize: 12.5, color: 'var(--ink)' }}>
+                          <EditText value={m.participants} canEdit={canEdit} placeholder="add participants" onSave={v => setMeeting(c, mt.id, { participants: v })} />
+                        </div>
+                        <div style={{ marginTop: 4, fontSize: 12, color: 'var(--muted)' }}>
+                          <EditText value={m.notes} canEdit={canEdit} placeholder="notes" onSave={v => setMeeting(c, mt.id, { notes: v })} />
+                        </div>
                       </td>
                     )
                   })}
