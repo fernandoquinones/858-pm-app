@@ -227,22 +227,15 @@ export default function Home() {
         <div>
           {shownProjects.length === 0 && <div className="card sans" style={{ color: 'var(--faint)' }}>{eventFilter === 'current' ? 'No current events — create one above.' : 'No past events yet.'}</div>}
           {shownProjects.map(p => (
-            <div key={p.id} className="card sans" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={p.id} className="card sans" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
               <div style={{ minWidth: 0 }}>
-                <Link href={`/project/${p.id}`} style={{ fontWeight: 600, fontSize: 15, fontFamily: 'Instrument Sans, sans-serif', color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{p.event_date ? fmtRange(p.event_date, p.event_end_date) : 'No date set'}{cityState(p) ? ` · ${cityState(p)}` : ''}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>Venue</span>
-                  {master
-                    ? <input value={venueDraft[p.id] !== undefined ? venueDraft[p.id] : (p.venue || '')} onChange={e => setVenueDraft(d => ({ ...d, [p.id]: e.target.value }))} onBlur={() => saveVenue(p)} placeholder="TBD" style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px', fontFamily: 'inherit', fontSize: 11.5, background: 'transparent', color: 'var(--muted)', minWidth: 130 }} />
-                    : <span style={{ fontSize: 12, color: 'var(--muted)' }}>{p.venue || 'TBD'}</span>}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <Link href={`/project/${p.id}`} style={{ fontWeight: 700, fontSize: 18, fontFamily: 'Instrument Sans, sans-serif', color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link>
+                  {master && <button onClick={e => deleteEvent(e, p)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#b42318', fontSize: 12, fontFamily: 'inherit' }}>Delete</button>}
                 </div>
-                {p.activations && parseActs(p.activations).length > 0 && <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 6 }}>{parseActs(p.activations).map(a => <span key={a} style={{ fontSize: 10.5, background: '#FFF6D6', border: '1px solid #D9A800', color: '#7a5e00', borderRadius: 999, padding: '2px 8px' }}>{a}</span>)}</div>}
+                <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 3 }}>{p.event_date ? fmtRange(p.event_date, p.event_end_date) : 'No date set'}{cityState(p) ? ` · ${cityState(p)}` : ''}{p.venue ? ` · ${p.venue}` : ''}</div>
               </div>
-              <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                {master && <button className="btn ghost sm" onClick={e => deleteEvent(e, p)} style={{ color: '#b42318', borderColor: '#f0c4c0' }}>Delete</button>}
-                <Link href={`/project/${p.id}`} className="btn ghost sm" style={{ textDecoration: 'none' }}>Open →</Link>
-              </span>
+              <Link href={`/project/${p.id}`} className="btn ghost sm" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>Open →</Link>
             </div>
           ))}
         </div>
