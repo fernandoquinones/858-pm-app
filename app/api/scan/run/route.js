@@ -63,12 +63,14 @@ There are exactly 3 meeting types: prep, deal, debrief.
 - "858: Deal Strategy Call (...)" events = deal. From JG's calendar.
 Map each event to ONE client company from the provided roster, using the contact name in the title or the attendee email domains. 
 Return STRICT, VALID JSON only (no prose, no code fence, no trailing commas). Inside any string value, NEVER use the double-quote character " — use single quotes instead (e.g. write 'Toast Team Schliestett', not "Toast Team Schliestett"). Shape:
-{"meetings":[{"client":"<exact roster company name>","type":"prep|deal|debrief","status":"Booked|Not Booked","date":"YYYY-MM-DD|null","time":"<e.g. 12:30 PM ET, or null>","title":"<event title or null>","participants":"<comma-separated external participant names, or null>","declines":"<comma-separated external names who declined, or null>"}],
+{"meetings":[{"client":"<exact roster company name>","type":"prep|deal|debrief","status":"Booked|Not Booked","date":"YYYY-MM-DD|null","time":"<e.g. 12:30 PM ET, or null>","title":"<event title or null>","participants":"<comma-separated external participant names, or null>","declines":"<comma-separated external names who declined, or null>","tentative":"<comma-separated external names marked maybe/tentative, or null>","no_response":"<comma-separated external names who have not responded, or null>"}],
  "flags":[{"level":"High|Medium|Low","text":"...","client":"<company or null>"}]}
 Rules: emit a row for EVERY company × EVERY type (21 rows for 7 companies). If no event matches, status "Not Booked", and date/time/title/participants all null.
 "time": convert the event start into a short local time like "12:30 PM ET" (use the event timeZone). 
 "participants": the EXTERNAL attendees on THAT specific event only — client-company people and their guests — as a short comma-separated list of humanized names. EXCLUDE anyone @858partners.com and non-people (lu.ma, calendar-invite@, rooms). This is per-meeting (who was on the call), NOT an onsite roster.
 "declines": of those external participants, the ones whose response status is 'declined' on THAT event — comma-separated humanized names; null if nobody declined.
+"tentative": external participants whose response is 'tentative' (maybe) on THAT event; null if none.
+"no_response": external participants whose response is 'needsAction' (invited, not yet responded) on THAT event; null if none.
 Flags: High for each Not Booked slot; Medium for any event whose title breaks the "(Contact Name)" convention (odd names, double spaces, non-standard debrief titles); Low for notable response anomalies (e.g. an 858 host shows declined/needsAction).`
   const user = `ROSTER (companies + primary contact email):\n${JSON.stringify(roster)}\n\nNIC CALENDAR EVENTS (prep + debrief):\n${JSON.stringify(prepDebrief)}\n\nJG CALENDAR EVENTS (deal):\n${JSON.stringify(deal)}`
   const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -119,6 +121,7 @@ async function run(req) {
         project_id: proj.id, client_id: cid, type: m.type,
         status: m.status || 'Not Booked', meeting_date: m.date || null,
         meeting_time: m.time || null, participants: m.participants || null, declines: m.declines || null,
+        tentative: m.tentative || null, no_response: m.no_response || null,
         event_title: m.title || null, source: 'scan', updated_at: new Date().toISOString(),
       }, { onConflict: 'client_id,type' })
       if (!error) updated++

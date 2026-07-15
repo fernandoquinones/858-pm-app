@@ -250,6 +250,16 @@ export default function ClientHub() {
                             <span style={{ fontWeight: 700 }}>⊘ Declined: </span>{m.declines}
                           </div>
                         )}
+                        {m.tentative && (
+                          <div style={{ marginTop: 3, fontSize: 12, color: '#b7791f' }}>
+                            <span style={{ fontWeight: 700 }}>◐ Maybe: </span>{m.tentative}
+                          </div>
+                        )}
+                        {m.no_response && (
+                          <div style={{ marginTop: 3, fontSize: 12, color: 'var(--muted)' }}>
+                            <span style={{ fontWeight: 700 }}>○ No response: </span>{m.no_response}
+                          </div>
+                        )}
                         <div style={{ marginTop: 4, fontSize: 12, color: 'var(--muted)' }}>
                           <EditText value={m.notes} canEdit={canEdit} placeholder="notes" onSave={v => setMeeting(c, mt.id, { notes: v })} />
                         </div>
