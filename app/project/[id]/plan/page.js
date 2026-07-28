@@ -105,7 +105,7 @@ export default function ProjectBoard() {
     if (!canEditTask(user, t)) return
     setTasks(ts => ts.map(x => x.id === t.id ? { ...x, status } : x))
     await supabase.from('tasks').update({ status }).eq('id', t.id)
-    if (status === 'review') { try { await fetch('/api/slack/notify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ taskId: t.id }) }) } catch (e) {} }
+    if (status === 'review') { try { await fetch('/api/slack/notify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ taskId: t.id, actor: user }) }) } catch (e) {} }
     if (status === 'done') { try { await fetch('/api/slack/complete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ taskId: t.id, by: user }) }) } catch (e) {} }
   }
   async function setDue(t, due_date) { if (!canEditTask(user, t)) return; setTasks(ts => ts.map(x => x.id === t.id ? { ...x, due_date } : x)); await supabase.from('tasks').update({ due_date: due_date || null }).eq('id', t.id) }

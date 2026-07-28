@@ -1,6 +1,6 @@
 import { sb } from '../../../../lib/supabaseServer'
 import { verifySlack } from '../../../../lib/slackVerify'
-import { renderTaskMessages, SLACK_STATUS } from '../../../../lib/slack'
+import { renderTaskMessages, SLACK_STATUS, notifyReview } from '../../../../lib/slack'
 
 // Update the clicked task's line inside a (multi-task) digest message via response_url.
 async function updateDigestLine(payload, taskId, status) {
@@ -50,6 +50,13 @@ export async function POST(req) {
 
     // Re-render any tracked single-task messages (channel post + DMs).
     await renderTaskMessages(sb, taskId)
+
+    // Needs review -> DM the reviewer(s) in the personal bot (not the channel).
+    if (status === 'review') {
+      let actor = null
+      try { const uid = payload.user && payload.user.id; if (uid) { const { data: su } = await sb.from('slack_users').select('name').eq('slack_id', uid).maybeSingle(); actor = su && su.name } } catch (e) {}
+      await notifyReview(sb, taskId, actor)
+    }
 
     // If the click came from a digest (not a tracked single-task message), update just that line.
     const channel = (payload.container && payload.container.channel_id) || (payload.channel && payload.channel.id)

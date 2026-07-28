@@ -79,10 +79,12 @@ export default function Home() {
     } catch (e) { setErr(String(e)); setGen(false) }
   }
 
-  function isPastEvent(p) {
-    if (!p.event_date) return false
-    const cutoff = new Date(); cutoff.setHours(0, 0, 0, 0); cutoff.setDate(cutoff.getDate() - 1)
-    return new Date(p.event_date + 'T00:00:00') < cutoff
+  function isPastEvent(p) { return !!p.archived }
+  async function toggleArchive(p) {
+    const v = !p.archived
+    const { error } = await supabase.from('projects').update({ archived: v }).eq('id', p.id)
+    if (error) { setErr('Update failed: ' + error.message); return }
+    setProjects(ps => ps.map(x => x.id === p.id ? { ...x, archived: v } : x))
   }
   function eventTime(p) { return p.event_date ? new Date(p.event_date + 'T00:00:00').getTime() : Infinity }
   const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
@@ -231,6 +233,7 @@ export default function Home() {
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                   <Link href={`/project/${p.id}`} style={{ fontWeight: 700, fontSize: 18, fontFamily: 'Instrument Sans, sans-serif', color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link>
+                  {master && <button onClick={() => toggleArchive(p)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--muted)', fontSize: 12, fontFamily: 'inherit' }}>{p.archived ? 'Move to current' : 'Move to past'}</button>}
                   {master && <button onClick={e => deleteEvent(e, p)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#b42318', fontSize: 12, fontFamily: 'inherit' }}>Delete</button>}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 3 }}>{p.event_date ? fmtRange(p.event_date, p.event_end_date) : 'No date set'}{cityState(p) ? ` · ${cityState(p)}` : ''}{p.venue ? ` · ${p.venue}` : ''}</div>
