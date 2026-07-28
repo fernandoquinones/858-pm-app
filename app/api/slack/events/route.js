@@ -1,6 +1,6 @@
 import { sb } from '../../../../lib/supabaseServer'
 import { verifySlack } from '../../../../lib/slackVerify'
-import { chatDelete, syncTaskCompleteMessages, restoreTaskMessages } from '../../../../lib/slack'
+import { chatDelete, syncTaskCompleteMessages, restoreTaskMessages, notifyParticipants } from '../../../../lib/slack'
 
 const DONE_REACTIONS = ['white_check_mark', 'heavy_check_mark', 'ballot_box_with_check', '+1']
 
@@ -55,8 +55,10 @@ export async function POST(req) {
     if (e.type === 'message' && !e.bot_id && !e.subtype && e.thread_ts && e.text) {
       const { data: link } = await sb.from('slack_links').select('task_id,project_id').eq('channel', e.channel).eq('ts', e.thread_ts).single()
       if (link) {
-        const author = await slackUserName(e.user)
+        let author = await slackUserName(e.user)
+        try { const { data: su } = await sb.from('slack_users').select('name').eq('slack_id', e.user).maybeSingle(); if (su && su.name) author = su.name } catch (er) {}
         await sb.from('comments').insert({ project_id: link.project_id, task_id: link.task_id, author, body: e.text, source: 'slack' })
+        await notifyParticipants(sb, { taskId: link.task_id, author, body: e.text, exceptChannel: e.channel })
       }
     }
   } catch (err) { /* swallow — always 200 so Slack doesn't retry forever */ }
