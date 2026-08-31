@@ -1,142 +1,141 @@
 import { sb } from '../../../../lib/supabaseServer'
+import { dmUser } from '../../../../lib/slack'
+import { etDow, etHour } from '../../../../lib/digest'
 
-// SERVER-SIDE CREATE scanner. Runs on Vercel (Cron or manual) — no Claude sandbox,
-// so the org egress allowlist never applies. Flow:
-//   1) refresh a Google access token (reads Nic's + JG's calendars, shared to Fernando)
-//   2) pull CREATE meetings from both calendars
-//   3) ask the Anthropic API to map them to clients + raise flags (the judgment layer)
-//   4) write client_meetings + scan_flags to Supabase (service key, server-side)
-//
-// Auth: Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. Manual runs may pass
-// the same bearer or `?secret=`.
-const PROJECT_NAME = 'CREATE 2026'
-const CAL_NIC = 'nic@858partners.com'   // prep ("CREATE Kickoff") + debrief ("CREATE Debrief")
-const CAL_JG  = 'jg@858partners.com'    // deal ("858: Deal Strategy Call")
-const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+// DETERMINISTIC, multi-event, DISCOVERY scanner. Each event posts generic booking links
+// ("fstec kickoff", "fstec deal strategy", "fstec debrief call"). When someone books, the
+// calendar title becomes "... (Firstname Lastname)" and the booker's email domain = the company.
+// The scanner reads each event's configured calendars (scan_meeting_types), DISCOVERS a client
+// per company domain, and fills the matrix — no pre-listing needed. Runs twice daily per event.
+const TEAM_DOMAIN = '858partners.com'
+const SKIP_DOMAINS = ['group.calendar.google.com', 'resource.calendar.google.com', 'lu.ma']
+const GENERIC_DOMAINS = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'me.com', 'aol.com']
+const extDomain = e => (String(e || '').split('@')[1] || '').toLowerCase()
+const humanize = e => String(e || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).trim()
+const companyFromDomain = d => { const base = String(d || '').split('.')[0]; return base ? base.charAt(0).toUpperCase() + base.slice(1) : d }
+const domainOf = c => String(c.company_domain || '').toLowerCase().replace(/^@/, '').trim()
 
 function authed(req) {
-  const need = process.env.CRON_SECRET
-  if (!need) return false
+  const need = process.env.CRON_SECRET; if (!need) return false
   const bearer = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
-  const url = new URL(req.url)
-  return bearer === need || url.searchParams.get('secret') === need
+  return bearer === need || new URL(req.url).searchParams.get('secret') === need
 }
-
 async function googleToken() {
   const r = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-      grant_type: 'refresh_token',
-    }),
+    body: new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID, client_secret: process.env.GOOGLE_CLIENT_SECRET, refresh_token: process.env.GOOGLE_REFRESH_TOKEN, grant_type: 'refresh_token' }),
   })
-  const j = await r.json()
-  if (!j.access_token) throw new Error('google token: ' + JSON.stringify(j))
-  return j.access_token
+  const j = await r.json(); if (!j.access_token) throw new Error('google token: ' + JSON.stringify(j)); return j.access_token
 }
-
 async function listEvents(token, calendarId, q, timeMin, timeMax) {
   const u = new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`)
-  u.searchParams.set('q', q)
-  u.searchParams.set('timeMin', timeMin)
-  u.searchParams.set('timeMax', timeMax)
-  u.searchParams.set('singleEvents', 'true')
-  u.searchParams.set('orderBy', 'startTime')
-  u.searchParams.set('maxResults', '100')
+  if (q) u.searchParams.set('q', q)
+  u.searchParams.set('timeMin', timeMin); u.searchParams.set('timeMax', timeMax)
+  u.searchParams.set('singleEvents', 'true'); u.searchParams.set('orderBy', 'startTime'); u.searchParams.set('maxResults', '200')
   const r = await fetch(u, { headers: { Authorization: 'Bearer ' + token } })
   const j = await r.json()
   return (j.items || []).map(e => ({
     title: e.summary || '',
     date: (e.start && (e.start.date || (e.start.dateTime || '').slice(0, 10))) || null,
-    start: (e.start && e.start.dateTime) || null,
-    tz: (e.start && e.start.timeZone) || null,
-    attendees: (e.attendees || []).map(a => ({ email: a.email, response: a.responseStatus })),
+    time: (e.start && e.start.dateTime) ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short', timeZone: (e.start.timeZone || 'America/New_York') }).format(new Date(e.start.dateTime)) : null,
+    attendees: (e.attendees || []).map(a => { const email = (a.email || ''); return { email, name: a.displayName || humanize(email), response: a.responseStatus, domain: extDomain(email) } }),
   }))
 }
+// external (client-side) attendees on an event
+const externals = e => e.attendees.filter(a => a.domain && a.domain !== TEAM_DOMAIN && !SKIP_DOMAINS.some(s => a.domain.includes(s)) && !a.email.includes('calendar-invite'))
+// the booker = external attendee whose surname is in the title, else the first external
+function pickBooker(e, ext) {
+  const title = (e.title || '').toLowerCase()
+  return ext.find(a => { const p = (a.name || '').toLowerCase().split(/\s+/); const last = p[p.length - 1]; return last && last.length > 2 && title.includes(last) }) || ext[0]
+}
 
-async function askClaude(roster, prepDebrief, deal) {
-  const sys = `You classify calendar events into a client-meeting matrix for the CREATE 2026 event.
-There are exactly 3 meeting types: prep, deal, debrief.
-- "CREATE Kickoff (...)" events = prep. "CREATE Debrief (...)" or any title with "CREATE debrief" = debrief. Both come from Nic's calendar.
-- "858: Deal Strategy Call (...)" events = deal. From JG's calendar.
-Map each event to ONE client company from the provided roster, using the contact name in the title or the attendee email domains. 
-Return STRICT, VALID JSON only (no prose, no code fence, no trailing commas). Inside any string value, NEVER use the double-quote character " — use single quotes instead (e.g. write 'Toast Team Schliestett', not "Toast Team Schliestett"). Shape:
-{"meetings":[{"client":"<exact roster company name>","type":"prep|deal|debrief","status":"Booked|Not Booked","date":"YYYY-MM-DD|null","time":"<e.g. 12:30 PM ET, or null>","title":"<event title or null>","participants":"<comma-separated external participant names, or null>","declines":"<comma-separated external names who declined, or null>","tentative":"<comma-separated external names marked maybe/tentative, or null>","no_response":"<comma-separated external names who have not responded, or null>"}],
- "flags":[{"level":"High|Medium|Low","text":"...","client":"<company or null>"}]}
-Rules: emit a row for EVERY company × EVERY type (21 rows for 7 companies). If no event matches, status "Not Booked", and date/time/title/participants all null.
-"time": convert the event start into a short local time like "12:30 PM ET" (use the event timeZone). 
-"participants": the EXTERNAL attendees on THAT specific event only — client-company people and their guests — as a short comma-separated list of humanized names. EXCLUDE anyone @858partners.com and non-people (lu.ma, calendar-invite@, rooms). This is per-meeting (who was on the call), NOT an onsite roster.
-"declines": of those external participants, the ones whose response status is 'declined' on THAT event — comma-separated humanized names; null if nobody declined.
-"tentative": external participants whose response is 'tentative' (maybe) on THAT event; null if none.
-"no_response": external participants whose response is 'needsAction' (invited, not yet responded) on THAT event; null if none.
-Flags: High for each Not Booked slot; Medium for any event whose title breaks the "(Contact Name)" convention (odd names, double spaces, non-standard debrief titles); Low for notable response anomalies (e.g. an 858 host shows declined/needsAction).`
-  const user = `ROSTER (companies + primary contact email):\n${JSON.stringify(roster)}\n\nNIC CALENDAR EVENTS (prep + debrief):\n${JSON.stringify(prepDebrief)}\n\nJG CALENDAR EVENTS (deal):\n${JSON.stringify(deal)}`
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 8000, system: sys, messages: [{ role: 'user', content: user }] }),
-  })
-  const j = await r.json()
-  if (!r.ok || j.error || !Array.isArray(j.content)) throw new Error('claude api: ' + JSON.stringify(j).slice(0, 400))
-  const text = j.content.map(b => b.text || '').join('')
-  const s = text.indexOf('{'), e = text.lastIndexOf('}')
-  if (s < 0 || e < 0) throw new Error('claude no-json: ' + text.slice(0, 300))
-  return JSON.parse(text.slice(s, e + 1))
+async function scanEvent(token, project, types) {
+  const timeMin = new Date(Date.now() - 45 * 864e5).toISOString()
+  const timeMax = new Date(Date.now() + 45 * 864e5).toISOString()
+
+  // 1) gather bookings per meeting type (only client-attended events)
+  const bookingsByType = {}
+  for (const t of (types || [])) {
+    const events = await listEvents(token, t.calendar, t.match || '', timeMin, timeMax)
+    bookingsByType[t.type] = events.map(e => { const ext = externals(e); return { title: e.title, date: e.date, time: e.time, ext, booker: ext.length ? pickBooker(e, ext) : null } }).filter(b => b.booker)
+  }
+
+  let { data: clients } = await sb.from('event_clients').select('id,name,company_domain,contact_name,contact_email,sort_order').eq('project_id', project.id)
+  clients = clients || []
+  // match a booking to a client by company domain, or the client's contact name in the title
+  const bookingFor = (c, type) => {
+    const d = domainOf(c)
+    return (bookingsByType[type] || []).find(b => (d && b.booker.domain === d) || (c.contact_name && (b.title || '').toLowerCase().includes(c.contact_name.toLowerCase())))
+  }
+  // 2) discover a NEW client per company domain, but skip domains a pre-listed client already owns
+  const claimed = new Set()
+  for (const c of clients) for (const t of (types || [])) { const b = bookingFor(c, t.type); if (b && b.booker) claimed.add(b.booker.domain) }
+  const seen = {}
+  for (const t of (types || [])) for (const b of (bookingsByType[t.type] || [])) { const d = b.booker.domain; if (d && !GENERIC_DOMAINS.includes(d) && !claimed.has(d) && !seen[d]) seen[d] = b.booker }
+  for (const d of Object.keys(seen)) {
+    if (clients.find(c => domainOf(c) === d)) continue
+    const bk = seen[d]
+    const { data: ins } = await sb.from('event_clients').insert({ project_id: project.id, name: companyFromDomain(d), company_domain: d, contact_name: bk.name || null, contact_email: bk.email || null, sort_order: clients.length }).select().single()
+    if (ins) clients.push(ins)
+  }
+  const rows = []; const flags = []; const perClient = {}
+  for (const c of clients) {
+    perClient[c.name] = {}
+    for (const t of (types || [])) {
+      const b = bookingFor(c, t.type)
+      if (b) {
+        const namesBy = st => b.ext.filter(a => a.response === st).map(a => a.name).filter(Boolean).join(', ') || null
+        rows.push({ project_id: project.id, client_id: c.id, type: t.type, status: 'Booked', meeting_date: b.date || null, meeting_time: b.time || null, event_title: b.title || null, participants: b.ext.map(a => a.name).filter(Boolean).join(', ') || null, declines: namesBy('declined'), tentative: namesBy('tentative'), no_response: namesBy('needsAction'), source: 'scan', updated_at: new Date().toISOString() })
+        perClient[c.name][t.type] = true
+      } else {
+        rows.push({ project_id: project.id, client_id: c.id, type: t.type, status: 'Not Booked', meeting_date: null, meeting_time: null, event_title: null, participants: null, declines: null, tentative: null, no_response: null, source: 'scan', updated_at: new Date().toISOString() })
+        flags.push({ level: 'High', text: `${c.name} · ${t.label} not booked`, client_id: c.id })
+        perClient[c.name][t.type] = false
+      }
+    }
+  }
+  for (const r of rows) { try { await sb.from('client_meetings').upsert(r, { onConflict: 'client_id,type' }) } catch (e) {} }
+  await sb.from('scan_flags').delete().eq('project_id', project.id).eq('source', 'scan').eq('resolved', false)
+  if (flags.length) await sb.from('scan_flags').insert(flags.map(f => ({ project_id: project.id, level: f.level, text: f.text, client_id: f.client_id, source: 'scan', scanned_at: new Date().toISOString() })))
+  return { clients: clients.length, booked: rows.filter(r => r.status === 'Booked').length, total: rows.length, perClient, typeLabels: Object.fromEntries((types || []).map(t => [t.type, t.label])) }
+}
+
+async function sendBethDigest(data) {
+  const { data: su } = await sb.from('slack_users').select('slack_id').eq('name', 'Beth').maybeSingle()
+  if (!su || !su.slack_id) return false
+  const blocks = [{ type: 'section', text: { type: 'mrkdwn', text: `:date: *End-of-week booking report* — who's booked and who isn't, per event.` } }, { type: 'divider' }]
+  for (const d of data) {
+    const clients = Object.keys(d.perClient); if (!clients.length) continue
+    const lines = clients.map(cn => { const m = d.perClient[cn]; const miss = Object.keys(m).filter(k => !m[k]).map(k => d.typeLabels[k] || k); return miss.length ? `❌ *${cn}* — missing: ${miss.join(', ')}` : `✅ *${cn}* — all booked` })
+    const fully = clients.filter(c => Object.values(d.perClient[c]).every(Boolean)).length
+    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: `*${d.project.name}* — ${fully}/${clients.length} clients fully booked\n${lines.join('\n')}` } })
+    blocks.push({ type: 'divider' })
+  }
+  const dm = await dmUser(su.slack_id, 'End-of-week booking report', blocks)
+  return !!(dm && dm.ts)
 }
 
 async function run(req) {
   if (!authed(req)) return Response.json({ error: 'unauthorized' }, { status: 401 })
   try {
-    // project + roster
-    const { data: projects } = await sb.from('projects').select('id,name')
-    const proj = (projects || []).find(p => norm(p.name) === norm(PROJECT_NAME))
-      || (projects || []).filter(p => norm(p.name).includes('create')).length === 1
-        ? (projects || []).find(p => norm(p.name).includes('create')) : null
-    if (!proj) return Response.json({ error: 'project not found: ' + PROJECT_NAME }, { status: 404 })
-    const { data: clients } = await sb.from('event_clients').select('id,name,contact_email').eq('project_id', proj.id)
-    const byName = new Map((clients || []).map(c => [norm(c.name), c.id]))
-    const roster = (clients || []).map(c => ({ company: c.name, contact_email: c.contact_email }))
-
-    // calendars
+    const { data: cfg } = await sb.from('scan_meeting_types').select('*').order('sort_order')
+    if (!cfg || !cfg.length) return Response.json({ ok: true, events: 0, note: 'no scan setup configured yet' })
+    const byProject = {}
+    for (const r of cfg) (byProject[r.project_id] = byProject[r.project_id] || []).push(r)
+    const { data: projects } = await sb.from('projects').select('id,name,archived').in('id', Object.keys(byProject))
     const token = await googleToken()
-    const now = new Date()
-    const timeMin = new Date(now.getTime() - 45 * 864e5).toISOString()
-    const timeMax = new Date(now.getTime() + 45 * 864e5).toISOString()
-    const prepDebrief = await listEvents(token, CAL_NIC, 'CREATE', timeMin, timeMax)
-    const deal = await listEvents(token, CAL_JG, 'Deal Strategy', timeMin, timeMax)
-
-    // judgment
-    const out = await askClaude(roster, prepDebrief, deal)
-    const meetings = Array.isArray(out.meetings) ? out.meetings : []
-    const flags = Array.isArray(out.flags) ? out.flags : []
-
-    // write
-    let updated = 0; const skipped = []
-    for (const m of meetings) {
-      const cid = byName.get(norm(m.client))
-      if (!cid) { skipped.push(m.client); continue }
-      const { error } = await sb.from('client_meetings').upsert({
-        project_id: proj.id, client_id: cid, type: m.type,
-        status: m.status || 'Not Booked', meeting_date: m.date || null,
-        meeting_time: m.time || null, participants: m.participants || null, declines: m.declines || null,
-        tentative: m.tentative || null, no_response: m.no_response || null,
-        event_title: m.title || null, source: 'scan', updated_at: new Date().toISOString(),
-      }, { onConflict: 'client_id,type' })
-      if (!error) updated++
+    const results = []; const digestData = []
+    for (const p of (projects || [])) {
+      if (p.archived) continue
+      const r = await scanEvent(token, p, byProject[p.id])
+      results.push({ event: p.name, clients: r.clients, booked: r.booked, total: r.total })
+      digestData.push({ project: p, perClient: r.perClient, typeLabels: r.typeLabels })
     }
-    await sb.from('scan_flags').delete().eq('project_id', proj.id).eq('source', 'scan').eq('resolved', false)
-    if (flags.length) {
-      await sb.from('scan_flags').insert(flags.map(f => ({
-        project_id: proj.id, level: f.level || 'Low', text: f.text,
-        client_id: f.client ? (byName.get(norm(f.client)) || null) : null,
-        source: 'scan', scanned_at: new Date().toISOString(),
-      })))
-    }
-    return Response.json({ ok: true, project: proj.name, events: { nic: prepDebrief.length, jg: deal.length }, updated, skipped: [...new Set(skipped)], flags: flags.length })
+    const force = new URL(req.url).searchParams.get('bethdigest') === '1'
+    let bethDigest = false
+    if (force || (etDow() === 5 && etHour() >= 16 && etHour() < 20)) bethDigest = await sendBethDigest(digestData)
+    return Response.json({ ok: true, events: results.length, results, bethDigest })
   } catch (e) { return Response.json({ error: String(e) }, { status: 500 }) }
 }
-
 export async function GET(req) { return run(req) }
 export async function POST(req) { return run(req) }

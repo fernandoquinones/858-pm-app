@@ -61,6 +61,8 @@ export default function ClientHub() {
   const [attendees, setAttendees] = useState([])
   const [outstanding, setOutstanding] = useState([])
   const [meta, setMeta] = useState([])
+  const [scanTypes, setScanTypes] = useState([])
+  const [showScan, setShowScan] = useState(false)
   const [err, setErr] = useState(null)
   const [newClient, setNewClient] = useState('')
   const [todoDraft, setTodoDraft] = useState({})
@@ -71,7 +73,7 @@ export default function ClientHub() {
   const [outDraft, setOutDraft] = useState({})
 
   async function load() {
-    const [pr, cl, td, lb, mt, fl, at, os, mmeta] = await Promise.all([
+    const [pr, cl, td, lb, mt, fl, at, os, mmeta, sty] = await Promise.all([
       supabase.from('projects').select('id,name').eq('id', id).single(),
       supabase.from('event_clients').select('*').eq('project_id', id).order('sort_order'),
       supabase.from('client_todos').select('*').eq('project_id', id).order('sort_order'),
@@ -81,10 +83,11 @@ export default function ClientHub() {
       supabase.from('client_attendees').select('*').eq('project_id', id).order('sort_order'),
       supabase.from('client_outstanding').select('*').eq('project_id', id).order('sort_order'),
       supabase.from('meeting_meta').select('*').eq('project_id', id),
+      supabase.from('scan_meeting_types').select('*').eq('project_id', id).order('sort_order'),
     ])
     if (pr.data) setProject(pr.data)
     setClients(cl.data || []); setTodos(td.data || []); setLib(lb.data || [])
-    setMeetings(mt.data || []); setFlags(fl.data || []); setAttendees(at.data || []); setOutstanding(os.data || []); setMeta(mmeta.data || [])
+    setMeetings(mt.data || []); setFlags(fl.data || []); setAttendees(at.data || []); setOutstanding(os.data || []); setMeta(mmeta.data || []); setScanTypes(sty.data || [])
   }
   useEffect(() => { load() }, [id])
 
@@ -93,6 +96,19 @@ export default function ClientHub() {
   const outFor = cid => outstanding.filter(o => o.client_id === cid)
   const meetingFor = (cid, type) => meetings.find(m => m.client_id === cid && m.type === type)
   const metaFor = type => meta.find(m => m.type === type) || {}
+  const types = scanTypes.length ? scanTypes.map(t => ({ id: t.type, label: t.label, host: t.host, color: t.color })) : MTYPES
+  async function seedDefaultScan() {
+    if (!canEdit) return
+    const rows = MTYPES.map((t, i) => ({ project_id: id, type: t.id, label: t.label, host: t.host, calendar: '', match: '', color: t.color, sort_order: i }))
+    await supabase.from('scan_meeting_types').insert(rows); load()
+  }
+  async function updScanType(t, field, val) {
+    if (!canEdit) return
+    const row = scanTypes.find(x => x.type === t.id)
+    if (!row) return
+    await supabase.from('scan_meeting_types').update({ [field]: val || null }).eq('id', row.id)
+    setScanTypes(xs => xs.map(x => x.id === row.id ? { ...x, [field]: val } : x))
+  }
   async function saveMeta(type, field, val) {
     if (!canEdit) return
     const ex = meta.find(m => m.type === type) || {}
@@ -222,13 +238,39 @@ export default function ClientHub() {
         </div>
       )}
 
+      {/* Scan setup — per-event calendars + title patterns */}
+      {canEdit && (
+        <div className="card sans">
+          <div onClick={() => setShowScan(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'Instrument Sans, sans-serif', fontWeight: 700, fontSize: 15 }}>
+            <span>{showScan ? '▾' : '▸'}</span>🔧 Scan setup ({scanTypes.length})
+            <span style={{ fontWeight: 400, fontSize: 12.5, color: 'var(--muted)', marginLeft: 'auto' }}>Calendars + titles the scanner looks for (runs twice daily)</span>
+          </div>
+          {showScan && (
+            <div style={{ marginTop: 10 }}>
+              {scanTypes.length === 0 && <div style={{ fontSize: 13, color: 'var(--faint)', marginBottom: 10 }}>No scan setup yet — this event won’t be scanned. <button className="btn sm" onClick={seedDefaultScan}>Set up the 3 standard calls</button></div>}
+              {scanTypes.map(t => (
+                <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: 8, alignItems: 'center', padding: '9px 0', borderTop: '1px solid #eef0f4' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>{t.label}<div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>Host: {t.host || '—'}</div></div>
+                  <label><span style={{ display: 'block', fontSize: 10, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>Calendar</span>
+                    <input defaultValue={t.calendar || ''} onBlur={e => { if (e.target.value !== (t.calendar || '')) updScanType({ id: t.type }, 'calendar', e.target.value.trim()) }} placeholder="name@858partners.com" style={{ width: '100%', boxSizing: 'border-box', ...inputStyle, fontSize: 12.5 }} /></label>
+                  <label><span style={{ display: 'block', fontSize: 10, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>Title contains</span>
+                    <input defaultValue={t.match || ''} onBlur={e => { if (e.target.value !== (t.match || '')) updScanType({ id: t.type }, 'match', e.target.value.trim()) }} placeholder="e.g. FSTEC Kickoff" style={{ width: '100%', boxSizing: 'border-box', ...inputStyle, fontSize: 12.5 }} /></label>
+                </div>
+              ))}
+              {scanTypes.length > 0 && <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 10 }}>Clients are matched to calendar events by their contact name/email. The matrix below fills automatically.</div>}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Meeting-type header cards */}
       {clients.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 14 }}>
-          {MTYPES.map(mt => {
+          {types.map(mt => {
             const mm = metaFor(mt.id)
-            const desc = mm.description ?? mt.desc
-            const slot = mm.slot_window ?? mt.slot
+            const dflt = MTYPES.find(d => d.id === mt.id) || {}
+            const desc = mm.description ?? mt.desc ?? dflt.desc
+            const slot = mm.slot_window ?? mt.slot ?? dflt.slot
             return (
               <div key={mt.id} className="card sans" style={{ borderLeft: '4px solid ' + mt.color, padding: '14px 16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -255,7 +297,7 @@ export default function ClientHub() {
             <thead>
               <tr style={{ background: '#f7f6f2' }}>
                 <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 800, letterSpacing: '0.04em', color: 'var(--muted)', textTransform: 'uppercase', borderBottom: '1px solid var(--line)', verticalAlign: 'top' }}>Client</th>
-                {MTYPES.map(mt => (
+                {types.map(mt => (
                   <th key={mt.id} style={{ textAlign: 'left', padding: '12px 16px', borderBottom: '1px solid var(--line)', borderLeft: '1px solid var(--line)', verticalAlign: 'top' }}>
                     <div style={{ color: mt.color, fontWeight: 800, fontSize: 12, letterSpacing: '0.03em', textTransform: 'uppercase' }}>{mt.label}</div>
                     <div style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 400, marginTop: 1 }}>Host: {mt.host}</div>
@@ -270,7 +312,7 @@ export default function ClientHub() {
                     <div style={{ fontWeight: 700, fontSize: 15 }}>{c.name}</div>
                     {c.contact_name && <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 2 }}>{c.contact_name}</div>}
                   </td>
-                  {MTYPES.map(mt => {
+                  {types.map(mt => {
                     const m = meetingFor(c.id, mt.id) || {}
                     return (
                       <td key={mt.id} style={{ padding: '14px 16px', verticalAlign: 'top', borderLeft: '1px solid var(--line)', borderTop: ri ? '1px solid var(--line)' : 'none', minWidth: 180 }}>
@@ -366,9 +408,10 @@ export default function ClientHub() {
               {canEdit ? (
                 <>
                   <input placeholder="name" defaultValue={c.contact_name || ''} onBlur={e => { if (e.target.value !== (c.contact_name || '')) saveContact(c, 'contact_name', e.target.value.trim()) }} style={{ ...inputStyle, fontSize: 12.5, padding: '3px 7px', width: 150 }} />{' '}
-                  <input placeholder="email" defaultValue={c.contact_email || ''} onBlur={e => { if (e.target.value !== (c.contact_email || '')) saveContact(c, 'contact_email', e.target.value.trim()) }} style={{ ...inputStyle, fontSize: 12.5, padding: '3px 7px', width: 220 }} />
+                  <input placeholder="email" defaultValue={c.contact_email || ''} onBlur={e => { if (e.target.value !== (c.contact_email || '')) saveContact(c, 'contact_email', e.target.value.trim()) }} style={{ ...inputStyle, fontSize: 12.5, padding: '3px 7px', width: 220 }} />{' '}
+                  <input placeholder="company domain (toasttab.com)" title="Used by the scanner to match meetings to this client" defaultValue={c.company_domain || ''} onBlur={e => { if (e.target.value !== (c.company_domain || '')) saveContact(c, 'company_domain', e.target.value.trim()) }} style={{ ...inputStyle, fontSize: 12.5, padding: '3px 7px', width: 200 }} />
                 </>
-              ) : <span>{c.contact_name || '—'}{c.contact_email ? ' · ' + c.contact_email : ''}</span>}
+              ) : <span>{c.contact_name || '—'}{c.contact_email ? ' · ' + c.contact_email : ''}{c.company_domain ? ' · @' + c.company_domain : ''}</span>}
             </div>
             {canEdit && <div style={{ margin: '8px 0' }}><input placeholder="Paste attendee sheet link…" defaultValue={c.sheet_url || ''} onBlur={e => saveSheet(c, e.target.value.trim())} style={{ width: '100%', boxSizing: 'border-box', ...inputStyle, fontSize: 12.5 }} /></div>}
 
