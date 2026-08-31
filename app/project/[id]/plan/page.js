@@ -52,6 +52,7 @@ export default function ProjectBoard() {
   const [reportHtml, setReportHtml] = useState('')
   const [fOwners, setFOwners] = useState([])
   const [fStatuses, setFStatuses] = useState([])
+  const [search, setSearch] = useState('')
   const [fActs, setFActs] = useState([])
   const [dueFilter, setDueFilter] = useState('')
   const [sortBy, setSortBy] = useState('flat')
@@ -370,13 +371,14 @@ export default function ProjectBoard() {
     let list = wsId === '__all__' ? [...tasks] : tasks.filter(t => t.workstream_id === wsId)
     if (fOwners.length) list = list.filter(t => { const os = (t.owner || '').split('+').map(x => x.trim()); return fOwners.some(o => os.includes(o)) })
     if (fStatuses.length) list = list.filter(t => fStatuses.includes(t.status))
+    if (search.trim()) { const q = search.trim().toLowerCase(); list = list.filter(t => ((t.title || '') + ' ' + (t.owner || '') + ' ' + (t.notes || '')).toLowerCase().includes(q)) }
     if (fActs.length) list = list.filter(t => { const a = parseActs(t.applies_to); return fActs.some(x => a.includes(x)) })
     if (dueFilter === 'overdue') list = list.filter(isOverdue)
     else if (dueFilter === 'upcoming') list = list.filter(t => !isOverdue(t))
     if (sortBy === 'due' || wsId === '__all__') list = [...list].sort((a, b) => (a.due_date || '9999-12-31').localeCompare(b.due_date || '9999-12-31'))
     return list
   }
-  const filtering = !!(fOwners.length || fStatuses.length || fActs.length || dueFilter)
+  const filtering = !!(fOwners.length || fStatuses.length || fActs.length || dueFilter || search.trim())
   const toggleF = (arr, set, v) => set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v])
   const ownersInUse = [...new Set(tasks.flatMap(t => (t.owner || '').split('+').map(x => x.trim())).filter(Boolean))]
   const fchip = on => ({ fontSize: 13, padding: '5px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit', border: '1px solid ' + (on ? 'var(--accent)' : 'var(--line)'), background: on ? 'var(--accent-soft)' : 'transparent', color: on ? 'var(--accent)' : 'var(--muted)', fontWeight: on ? 700 : 500 })
@@ -513,7 +515,7 @@ export default function ProjectBoard() {
           const counts = {}; Object.keys(STATUS).forEach(k => counts[k] = 0)
           tasks.forEach(t => { counts[t.status] = (counts[t.status] || 0) + 1 })
           const total = tasks.length || 1
-          const colors = { todo: '#8A94A3', prog: '#3A7BD5', ongoing: '#5B45A8', review: '#B25A00', done: '#0F6E56' }
+          const colors = { todo: '#8A94A3', prog: '#3A7BD5', hold: '#64748B', ongoing: '#5B45A8', review: '#B25A00', done: '#0F6E56' }
           return <div style={{ display: 'grid', gap: 9, margin: '8px 0 4px' }}>
             {Object.entries(STATUS).map(([k, v]) => <div key={k}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 3 }}><span>{v}</span><span style={{ fontWeight: 700 }}>{counts[k] || 0}</span></div>
@@ -618,6 +620,11 @@ export default function ProjectBoard() {
       )}
 
       <div style={{ margin: '10px 0 10px' }}>
+        <div className="sans" style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+          <span style={flabel}>Search</span>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks by name, owner, or notes…" style={{ flex: 1, minWidth: 220, maxWidth: 460, border: '1px solid var(--line)', borderRadius: 999, padding: '7px 14px', fontFamily: 'inherit', fontSize: 13 }} />
+          {search && <button className="btn ghost sm" onClick={() => setSearch('')}>Clear</button>}
+        </div>
         <div className="sans" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
           <span style={flabel}>Owners</span>
           {ownersInUse.map(o => <button key={o} style={fchip(fOwners.includes(o))} onClick={() => toggleF(fOwners, setFOwners, o)}>{o}</button>)}
@@ -639,7 +646,7 @@ export default function ProjectBoard() {
             <option value="due">Due date (within group)</option>
             <option value="flat">All tasks by due date</option>
           </select>}
-          {(filtering || sortBy !== 'flat') && <button className="btn ghost sm" onClick={() => { setFOwners([]); setFStatuses([]); setFActs([]); setDueFilter(''); setSortBy('flat') }}>Clear</button>}
+          {(filtering || sortBy !== 'flat') && <button className="btn ghost sm" onClick={() => { setFOwners([]); setFStatuses([]); setFActs([]); setDueFilter(''); setSearch(''); setSortBy('flat') }}>Clear</button>}
         </div>
       </div>
 

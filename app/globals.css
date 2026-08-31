@@ -217,3 +217,4 @@ select.st{font-size:16px;padding:10px 13px}
 
 /* Ongoing status color */
 select.st.ongoing{color:#5B45A8;background:#EEEBFA;border-color:#D6CCF2}
+select.st.hold{color:#64748B;background:#F1F5F9;border-color:#CBD5E1}
