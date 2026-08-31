@@ -2,7 +2,7 @@ import { sb } from '../../../../lib/supabaseServer'
 import { dmUser, dmPersonalTasks } from '../../../../lib/slack'
 import { windowFor, tasksInWindow, ownedBy, fullBlocks, etHour, etDow, REAL_PEOPLE } from '../../../../lib/digest'
 
-const LEADS = ['Christina', 'Fernando'] // also receive the full cross-event view
+const FULL_VIEW = REAL_PEOPLE // everyone gets ONE full cross-event summary (plus their own actionable tasks)
 
 async function run(type, { enforceTime } = {}) {
   if (!process.env.SLACK_BOT_TOKEN) return { ok: false, skipped: 'Slack not configured' }
@@ -20,13 +20,20 @@ async function run(type, { enforceTime } = {}) {
   const idOf = {}; (users || []).forEach(u => { if (u.slack_id) idOf[u.name] = u.slack_id })
 
   const sent = []
+  // Everyone (including Christina & Fernando) gets their OWN tasks as actionable per-task DMs.
   for (const person of REAL_PEOPLE) {
-    // Christina gets the full cross-event set; everyone else gets only their own — all per-task
-    const mine = person === 'Christina' ? tasks : ownedBy(tasks, person)
+    const mine = ownedBy(tasks, person)
     if (!mine.length) continue
     if (!idOf[person]) { sent.push({ person, skipped: 'no slack_id' }); continue }
     const n = await dmPersonalTasks(sb, idOf[person], person, mine, meta, w.headline)
     sent.push({ person, delivered: n })
+  }
+  // Christina additionally gets ONE read-only cross-event summary (not 1 DM per task).
+  for (const lead of FULL_VIEW) {
+    if (!idOf[lead]) continue
+    const { text, blocks } = fullBlocks(tasks, meta, w.headline)
+    await dmUser(idOf[lead], text, blocks)
+    sent.push({ person: lead, fullView: tasks.length })
   }
   return { ok: true, type, window: w, taskCount: tasks.length, sent }
 }
