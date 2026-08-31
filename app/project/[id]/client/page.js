@@ -8,9 +8,9 @@ import { canEditClientHub } from '../../../../lib/roles'
 import { EventTabs } from '../../../../lib/EventTabs'
 
 const MTYPES = [
-  { id: 'prep', label: 'Prep Call', host: 'Nic', color: '#0F6E56', desc: 'Pre-event prep call to align on goals, GRIP strategy, and stand setup — "CREATE Kickoff (Contact Name)"', slot: 'Week of Jul 6' },
-  { id: 'deal', label: 'Deal Strategy Call', host: 'JG', color: '#185FA5', desc: 'Strategic call with JG to align on key targets and deal priorities — "858: Deal Strategy Call (Contact Name)"', slot: 'Week of Jul 13' },
-  { id: 'debrief', label: 'Client Debrief Call', host: 'Nic', color: '#8E44AD', desc: 'Post-event debrief to recap meetings, capture follow-ups, and assess ROI — "CREATE Debrief (Contact Name)"', slot: 'Week of Jul 27' },
+  { id: 'prep', label: 'Prep Call', host: 'Beth', color: '#0F6E56', desc: 'Pre-event prep / kickoff call to align on goals and setup.', slot: '' },
+  { id: 'deal', label: 'Deal Strategy Call', host: 'JG', color: '#185FA5', desc: 'Strategy call to align on key targets and deal priorities.', slot: '' },
+  { id: 'debrief', label: 'Client Debrief Call', host: 'Beth', color: '#8E44AD', desc: 'Post-event debrief — recap meetings, capture follow-ups, assess ROI.', slot: '' },
 ]
 const M_STATUS = ['Not Booked', 'Booked', 'Completed', 'N/A']
 const M_COLOR = { 'Not Booked': '#94a3b8', 'Booked': '#3b82f6', 'Completed': '#22c55e', 'N/A': '#cbd5e1' }
@@ -63,6 +63,7 @@ export default function ClientHub() {
   const [meta, setMeta] = useState([])
   const [scanTypes, setScanTypes] = useState([])
   const [showScan, setShowScan] = useState(false)
+  const [scanMsg, setScanMsg] = useState(null)
   const [err, setErr] = useState(null)
   const [newClient, setNewClient] = useState('')
   const [todoDraft, setTodoDraft] = useState({})
@@ -243,8 +244,10 @@ export default function ClientHub() {
         <div className="card sans">
           <div onClick={() => setShowScan(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'Instrument Sans, sans-serif', fontWeight: 700, fontSize: 15 }}>
             <span>{showScan ? '▾' : '▸'}</span>🔧 Scan setup ({scanTypes.length})
-            <span style={{ fontWeight: 400, fontSize: 12.5, color: 'var(--muted)', marginLeft: 'auto' }}>Calendars + titles the scanner looks for (runs twice daily)</span>
+            <span style={{ fontWeight: 400, fontSize: 12.5, color: 'var(--muted)', marginLeft: 'auto', marginRight: 10 }}>Calendars + titles the scanner looks for (runs twice daily)</span>
+            {scanTypes.length > 0 && <button className="btn sm" onClick={async (e) => { e.stopPropagation(); setScanMsg('Scanning…'); try { const r = await fetch('/api/scan/trigger', { method: 'POST' }); const j = await r.json(); setScanMsg(j.ok ? `Scanned ${j.events} event(s).` : ('Error: ' + (j.error || 'failed'))); load() } catch (er) { setScanMsg('Error') } setTimeout(() => setScanMsg(null), 6000) }}>Scan now</button>}
           </div>
+          {scanMsg && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>{scanMsg}</div>}
           {showScan && (
             <div style={{ marginTop: 10 }}>
               {scanTypes.length === 0 && <div style={{ fontSize: 13, color: 'var(--faint)', marginBottom: 10 }}>No scan setup yet — this event won’t be scanned. <button className="btn sm" onClick={seedDefaultScan}>Set up the 3 standard calls</button></div>}

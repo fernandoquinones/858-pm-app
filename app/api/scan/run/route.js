@@ -115,27 +115,28 @@ async function sendBethDigest(data) {
   return !!(dm && dm.ts)
 }
 
+export async function scanAll(force) {
+  const { data: cfg } = await sb.from('scan_meeting_types').select('*').order('sort_order')
+  if (!cfg || !cfg.length) return { ok: true, events: 0, note: 'no scan setup configured yet' }
+  const byProject = {}
+  for (const r of cfg) (byProject[r.project_id] = byProject[r.project_id] || []).push(r)
+  const { data: projects } = await sb.from('projects').select('id,name,archived').in('id', Object.keys(byProject))
+  const token = await googleToken()
+  const results = []; const digestData = []
+  for (const p of (projects || [])) {
+    if (p.archived) continue
+    const r = await scanEvent(token, p, byProject[p.id])
+    results.push({ event: p.name, clients: r.clients, booked: r.booked, total: r.total })
+    digestData.push({ project: p, perClient: r.perClient, typeLabels: r.typeLabels })
+  }
+  let bethDigest = false
+  if (force || (etDow() === 5 && etHour() >= 16 && etHour() < 20)) bethDigest = await sendBethDigest(digestData)
+  return { ok: true, events: results.length, results, bethDigest }
+}
 async function run(req) {
   if (!authed(req)) return Response.json({ error: 'unauthorized' }, { status: 401 })
-  try {
-    const { data: cfg } = await sb.from('scan_meeting_types').select('*').order('sort_order')
-    if (!cfg || !cfg.length) return Response.json({ ok: true, events: 0, note: 'no scan setup configured yet' })
-    const byProject = {}
-    for (const r of cfg) (byProject[r.project_id] = byProject[r.project_id] || []).push(r)
-    const { data: projects } = await sb.from('projects').select('id,name,archived').in('id', Object.keys(byProject))
-    const token = await googleToken()
-    const results = []; const digestData = []
-    for (const p of (projects || [])) {
-      if (p.archived) continue
-      const r = await scanEvent(token, p, byProject[p.id])
-      results.push({ event: p.name, clients: r.clients, booked: r.booked, total: r.total })
-      digestData.push({ project: p, perClient: r.perClient, typeLabels: r.typeLabels })
-    }
-    const force = new URL(req.url).searchParams.get('bethdigest') === '1'
-    let bethDigest = false
-    if (force || (etDow() === 5 && etHour() >= 16 && etHour() < 20)) bethDigest = await sendBethDigest(digestData)
-    return Response.json({ ok: true, events: results.length, results, bethDigest })
-  } catch (e) { return Response.json({ error: String(e) }, { status: 500 }) }
+  try { return Response.json(await scanAll(new URL(req.url).searchParams.get('bethdigest') === '1')) }
+  catch (e) { return Response.json({ error: String(e) }, { status: 500 }) }
 }
 export async function GET(req) { return run(req) }
 export async function POST(req) { return run(req) }
