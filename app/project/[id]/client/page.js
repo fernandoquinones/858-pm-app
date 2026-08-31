@@ -119,9 +119,15 @@ export default function ClientHub() {
     await supabase.from('projects').update({ client_info: v || null }).eq('id', id)
     setProject(pr => ({ ...pr, client_info: v }))
   }
-  async function addAgenda() { if (!canEdit) return; await supabase.from('event_agenda').insert({ project_id: id, time: '', block: '', sort_order: agenda.length }); load() }
-  async function updAgenda(a, field, v) { if (!canEdit) return; await supabase.from('event_agenda').update({ [field]: v || null }).eq('id', a.id); setAgenda(xs => xs.map(x => x.id === a.id ? { ...x, [field]: v } : x)) }
-  async function delAgenda(a) { if (canEdit) { await supabase.from('event_agenda').delete().eq('id', a.id); load() } }
+  async function addAgenda() {
+    if (!canEdit) return
+    const { data, error } = await supabase.from('event_agenda').insert({ project_id: id, time: '', block: '', sort_order: agenda.length }).select().single()
+    if (error) { setErr('Add agenda block failed: ' + error.message + ' — did you run 30-clienthub-info.sql?'); return }
+    setAgenda(xs => [...xs, data])
+  }
+  function editAgendaLocal(aid, field, v) { setAgenda(xs => xs.map(x => x.id === aid ? { ...x, [field]: v } : x)) }
+  async function saveAgenda(aid, field, v) { if (canEdit) await supabase.from('event_agenda').update({ [field]: v || null }).eq('id', aid) }
+  async function delAgenda(a) { if (canEdit) { await supabase.from('event_agenda').delete().eq('id', a.id); setAgenda(xs => xs.filter(x => x.id !== a.id)) } }
   async function saveMeta(type, field, val) {
     if (!canEdit) return
     const ex = meta.find(m => m.type === type) || {}
@@ -280,8 +286,8 @@ export default function ClientHub() {
                 {agenda.map(a => (
                   <div key={a.id} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '5px 0', borderTop: '1px solid #eef0f4' }}>
                     {canEdit ? (<>
-                      <input defaultValue={a.time || ''} onBlur={e => { if (e.target.value !== (a.time || '')) updAgenda(a, 'time', e.target.value.trim()) }} placeholder="1:00–2:30" style={{ width: 130, ...inputStyle, fontSize: 12.5 }} />
-                      <input defaultValue={a.block || ''} onBlur={e => { if (e.target.value !== (a.block || '')) updAgenda(a, 'block', e.target.value.trim()) }} placeholder="Workshop / Luncheon / Roundtable" style={{ flex: 1, ...inputStyle, fontSize: 12.5 }} />
+                      <input value={a.time || ''} onChange={e => editAgendaLocal(a.id, 'time', e.target.value)} onBlur={e => saveAgenda(a.id, 'time', e.target.value.trim())} placeholder="1:00–2:30" style={{ width: 130, ...inputStyle, fontSize: 12.5 }} />
+                      <input value={a.block || ''} onChange={e => editAgendaLocal(a.id, 'block', e.target.value)} onBlur={e => saveAgenda(a.id, 'block', e.target.value.trim())} placeholder="Workshop / Luncheon / Roundtable" style={{ flex: 1, ...inputStyle, fontSize: 12.5 }} />
                       <button className="cmtbtn" onClick={() => delAgenda(a)} style={{ color: 'var(--red)', fontSize: 11 }}>✕</button>
                     </>) : (<><span style={{ width: 130, fontWeight: 600, fontSize: 13 }}>{a.time}</span><span style={{ flex: 1, fontSize: 13 }}>{a.block}</span></>)}
                   </div>
