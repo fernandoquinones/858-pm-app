@@ -64,6 +64,9 @@ export default function ClientHub() {
   const [scanTypes, setScanTypes] = useState([])
   const [showScan, setShowScan] = useState(false)
   const [scanMsg, setScanMsg] = useState(null)
+  const [agenda, setAgenda] = useState([])
+  const [showInfo, setShowInfo] = useState(true)
+  const [showTimeline, setShowTimeline] = useState(true)
   const [err, setErr] = useState(null)
   const [newClient, setNewClient] = useState('')
   const [todoDraft, setTodoDraft] = useState({})
@@ -74,8 +77,8 @@ export default function ClientHub() {
   const [outDraft, setOutDraft] = useState({})
 
   async function load() {
-    const [pr, cl, td, lb, mt, fl, at, os, mmeta, sty] = await Promise.all([
-      supabase.from('projects').select('id,name').eq('id', id).single(),
+    const [pr, cl, td, lb, mt, fl, at, os, mmeta, sty, ag] = await Promise.all([
+      supabase.from('projects').select('*').eq('id', id).single(),
       supabase.from('event_clients').select('*').eq('project_id', id).order('sort_order'),
       supabase.from('client_todos').select('*').eq('project_id', id).order('sort_order'),
       supabase.from('client_task_library').select('*').order('sort_order'),
@@ -85,10 +88,11 @@ export default function ClientHub() {
       supabase.from('client_outstanding').select('*').eq('project_id', id).order('sort_order'),
       supabase.from('meeting_meta').select('*').eq('project_id', id),
       supabase.from('scan_meeting_types').select('*').eq('project_id', id).order('sort_order'),
+      supabase.from('event_agenda').select('*').eq('project_id', id).order('sort_order'),
     ])
     if (pr.data) setProject(pr.data)
     setClients(cl.data || []); setTodos(td.data || []); setLib(lb.data || [])
-    setMeetings(mt.data || []); setFlags(fl.data || []); setAttendees(at.data || []); setOutstanding(os.data || []); setMeta(mmeta.data || []); setScanTypes(sty.data || [])
+    setMeetings(mt.data || []); setFlags(fl.data || []); setAttendees(at.data || []); setOutstanding(os.data || []); setMeta(mmeta.data || []); setScanTypes(sty.data || []); setAgenda(ag.data || [])
   }
   useEffect(() => { load() }, [id])
 
@@ -110,6 +114,14 @@ export default function ClientHub() {
     await supabase.from('scan_meeting_types').update({ [field]: val || null }).eq('id', row.id)
     setScanTypes(xs => xs.map(x => x.id === row.id ? { ...x, [field]: val } : x))
   }
+  async function saveClientInfo(v) {
+    if (!canEdit) return
+    await supabase.from('projects').update({ client_info: v || null }).eq('id', id)
+    setProject(pr => ({ ...pr, client_info: v }))
+  }
+  async function addAgenda() { if (!canEdit) return; await supabase.from('event_agenda').insert({ project_id: id, time: '', block: '', sort_order: agenda.length }); load() }
+  async function updAgenda(a, field, v) { if (!canEdit) return; await supabase.from('event_agenda').update({ [field]: v || null }).eq('id', a.id); setAgenda(xs => xs.map(x => x.id === a.id ? { ...x, [field]: v } : x)) }
+  async function delAgenda(a) { if (canEdit) { await supabase.from('event_agenda').delete().eq('id', a.id); load() } }
   async function saveMeta(type, field, val) {
     if (!canEdit) return
     const ex = meta.find(m => m.type === type) || {}
@@ -196,8 +208,8 @@ export default function ClientHub() {
   async function addAttendee(c) {
     if (!canEdit) return
     const raw = (attDraft[c.id] || '').trim(); if (!raw) return
-    const [name, email] = raw.split('|').map(s => (s || '').trim())
-    await supabase.from('client_attendees').insert({ project_id: id, client_id: c.id, name: name || raw, email: email || null, sort_order: attFor(c.id).length })
+    const [name, email, title, phone] = raw.split('|').map(s => (s || '').trim())
+    await supabase.from('client_attendees').insert({ project_id: id, client_id: c.id, name: name || raw, email: email || null, title: title || null, phone: phone || null, sort_order: attFor(c.id).length })
     setAttDraft(d => ({ ...d, [c.id]: '' })); load()
   }
   async function delAttendee(a) { if (canEdit) { await supabase.from('client_attendees').delete().eq('id', a.id); load() } }
@@ -238,6 +250,92 @@ export default function ClientHub() {
           </div>
         </div>
       )}
+
+      {/* Event info — client-facing details Beth can reference */}
+      <div className="card sans">
+        <div onClick={() => setShowInfo(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'Instrument Sans, sans-serif', fontWeight: 700, fontSize: 15 }}>
+          <span>{showInfo ? '▾' : '▸'}</span>📍 Event info
+          <span style={{ fontWeight: 400, fontSize: 12.5, color: 'var(--muted)', marginLeft: 'auto' }}>What clients need to know</span>
+        </div>
+        {showInfo && (() => {
+          const L = { fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 3 }
+          const dates = project && project.event_date ? (fmtDate(project.event_date) + (project.event_end_date && project.event_end_date !== project.event_date ? ' – ' + fmtDate(project.event_end_date) : '')) : '—'
+          const acts = project && project.activations ? String(project.activations).split(/[,+]/).map(a => a.trim()).filter(Boolean) : []
+          return (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
+                <div><div style={L}>Venue</div><div style={{ fontSize: 13 }}>{(project && project.venue) || '—'}</div></div>
+                <div><div style={L}>Location</div><div style={{ fontSize: 13 }}>{project ? ([project.city, project.state].filter(Boolean).join(', ') || '—') : '—'}</div></div>
+                <div><div style={L}>Dates</div><div style={{ fontSize: 13 }}>{dates}</div></div>
+              </div>
+              {acts.length > 0 && <div style={{ marginTop: 12 }}><div style={L}>Activations</div><div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{acts.map(a => <span key={a} className="pill">{a}</span>)}</div></div>}
+              <div style={{ marginTop: 12 }}>
+                <div style={L}>What clients need to know</div>
+                {canEdit
+                  ? <textarea defaultValue={(project && project.client_info) || ''} onBlur={e => { if (e.target.value !== ((project && project.client_info) || '')) saveClientInfo(e.target.value.trim()) }} placeholder="Arrival time, format, what to expect…" rows={2} style={{ width: '100%', boxSizing: 'border-box', ...inputStyle, fontSize: 13 }} />
+                  : <div style={{ fontSize: 13, whiteSpace: 'pre-wrap' }}>{(project && project.client_info) || '—'}</div>}
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><div style={L}>Agenda (high-level)</div>{canEdit && <button className="btn sm" onClick={addAgenda}>+ block</button>}</div>
+                {agenda.map(a => (
+                  <div key={a.id} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '5px 0', borderTop: '1px solid #eef0f4' }}>
+                    {canEdit ? (<>
+                      <input defaultValue={a.time || ''} onBlur={e => { if (e.target.value !== (a.time || '')) updAgenda(a, 'time', e.target.value.trim()) }} placeholder="1:00–2:30" style={{ width: 130, ...inputStyle, fontSize: 12.5 }} />
+                      <input defaultValue={a.block || ''} onBlur={e => { if (e.target.value !== (a.block || '')) updAgenda(a, 'block', e.target.value.trim()) }} placeholder="Workshop / Luncheon / Roundtable" style={{ flex: 1, ...inputStyle, fontSize: 12.5 }} />
+                      <button className="cmtbtn" onClick={() => delAgenda(a)} style={{ color: 'var(--red)', fontSize: 11 }}>✕</button>
+                    </>) : (<><span style={{ width: 130, fontWeight: 600, fontSize: 13 }}>{a.time}</span><span style={{ flex: 1, fontSize: 13 }}>{a.block}</span></>)}
+                  </div>
+                ))}
+                {agenda.length === 0 && <div style={{ color: 'var(--faint)', fontSize: 12.5, padding: '4px 0' }}>No agenda blocks yet.</div>}
+              </div>
+            </div>
+          )
+        })()}
+      </div>
+
+      {/* Prep timeline (Gantt) — auto-computed from the event date, per Beth's rules */}
+      <div className="card sans">
+        <div onClick={() => setShowTimeline(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'Instrument Sans, sans-serif', fontWeight: 700, fontSize: 15 }}>
+          <span>{showTimeline ? '▾' : '▸'}</span>🗓️ Prep timeline
+          <span style={{ fontWeight: 400, fontSize: 12.5, color: 'var(--muted)', marginLeft: 'auto' }}>Auto-built from the event date</span>
+        </div>
+        {showTimeline && (() => {
+          if (!project || !project.event_date) return <div style={{ fontSize: 12.5, color: 'var(--faint)', marginTop: 10 }}>Set an event date (on the Event Hub) to build the timeline.</div>
+          const base = new Date(project.event_date + 'T00:00:00')
+          const addD = (n) => { const x = new Date(base); x.setDate(x.getDate() + n); return x }
+          const tMid = new Date(); tMid.setHours(0, 0, 0, 0)
+          const md = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          const PHASES = [
+            { label: 'Prep — finalize attendees, draft outreach', note: '7 wks out', s: -49, e: -43, color: '#8A94A3' },
+            { label: 'Send outreach emails + start dossiers', note: '6 wks out', s: -42, e: -36, color: '#BA7517' },
+            { label: 'Ongoing — update list & gather top targets', note: '6 wks → event', s: -42, e: 0, color: '#3A7BD5' },
+            { label: 'Client kickoff calls', note: '2 wks out', s: -14, e: -8, color: '#0F6E56' },
+            { label: 'Client strategy calls', note: '1 wk out', s: -7, e: -1, color: '#185FA5' },
+            { label: 'Client debrief calls', note: '1 wk after', s: 7, e: 13, color: '#8E44AD' },
+          ]
+          const chip = { Done: { bg: '#EFF4F0', c: '#0F6E56' }, 'In progress': { bg: '#EAF2FB', c: '#185FA5' }, Upcoming: { bg: '#F1F0EA', c: 'var(--muted)' } }
+          return (
+            <div style={{ marginTop: 10 }}>
+              {PHASES.map((p, i) => {
+                const start = addD(p.s), end = addD(p.e)
+                const status = end < tMid ? 'Done' : (start <= tMid ? 'In progress' : 'Upcoming')
+                const cs = chip[status]
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderTop: i ? '1px solid #eef0f4' : 'none' }}>
+                    <span style={{ width: 8, height: 8, borderRadius: 999, background: p.color, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600 }}>{p.label}</div>
+                      <div style={{ fontSize: 11.5, color: 'var(--faint)' }}>{p.note}</div>
+                    </div>
+                    <div style={{ fontSize: 12.5, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{md(start)} – {md(end)}</div>
+                    <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '3px 10px', background: cs.bg, color: cs.c, whiteSpace: 'nowrap' }}>{status}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
+      </div>
 
       {/* Scan setup — per-event calendars + title patterns */}
       {canEdit && (
@@ -450,14 +548,14 @@ export default function ClientHub() {
                 <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>Attendees</div>
                 {ca.map(a => (
                   <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', borderTop: '1px solid #eef0f4', fontSize: 13.5 }}>
-                    <span style={{ flex: 1 }}>{a.name}{a.email ? <span style={{ color: 'var(--muted)', fontSize: 12 }}> · {a.email}</span> : ''}</span>
+                    <span style={{ flex: 1 }}>{a.name}{a.title ? <span style={{ color: 'var(--muted)', fontSize: 12 }}> · {a.title}</span> : ''}{a.email ? <span style={{ color: 'var(--muted)', fontSize: 12 }}> · {a.email}</span> : ''}{a.phone ? <span style={{ color: 'var(--muted)', fontSize: 12 }}> · {a.phone}</span> : ''}</span>
                     {canEdit && <button className="cmtbtn" onClick={() => delAttendee(a)} style={{ color: 'var(--red)', fontSize: 12 }}>remove</button>}
                   </div>
                 ))}
                 {ca.length === 0 && <div style={{ color: 'var(--faint)', fontSize: 12.5, padding: '4px 0' }}>None yet.</div>}
                 {canEdit && (
                   <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                    <input placeholder="Name | email" value={attDraft[c.id] || ''} onChange={e => setAttDraft(d => ({ ...d, [c.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addAttendee(c) }} style={{ flex: 1, ...inputStyle, fontSize: 12.5 }} />
+                    <input placeholder="Name | email | title | phone" value={attDraft[c.id] || ''} onChange={e => setAttDraft(d => ({ ...d, [c.id]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addAttendee(c) }} style={{ flex: 1, ...inputStyle, fontSize: 12.5 }} />
                     <button className="btn sm" onClick={() => addAttendee(c)}>Add</button>
                   </div>
                 )}
